@@ -25,6 +25,7 @@ import {
   LogIn,
   LogOut,
   Handshake,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -41,39 +42,48 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import type { User } from "@/lib/types";
 import { logout } from "@/app/logout/actions";
 
-const navItems = [
+const memberNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/apply-loan", label: "Apply for Loan", icon: Handshake },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
 ];
 
 const adminNavItems = [
+    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/users", label: "User Management", icon: Users },
     { href: "/admin/audit", label: "AI Audit", icon: ShieldCheck },
-    { href: "/admin/users", label: "Users", icon: Users },
+];
+
+const boardMemberNavItems = [
+    { href: "/dashboard", label: "Member View", icon: LayoutDashboard }, // Can see what a member sees
+    { href: "/board/approvals", label: "Loan Approvals", icon: UserCheck },
 ]
 
 const pageTitles: { [key: string]: string } = {
   "/dashboard": "Member Dashboard",
   "/apply-loan": "Apply for a New Loan",
   "/calculator": "Loan Payment Calculator",
+  "/admin/dashboard": "Admin Dashboard",
   "/admin/audit": "AI Financial Auditor",
   "/admin/users": "User Management",
+  "/board/approvals": "Loan Approvals",
   "/login": "Login",
   "/signup": "Sign Up",
 };
 
 export function AppProvider({ children, user }: { children: React.ReactNode, user: User | null }) {
   const pathname = usePathname();
-  const isAdmin = user?.role === 'admin';
-
+  
   const getNavItems = () => {
-    let items = [...navItems];
-    if (isAdmin) {
-      items = [...navItems, ...adminNavItems];
+    switch (user?.role) {
+      case 'admin':
+        return adminNavItems;
+      case 'board_member':
+        return boardMemberNavItems;
+      case 'member':
+      default:
+        return memberNavItems;
     }
-    // Adjust for root redirection to dashboard if user is logged in
-    const finalItems = items.map(item => ({...item, href: item.href === '/' ? '/dashboard' : item.href}));
-    return finalItems;
   }
   
   const isAuthPage = pathname === "/login" || pathname === "/signup";

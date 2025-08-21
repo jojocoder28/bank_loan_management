@@ -41,10 +41,14 @@ export async function login(formData: FormData) {
       role: user.role,
     });
 
+    if (user.role === 'admin') {
+        redirect('/admin/dashboard');
+    }
+
   } catch (error) {
     console.error('Login error:', error);
     return { error: 'An unexpected error occurred.' };
   }
 
-  redirect('/');
+  redirect('/dashboard');
 }
