@@ -10,66 +10,38 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { LogIn, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { login } from "./actions";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@cooploan.com");
   const [password, setPassword] = useState("password");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const authError = searchParams.get('error');
-    if (authError) {
-      // Map NextAuth default errors to more user-friendly messages
-      switch (authError) {
-        case "CredentialsSignin":
-          setError("Invalid email or password. Please try again.");
-          break;
-        default:
-          setError("An unexpected error occurred during login. Please try again.");
-          break;
-      }
-    }
-  }, [searchParams]);
+  const [isPending, startTransition] = useTransition();
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError(null);
-
-    const result = await signIn("credentials", {
-      redirect: false, // We handle the redirect manually
-      email,
-      password,
-    });
-
-
-    if (result?.error) {
-        // This will catch authorization errors returned from the `authorize` function
-        // or other NextAuth errors.
-        if (result.error === "CredentialsSignin") {
-            setError("Invalid email or password. Please try again.");
-        } else {
-            setError("An unexpected error occurred. Please try again later.");
-        }
-    } else if (result?.ok) {
-        // On success, NextAuth will set the session cookie and we can redirect
-        router.push("/");
-        router.refresh(); // Ensure the page re-renders with the new session
-    } else {
-        setError("An unknown login error occurred.");
-    }
     
-    setIsLoading(false);
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('password', password);
+      
+      const result = await login(formData);
+
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        // Redirect is handled by the server action
+      }
+    });
   };
 
   return (
@@ -103,7 +75,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={isPending}
               />
             </div>
             <div className="grid gap-2">
@@ -116,11 +88,11 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
+                disabled={isPending}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Logging in..." : "Login"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

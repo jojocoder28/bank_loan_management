@@ -22,7 +22,6 @@ import {
   PanelLeft,
   ShieldCheck,
   Users,
-  User,
   LogIn,
   LogOut,
   Handshake,
@@ -38,8 +37,9 @@ import {
 } from "./ui/dropdown-menu";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
-import { useSession, signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import type { User } from "@/lib/types";
+import { logout } from "@/app/logout/actions";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -62,10 +62,9 @@ const pageTitles: { [key: string]: string } = {
   "/signup": "Sign Up",
 };
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
+export function AppProvider({ children, user }: { children: React.ReactNode, user: User | null }) {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
 
   const getNavItems = () => {
     let items = [...navItems];
@@ -104,7 +103,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <UserMenu />
+          <UserMenu user={user}/>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
@@ -121,7 +120,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             </h1>
           </div>
           <div className="hidden md:block">
-            <UserMenu />
+            <UserMenu user={user} />
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
@@ -130,14 +129,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function UserMenu() {
-    const { data: session, status } = useSession();
-    const user = session?.user;
-
-    if (status === "loading") {
-        return <Button variant="ghost" className="w-full justify-start">Loading...</Button>;
-    }
-
+function UserMenu({ user }: { user: User | null }) {
+    
     if (!user) {
         return (
             <SidebarMenuButton asChild className="w-full justify-start">
@@ -148,6 +141,7 @@ function UserMenu() {
             </SidebarMenuButton>
         );
     }
+    
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -168,7 +162,7 @@ function UserMenu() {
         <DropdownMenuItem>Profile</DropdownMenuItem>
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
+        <DropdownMenuItem onClick={() => logout()}>
             <LogOut className="mr-2" />
             Logout
         </DropdownMenuItem>

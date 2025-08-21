@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppProvider } from '@/components/app-provider';
-import AuthProvider from '@/components/auth-provider';
+import { getSession } from '@/lib/session';
 
 export const metadata: Metadata = {
   title: 'Co-op Bank Manager',
@@ -11,11 +11,12 @@ export const metadata: Metadata = {
     'A user-friendly dashboard for managing cooperative loans and funds.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getSession();
   return (
     <html lang="en" className="dark">
       <head>
@@ -31,9 +32,7 @@ export default function RootLayout({
         ></link>
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          <AppProvider>{children}</AppProvider>
-        </AuthProvider>
+        <AppProvider user={user}>{children}</AppProvider>
         <Toaster />
       </body>
     </html>
