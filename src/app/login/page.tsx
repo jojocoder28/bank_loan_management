@@ -38,14 +38,12 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError(result.error);
-      } else {
-        // Redirect is handled by the server action
       }
     });
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
