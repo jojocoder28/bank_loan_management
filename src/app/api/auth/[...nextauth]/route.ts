@@ -9,11 +9,13 @@ import { Db } from 'mongodb';
 
 async function getDb(): Promise<Db> {
   const client = await clientPromise;
-  return client.db();
+  return client.db(process.env.MONGODB_DB_NAME);
 }
 
-const authOptions: AuthOptions = {
-  adapter: MongoDBAdapter(clientPromise),
+export const authOptions: AuthOptions = {
+  adapter: MongoDBAdapter(clientPromise, {
+    databaseName: process.env.MONGODB_DB_NAME,
+  }),
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -25,19 +27,24 @@ const authOptions: AuthOptions = {
         if (!credentials) {
           return null;
         }
-        const db = await getDb();
-        const user = await db.collection<User>('users').findOne({ email: credentials.email });
+        try {
+          const db = await getDb();
+          const user = await db.collection<User>('users').findOne({ email: credentials.email });
 
-        if (user && user.password && (await bcrypt.compare(credentials.password, user.password))) {
-          // Return a user object that NextAuth can use
-          return {
-            id: user._id!.toString(),
-            name: user.name,
-            email: user.email,
-            role: user.role,
-          };
+          if (user && user.password && (await bcrypt.compare(credentials.password, user.password))) {
+            // Return a user object that NextAuth can use
+            return {
+              id: user._id!.toString(),
+              name: user.name,
+              email: user.email,
+              role: user.role,
+            };
+          }
+          return null;
+        } catch (error) {
+            console.error("Authorization Error:", error);
+            return null;
         }
-        return null;
       },
     }),
   ],
@@ -64,6 +71,7 @@ const authOptions: AuthOptions = {
   pages: {
     signIn: '/login',
   },
+  debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);
