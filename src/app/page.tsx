@@ -23,6 +23,7 @@ import {
   CreditCard,
   Calendar,
 } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 const fundBalances = [
   {
