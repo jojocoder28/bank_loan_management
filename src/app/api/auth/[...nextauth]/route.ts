@@ -1,19 +1,18 @@
 
-import NextAuth from 'next-auth';
+import NextAuth, { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import clientPromise from '@/lib/mongodb';
-import {-models/user';
+import { User } from '@/models/user';
 import bcrypt from 'bcrypt';
-import {-models/user';
-import { Db, User as DbUser } from 'mongodb';
+import { Db } from 'mongodb';
 
 async function getDb(): Promise<Db> {
   const client = await clientPromise;
   return client.db();
 }
 
-const authOptions = {
+const authOptions: AuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
   providers: [
     CredentialsProvider({
@@ -27,12 +26,12 @@ const authOptions = {
           return null;
         }
         const db = await getDb();
-        const user = await db.collection<DbUser>('users').findOne({ email: credentials.email });
+        const user = await db.collection<User>('users').findOne({ email: credentials.email });
 
         if (user && user.password && (await bcrypt.compare(credentials.password, user.password))) {
           // Return a user object that NextAuth can use
           return {
-            id: user._id.toString(),
+            id: user._id!.toString(),
             name: user.name,
             email: user.email,
             role: user.role,
