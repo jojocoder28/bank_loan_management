@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -20,6 +21,7 @@ import {
   LayoutDashboard,
   PanelLeft,
   ShieldCheck,
+  Users,
   User,
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -38,12 +40,14 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
   { href: "/admin/audit", label: "AI Audit", icon: ShieldCheck },
+  { href: "/admin/users", label: "Users", icon: Users },
 ];
 
 const pageTitles: { [key: string]: string } = {
   "/": "Member Dashboard",
   "/calculator": "Loan Calculator",
   "/admin/audit": "AI Financial Auditor",
+  "/admin/users": "User Management",
 };
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
