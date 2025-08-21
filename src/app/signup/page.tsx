@@ -37,11 +37,11 @@ export default function SignupPage() {
     formData.append('email', email);
     formData.append('password', password);
 
-    const errorMessage = await signUp(formData);
+    const result = await signUp(formData);
 
     setIsLoading(false);
-    if (errorMessage) {
-      setError(errorMessage);
+    if (result.error) {
+      setError(result.error);
     } else {
       toast({
         title: "Signup Successful",

@@ -8,9 +8,6 @@ import { Db } from 'mongodb';
 
 async function getDb(): Promise<Db> {
   const client = await clientPromise;
-  // Use a specific database name for clarity and to avoid issues
-  // where the default DB is not what you expect.
-  // Ensure MONGODB_DB_NAME is set in your .env file
   return client.db(process.env.MONGODB_DB_NAME || 'coop_bank_db');
 }
 

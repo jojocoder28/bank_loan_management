@@ -14,7 +14,6 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { LogIn, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -25,7 +24,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
 
   useEffect(() => {
     const authError = searchParams.get('error');
@@ -36,7 +34,7 @@ export default function LoginPage() {
           setError("Invalid email or password. Please try again.");
           break;
         default:
-          setError("An unexpected error occurred. Please try again later.");
+          setError("An unexpected error occurred during login. Please try again.");
           break;
       }
     }
@@ -48,28 +46,30 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const result = await signIn("credentials", {
-        redirect: false, // We handle the redirect manually
-        email,
-        password,
-      });
+    const result = await signIn("credentials", {
+      redirect: false, // We handle the redirect manually
+      email,
+      password,
+    });
 
-      if (result?.error) {
+
+    if (result?.error) {
         // This will catch authorization errors returned from the `authorize` function
-        setError("Invalid email or password. Please try again.");
-      } else if (result?.ok) {
+        // or other NextAuth errors.
+        if (result.error === "CredentialsSignin") {
+            setError("Invalid email or password. Please try again.");
+        } else {
+            setError("An unexpected error occurred. Please try again later.");
+        }
+    } else if (result?.ok) {
         // On success, NextAuth will set the session cookie and we can redirect
         router.push("/");
-      } else {
-        setError("An unexpected login error occurred. Please try again.");
-      }
-    } catch (error) {
-      // This will catch network errors or other exceptions
-      setError("Failed to connect to the server. Please check your connection and try again.");
-    } finally {
-      setIsLoading(false);
+        router.refresh(); // Ensure the page re-renders with the new session
+    } else {
+        setError("An unknown login error occurred.");
     }
+    
+    setIsLoading(false);
   };
 
   return (
