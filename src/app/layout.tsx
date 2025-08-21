@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -5,7 +6,7 @@ import { AppProvider } from '@/components/app-provider';
 import AuthProvider from '@/components/auth-provider';
 
 export const metadata: Metadata = {
-  title: 'CoopLoan Manager',
+  title: 'Co-op Bank Manager',
   description:
     'A user-friendly dashboard for managing cooperative loans and funds.',
 };

@@ -25,6 +25,7 @@ import {
   User,
   LogIn,
   LogOut,
+  Handshake,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -42,6 +43,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/apply-loan", label: "Apply for Loan", icon: Handshake },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
 ];
 
@@ -52,7 +54,8 @@ const adminNavItems = [
 
 const pageTitles: { [key: string]: string } = {
   "/": "Member Dashboard",
-  "/calculator": "Loan Calculator",
+  "/apply-loan": "Apply for a New Loan",
+  "/calculator": "Loan Payment Calculator",
   "/admin/audit": "AI Financial Auditor",
   "/admin/users": "User Management",
   "/login": "Login",
@@ -114,7 +117,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex-1">
             <h1 className="text-xl font-semibold font-headline">
-              {pageTitles[pathname] || "CoopLoan Manager"}
+              {pageTitles[pathname] || "Co-op Bank Manager"}
             </h1>
           </div>
           <div className="hidden md:block">

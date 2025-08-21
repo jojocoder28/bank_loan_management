@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import { Landmark } from "lucide-react";
 
@@ -13,7 +14,7 @@ export function Logo({ className }: { className?: string }) {
         <Landmark className="size-5" />
       </div>
       <span className="truncate group-data-[collapsible=icon]:hidden">
-        CoopLoan Manager
+        Co-op Bank Manager
       </span>
     </div>
   );
