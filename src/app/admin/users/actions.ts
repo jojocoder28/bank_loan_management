@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 async function seedAdminUser() {
   try {
     await dbConnect();
-    const adminExists = await User.findOne({ role: 'admin' });
+    const adminExists = await User.findOne({ email: 'admin@cooploan.com' });
 
     if (!adminExists) {
         console.log("Seeding initial admin user...");
@@ -28,7 +28,8 @@ async function seedAdminUser() {
 
 export async function getUsers() {
     await dbConnect();
-    await seedAdminUser(); // Ensure admin exists before fetching users
+    // The seedAdminUser function has been removed from here to prevent automatic user creation.
+    // If you need to create the first admin, you can do it via a separate script or manually.
     const users = await User.find({}).sort({ createdAt: -1 }).lean();
 
     return users.map(user => ({
