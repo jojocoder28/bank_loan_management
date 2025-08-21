@@ -4,7 +4,6 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import clientPromise from '@/lib/mongodb';
 import { User } from '@/models/user';
-import bcrypt from 'bcrypt';
 import { Db } from 'mongodb';
 
 async function getDb(): Promise<Db> {
@@ -13,9 +12,7 @@ async function getDb(): Promise<Db> {
 }
 
 export const authOptions: AuthOptions = {
-  adapter: MongoDBAdapter(clientPromise, {
-    databaseName: process.env.MONGODB_DB_NAME,
-  }),
+  adapter: MongoDBAdapter(clientPromise),
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -24,15 +21,19 @@ export const authOptions: AuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        // Dynamically import bcrypt only when needed
+        const bcrypt = await import('bcrypt');
+        
         if (!credentials) {
+          console.error("Authorization Error: No credentials provided.");
           return null;
         }
+
         try {
           const db = await getDb();
           const user = await db.collection<User>('users').findOne({ email: credentials.email });
 
           if (user && user.password && (await bcrypt.compare(credentials.password, user.password))) {
-            // Return a user object that NextAuth can use
             return {
               id: user._id!.toString(),
               name: user.name,
@@ -40,11 +41,12 @@ export const authOptions: AuthOptions = {
               role: user.role,
             };
           }
+          
           console.log("Authentication failed: Invalid credentials for email:", credentials.email);
           return null;
+
         } catch (error) {
             console.error("Authorization Error:", error);
-            // Returning null or an object with an error message is safer than letting it crash
             return null;
         }
       },
