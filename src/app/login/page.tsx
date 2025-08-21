@@ -12,58 +12,69 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn } from "lucide-react";
+import { LogIn, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@cooploan.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const authError = searchParams.get('error');
+    if (authError) {
+      // Map NextAuth default errors to more user-friendly messages
+      switch (authError) {
+        case "CredentialsSignin":
+          setError("Invalid email or password. Please try again.");
+          break;
+        default:
+          setError("An unexpected error occurred. Please try again later.");
+          break;
+      }
+    }
+  }, [searchParams]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
       const result = await signIn("credentials", {
-        redirect: false,
+        redirect: false, // We handle the redirect manually
         email,
         password,
       });
 
       if (result?.error) {
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
-        });
+        // This will catch authorization errors returned from the `authorize` function
+        setError("Invalid email or password. Please try again.");
       } else if (result?.ok) {
+        // On success, NextAuth will set the session cookie and we can redirect
         router.push("/");
       } else {
-        toast({
-            variant: "destructive",
-            title: "Login Failed",
-            description: "An unexpected error occurred. Please try again later.",
-        });
+        setError("An unexpected login error occurred. Please try again.");
       }
     } catch (error) {
-        toast({
-            variant: "destructive",
-            title: "Network Error",
-            description: "Failed to connect to the server. Please check your connection.",
-        });
+      // This will catch network errors or other exceptions
+      setError("Failed to connect to the server. Please check your connection and try again.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center">
-      <Card className="mx-auto max-w-sm">
+      <Card className="mx-auto max-w-sm w-full">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
             <LogIn/> Login
@@ -73,6 +84,15 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+             <Alert variant="destructive" className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Login Failed</AlertTitle>
+                <AlertDescription>
+                    {error}
+                </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>

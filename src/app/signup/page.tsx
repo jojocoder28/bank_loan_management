@@ -11,38 +11,37 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus } from "lucide-react";
+import { UserPlus, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signUp } from "./actions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     const formData = new FormData();
     formData.append('name', name);
     formData.append('email', email);
     formData.append('password', password);
 
-    const error = await signUp(formData);
+    const errorMessage = await signUp(formData);
 
     setIsLoading(false);
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Signup Failed",
-        description: error,
-      });
+    if (errorMessage) {
+      setError(errorMessage);
     } else {
       toast({
         title: "Signup Successful",
@@ -54,7 +53,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center">
-      <Card className="mx-auto max-w-sm">
+      <Card className="mx-auto max-w-sm w-full">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
             <UserPlus /> Sign Up
@@ -64,6 +63,15 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+           {error && (
+             <Alert variant="destructive" className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Signup Failed</AlertTitle>
+                <AlertDescription>
+                    {error}
+                </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Name</Label>
@@ -94,6 +102,7 @@ export default function SignupPage() {
                 id="password"
                 type="password"
                 required
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}

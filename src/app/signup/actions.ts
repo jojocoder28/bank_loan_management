@@ -3,6 +3,7 @@
 import clientPromise from "@/lib/mongodb";
 import bcrypt from "bcrypt";
 import { z } from "zod";
+import { User } from "@/models/user";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -12,24 +13,25 @@ const signupSchema = z.object({
 
 async function getDb() {
   const client = await clientPromise;
-  return client.db();
+  return client.db(process.env.MONGODB_DB_NAME || 'coop_bank_db');
 }
 
-export async function signUp(formData: FormData) {
+// Returns an error message string on failure, or null on success.
+export async function signUp(formData: FormData): Promise<string | null> {
   const values = Object.fromEntries(formData.entries());
   const validatedFields = signupSchema.safeParse(values);
 
   if (!validatedFields.success) {
-    return validatedFields.error.flatten().fieldErrors.password?.[0] 
-        || validatedFields.error.flatten().fieldErrors.email?.[0]
-        || validatedFields.error.flatten().fieldErrors.name?.[0];
+    // Return the first error message.
+    return validatedFields.error.errors[0]?.message ?? "Invalid data provided.";
   }
 
   const { name, email, password } = validatedFields.data;
 
   try {
     const db = await getDb();
-    const existingUser = await db.collection("users").findOne({ email });
+    const usersCollection = db.collection<User>("users");
+    const existingUser = await usersCollection.findOne({ email });
 
     if (existingUser) {
       return "An account with this email already exists.";
@@ -37,7 +39,7 @@ export async function signUp(formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await db.collection("users").insertOne({
+    await usersCollection.insertOne({
       name,
       email,
       password: hashedPassword,
@@ -45,9 +47,9 @@ export async function signUp(formData: FormData) {
       createdAt: new Date(),
     });
 
-    return null;
+    return null; // Success
   } catch (error) {
-    console.error("Signup error:", error);
-    return "An unexpected error occurred.";
+    console.error("Signup Error:", error);
+    return "An unexpected error occurred. Please try again later.";
   }
 }
