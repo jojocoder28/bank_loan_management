@@ -1,20 +1,10 @@
 
 import NextAuth, { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
-import clientPromise from '@/lib/mongodb';
-import { User } from '@/models/user';
-import { Db } from 'mongodb';
-
-async function getDb(): Promise<Db> {
-  const client = await clientPromise;
-  return client.db(process.env.MONGODB_DB_NAME || 'coop_bank_db');
-}
+import dbConnect from '@/lib/mongodb';
+import User, { IUser } from '@/models/user';
 
 export const authOptions: AuthOptions = {
-  adapter: MongoDBAdapter(clientPromise, {
-    databaseName: process.env.MONGODB_DB_NAME || 'coop_bank_db',
-  }),
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -23,39 +13,30 @@ export const authOptions: AuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // Dynamically import bcrypt only when needed to avoid server-start issues
-        const bcrypt = await import('bcrypt');
-        
         if (!credentials?.email || !credentials.password) {
-          console.error("Authorization Error: Missing email or password.");
-          return null;
+          throw new Error('Please enter an email and password');
         }
 
-        try {
-          const db = await getDb();
-          const user = await db.collection<User>('users').findOne({ email: credentials.email });
+        await dbConnect();
 
-          if (user && user.password) {
-            const isPasswordCorrect = await bcrypt.compare(credentials.password, user.password);
-            if (isPasswordCorrect) {
-              // Return the user object to be encoded in the JWT
-              return {
-                id: user._id!.toString(),
-                name: user.name,
-                email: user.email,
-                role: user.role,
-              };
-            }
-          }
-          
-          console.log("Authentication failed: Invalid credentials for email:", credentials.email);
-          return null; // Invalid credentials
+        const user = await User.findOne({ email: credentials.email }).select('+password');
 
-        } catch (error) {
-            console.error("Authorization Error:", error);
-            // Throwing an error will show a generic error message on the client
-            throw new Error("An error occurred during authentication.");
+        if (!user || !user.password) {
+          throw new Error('Invalid credentials');
         }
+        
+        const isPasswordCorrect = await user.comparePassword(credentials.password);
+
+        if (!isPasswordCorrect) {
+          throw new Error('Invalid credentials');
+        }
+        
+        return {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        };
       },
     }),
   ],
@@ -63,28 +44,25 @@ export const authOptions: AuthOptions = {
     strategy: 'jwt' as const,
   },
   callbacks: {
-    // The `jwt` callback is called when a JWT is created (i.e., on sign-in) 
-    // or updated (i.e., whenever a session is accessed in the client).
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
+        token.role = (user as IUser).role;
         token.id = user.id;
       }
       return token;
     },
-    // The `session` callback is called whenever a session is checked.
     async session({ session, token }) {
       if (session.user) {
-        session.user.role = token.role as User['role'];
+        session.user.role = token.role as IUser['role'];
         session.user.id = token.id as string;
       }
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'a-secure-secret-for-development',
   pages: {
     signIn: '/login',
-    error: '/login', // Redirect users to login page on error
+    error: '/login',
   },
   debug: process.env.NODE_ENV === 'development',
 };

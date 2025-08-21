@@ -1,33 +1,23 @@
 
 "use server";
 
-import clientPromise from "@/lib/mongodb";
-import { User } from "@/models/user";
+import dbConnect from "@/lib/mongodb";
+import User from "@/models/user";
 import { revalidatePath } from "next/cache";
-import bcrypt from "bcrypt";
-
-async function getDb() {
-  const client = await clientPromise;
-  return client.db(process.env.MONGODB_DB_NAME || 'coop_bank_db');
-}
 
 async function seedAdminUser() {
   try {
-    const db = await getDb();
-    const usersCollection = db.collection<User>('users');
-    const adminExists = await usersCollection.findOne({ role: 'admin' });
+    await dbConnect();
+    const adminExists = await User.findOne({ role: 'admin' });
 
     if (!adminExists) {
         console.log("Seeding initial admin user...");
-        // Ensure you have ADMIN_PASSWORD in your .env file
         const password = process.env.ADMIN_PASSWORD || "password";
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await usersCollection.insertOne({
+        await User.create({
             name: "Admin User",
             email: "admin@cooploan.com",
-            password: hashedPassword,
+            password: password, // The pre-save hook will hash it
             role: "admin",
-            createdAt: new Date(),
         });
         console.log("Admin user seeded successfully.");
     }
@@ -37,9 +27,9 @@ async function seedAdminUser() {
 }
 
 export async function getUsers() {
+    await dbConnect();
     await seedAdminUser(); // Ensure admin exists before fetching users
-    const db = await getDb();
-    const users = await db.collection<User>('users').find({}).sort({ createdAt: -1 }).toArray();
+    const users = await User.find({}).sort({ createdAt: -1 }).lean();
 
     return users.map(user => ({
       ...user,
