@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,7 +17,6 @@ import { runAudit } from "./actions";
 import { Loader2, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 const initialState = {
   analysisResult: "",
@@ -38,7 +38,7 @@ function SubmitButton() {
 }
 
 export default function AiAuditPage() {
-  const [state, formAction] = useFormState(runAudit, initialState);
+  const [state, formAction] = useActionState(runAudit, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function AiAuditPage() {
       toast({
         variant: "destructive",
         title: "Audit Failed",
-        description: state.error,
+        description: state.error as string,
       });
     }
   }, [state.error, toast]);
