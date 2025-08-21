@@ -1,8 +1,10 @@
+
 "use server";
 
 import clientPromise from "@/lib/mongodb";
 import { User } from "@/models/user";
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcrypt";
 
 async function getDb() {
   const client = await clientPromise;
@@ -16,9 +18,11 @@ async function seedAdminUser() {
 
     if (!adminExists) {
         console.log("Seeding initial admin user...");
+        const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || "password", 10);
         await usersCollection.insertOne({
             name: "Admin User",
             email: "admin@cooploan.com",
+            password: hashedPassword,
             role: "admin",
             createdAt: new Date(),
         });
@@ -34,5 +38,6 @@ export async function getUsers() {
     return users.map(user => ({
       ...user,
       _id: user._id!.toString(),
+      password: "" // Don't send password to client
     }));
 }

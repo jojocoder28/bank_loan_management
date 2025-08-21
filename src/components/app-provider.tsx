@@ -23,6 +23,8 @@ import {
   ShieldCheck,
   Users,
   User,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -35,23 +37,40 @@ import {
 } from "./ui/dropdown-menu";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
+import { useSession, signOut } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
-  { href: "/admin/audit", label: "AI Audit", icon: ShieldCheck },
-  { href: "/admin/users", label: "Users", icon: Users },
 ];
+
+const adminNavItems = [
+    { href: "/admin/audit", label: "AI Audit", icon: ShieldCheck },
+    { href: "/admin/users", label: "Users", icon: Users },
+]
 
 const pageTitles: { [key: string]: string } = {
   "/": "Member Dashboard",
   "/calculator": "Loan Calculator",
   "/admin/audit": "AI Financial Auditor",
   "/admin/users": "User Management",
+  "/login": "Login",
+  "/signup": "Sign Up",
 };
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
+
+  const getNavItems = () => {
+    let items = [...navItems];
+    if (isAdmin) {
+      items = [...items, ...adminNavItems];
+    }
+    return items;
+  }
 
   return (
     <SidebarProvider>
@@ -65,7 +84,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {navItems.map((item) => (
+            {getNavItems().map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
@@ -82,35 +101,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <SidebarMenuButton
-                asChild
-                className={cn(
-                  "w-full justify-start",
-                  "group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-2"
-                )}
-                tooltip={{
-                  children: "User Account",
-                  side: "right",
-                  align: "start",
-                }}
-              >
-                <Button variant="ghost" className="w-full justify-start">
-                  <User />
-                  <span className="truncate">Member Account</span>
-                </Button>
-              </SidebarMenuButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserMenu />
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
@@ -137,24 +128,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 }
 
 function UserMenu() {
+    const { data: session, status } = useSession();
+    const user = session?.user;
+
+    if (status === "loading") {
+        return <Button variant="ghost" className="w-full justify-start">Loading...</Button>;
+    }
+
+    if (!user) {
+        return (
+            <SidebarMenuButton asChild className="w-full justify-start">
+                <Link href="/login">
+                    <LogIn/>
+                    <span>Login</span>
+                </Link>
+            </SidebarMenuButton>
+        );
+    }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
-          size="icon"
-          className="overflow-hidden rounded-full"
+          variant="ghost"
+          className="w-full justify-start gap-2"
         >
-          <User />
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={user.image ?? undefined} />
+            <AvatarFallback>{user.name?.[0]}</AvatarFallback>
+          </Avatar>
+          <span className="truncate">{user.name}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+      <DropdownMenuContent side="right" align="start" className="w-56">
+        <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem>Profile</DropdownMenuItem>
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Logout</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => signOut()}>
+            <LogOut className="mr-2" />
+            Logout
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

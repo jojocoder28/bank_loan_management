@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppProvider } from '@/components/app-provider';
+import AuthProvider from '@/components/auth-provider';
 
 export const metadata: Metadata = {
   title: 'CoopLoan Manager',
@@ -29,7 +30,9 @@ export default function RootLayout({
         ></link>
       </head>
       <body className="font-body antialiased">
-        <AppProvider>{children}</AppProvider>
+        <AuthProvider>
+          <AppProvider>{children}</AppProvider>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>
