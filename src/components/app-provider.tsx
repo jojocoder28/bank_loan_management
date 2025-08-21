@@ -66,6 +66,7 @@ const pageTitles: { [key: string]: string } = {
   "/admin/dashboard": "Admin Dashboard",
   "/admin/audit": "AI Financial Auditor",
   "/admin/users": "User Management",
+  "/admin/users/add": "Add New User",
   "/board/approvals": "Loan Approvals",
   "/login": "Login",
   "/signup": "Sign Up",
@@ -109,7 +110,7 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href)}
                   tooltip={{ children: item.label }}
                 >
                   <Link href={item.href}>

@@ -1,8 +1,12 @@
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getUsers } from "./actions";
 import { UserRole } from "@/models/user";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { UserPlus } from "lucide-react";
 
 export default async function UsersPage() {
   const users = await getUsers();
@@ -15,9 +19,17 @@ export default async function UsersPage() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>User Management</CardTitle>
-        <CardDescription>View and manage all registered users.</CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+          <CardTitle>User Management</CardTitle>
+          <CardDescription>View and manage all registered users.</CardDescription>
+        </div>
+        <Button asChild>
+          <Link href="/admin/users/add">
+            <UserPlus className="mr-2" />
+            Add New User
+          </Link>
+        </Button>
       </CardHeader>
       <CardContent>
         <Table>
