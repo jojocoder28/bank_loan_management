@@ -9,7 +9,7 @@ import { Db } from 'mongodb';
 
 async function getDb(): Promise<Db> {
   const client = await clientPromise;
-  return client.db(process.env.MONGODB_DB_NAME);
+  return client.db();
 }
 
 export const authOptions: AuthOptions = {
@@ -40,9 +40,11 @@ export const authOptions: AuthOptions = {
               role: user.role,
             };
           }
+          console.log("Authentication failed: Invalid credentials for email:", credentials.email);
           return null;
         } catch (error) {
             console.error("Authorization Error:", error);
+            // Returning null or an object with an error message is safer than letting it crash
             return null;
         }
       },

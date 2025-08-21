@@ -18,8 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { LogIn } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@cooploan.com");
+  const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -28,22 +28,36 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-    });
-
-    setIsLoading(false);
-
-    if (result?.error) {
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: result.error,
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
       });
-    } else if (result?.ok) {
-      router.push("/");
+
+      if (result?.error) {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+        });
+      } else if (result?.ok) {
+        router.push("/");
+      } else {
+        toast({
+            variant: "destructive",
+            title: "Login Failed",
+            description: "An unexpected error occurred. Please try again later.",
+        });
+      }
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Network Error",
+            description: "Failed to connect to the server. Please check your connection.",
+        });
+    } finally {
+        setIsLoading(false);
     }
   };
 
