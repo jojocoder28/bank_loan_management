@@ -16,8 +16,8 @@ import { useFormStatus } from "react-dom";
 import { applyForMembership } from "./actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { getSession } from "@/lib/session";
-import { User } from "@/lib/types";
+import { getMembershipStatus } from "./data-actions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 const initialState = {
@@ -43,6 +43,19 @@ function SubmitButton() {
 export default function BecomeMemberPage() {
     const [state, formAction] = useActionState(applyForMembership, initialState);
     const { toast } = useToast();
+    const [hasApplied, setHasApplied] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+      async function fetchStatus() {
+        setIsLoading(true);
+        const status = await getMembershipStatus();
+        setHasApplied(status.membershipApplied);
+        setIsLoading(false);
+      }
+      fetchStatus();
+    }, [state.success]);
+
 
     useEffect(() => {
         if (state.error) {
@@ -59,6 +72,22 @@ export default function BecomeMemberPage() {
             })
         }
     }, [state, toast])
+    
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-start pt-8">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+             <Skeleton className="h-8 w-1/2" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-48 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="flex justify-center items-start pt-8">
@@ -95,7 +124,7 @@ export default function BecomeMemberPage() {
                 </CardContent>
             </Card>
 
-            {state.success ? (
+            {hasApplied ? (
                 <Alert variant="default" className="bg-green-600/10 border-green-600/30 text-green-700 dark:text-green-400">
                     <Check className="h-4 w-4 text-green-600" />
                     <AlertTitle>Application Submitted!</AlertTitle>

@@ -20,7 +20,7 @@ export async function applyForMembership() {
 
     // A user can only apply if their role is 'user'.
     // If they are already a member, admin, etc., they cannot re-apply.
-    if (user.role !== 'user') {
+    if (user.role != 'user') {
         return { error: `You cannot apply. Your current role is already '${user.role}'.` }
     }
     
