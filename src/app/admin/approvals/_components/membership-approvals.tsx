@@ -14,8 +14,8 @@ import { Check } from "lucide-react";
 import Link from 'next/link';
 import { IUser } from "@/models/user";
 import { approveMembership } from "../actions";
-import { useActionState, useFormStatus } from "react-dom";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { useToast } from "@/hooks/use-toast";
 
 

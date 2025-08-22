@@ -47,7 +47,7 @@ function SubmitButton() {
 }
 
 export default function AddUserPage() {
-  const [state, formAction] = useActionState(addUser, initialState);
+  const [state, formAction] = useActionState(addUser, initialState as any);
 
   return (
     <form action={formAction}>
