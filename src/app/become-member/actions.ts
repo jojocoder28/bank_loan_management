@@ -18,8 +18,9 @@ export async function applyForMembership() {
          return { error: 'Could not find your user profile.' }
     }
 
+    // Only users with the 'user' role can apply.
     if (user.role !== 'user') {
-        return { error: `You cannot apply. Your current role is: ${user.role}` }
+        return { error: `You cannot apply. Your current role is already '${user.role}'.` }
     }
     
     if (user.membershipApplied) {
