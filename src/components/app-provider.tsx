@@ -27,6 +27,7 @@ import {
   Handshake,
   UserCheck,
   UserPlus,
+  FileText,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -50,6 +51,7 @@ const userNavItems = [
 
 const memberNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/my-finances", label: "My Finances", icon: FileText },
   { href: "/apply-loan", label: "Apply for Loan", icon: Handshake },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
 ];
@@ -68,6 +70,7 @@ const boardMemberNavItems = [
 
 const pageTitles: { [key: string]: string | ((pathname: string) => string) } = {
   "/dashboard": "Member Dashboard",
+  "/my-finances": "My Finances",
   "/apply-loan": "Apply for a New Loan",
   "/calculator": "Loan Payment Calculator",
   "/become-member": "Become a Member",
@@ -91,7 +94,8 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
   }
   
   const getNavItems = () => {
-    switch (user?.role) {
+    if (!user) return [];
+    switch (user.role) {
       case 'admin':
         return adminNavItems;
       case 'board_member':
@@ -101,7 +105,7 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
       case 'user':
         return userNavItems;
       default:
-        return []; // Return empty for guests or add guest nav items
+        return user.membershipApplied ? userNavItems.filter(item => item.href !== '/become-member') : userNavItems;
     }
   }
   
