@@ -33,18 +33,18 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
 
     await User.create({
       name,
-      email,
+      email: email.toLowerCase(),
       password, // The pre-save hook in the model will hash this
       role: "user", // New users are assigned the 'user' role by default
     });
 
     return { error: null }; // Success
-  } catch (error) {
+  } catch (error: any) {
     console.error("Signup Error:", error);
-    // Check for Mongoose duplicate key error
-    if ((error as any).code === 11000) {
+    // Check for Mongoose duplicate key error, although the check above should prevent this.
+    if (error.code === 11000) {
         return { error: "An account with this email already exists." };
     }
-    return { error: "An unexpected error occurred. Please try again later." };
+    return { error: "An unexpected error has occurred during signup." };
   }
 }
