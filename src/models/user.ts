@@ -1,7 +1,9 @@
+
 import mongoose, { Document, Model, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
 export type UserRole = 'admin' | 'board_member' | 'member';
+export type Gender = 'male' | 'female' | 'other';
 
 // Interface for the User document
 export interface IUser extends Document {
@@ -10,6 +12,23 @@ export interface IUser extends Document {
   password?: string;
   role: UserRole;
   createdAt: Date;
+
+  // New Fields
+  workplace?: string;
+  profession?: string;
+  workplaceAddress?: string;
+  personalAddress?: string;
+  membershipNumber?: string;
+  phone?: string;
+  bankAccountNumber?: string;
+  age?: number;
+  gender?: Gender;
+
+  // Nominee Details
+  nomineeName?: string;
+  nomineeRelation?: string;
+  nomineeAge?: number;
+  
   comparePassword(password: string): Promise<boolean>;
 }
 
@@ -24,6 +43,22 @@ const UserSchema = new Schema<IUser>({
     default: 'member',
   },
   createdAt: { type: Date, default: Date.now },
+  
+  // New Fields
+  workplace: { type: String },
+  profession: { type: String },
+  workplaceAddress: { type: String },
+  personalAddress: { type: String },
+  membershipNumber: { type: String, unique: true, sparse: true }, // unique but can be null
+  phone: { type: String },
+  bankAccountNumber: { type: String },
+  age: { type: Number },
+  gender: { type: String, enum: ['male', 'female', 'other'] },
+
+  // Nominee Details
+  nomineeName: { type: String },
+  nomineeRelation: { type: String },
+  nomineeAge: { type: Number },
 });
 
 // Pre-save hook to hash password before saving

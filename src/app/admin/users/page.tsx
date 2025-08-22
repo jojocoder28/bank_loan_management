@@ -38,6 +38,8 @@ export default async function UsersPage() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Membership #</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Member Since</TableHead>
             </TableRow>
           </TableHeader>
@@ -51,6 +53,8 @@ export default async function UsersPage() {
                     {user.role.replace("_", " ")}
                   </Badge>
                 </TableCell>
+                <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
+                <TableCell>{user.phone || 'N/A'}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
               </TableRow>
             ))}

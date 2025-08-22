@@ -12,6 +12,19 @@ const addUserSchema = z.object({
   email: z.string().email("Invalid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   role: z.enum(["admin", "board_member", "member"]),
+  // Optional Fields
+  workplace: z.string().optional().or(z.literal('')),
+  profession: z.string().optional().or(z.literal('')),
+  workplaceAddress: z.string().optional().or(z.literal('')),
+  personalAddress: z.string().optional().or(z.literal('')),
+  membershipNumber: z.string().optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  bankAccountNumber: z.string().optional().or(z.literal('')),
+  age: z.coerce.number().optional(),
+  gender: z.enum(["male", "female", "other"]).optional(),
+  nomineeName: z.string().optional().or(z.literal('')),
+  nomineeRelation: z.string().optional().or(z.literal('')),
+  nomineeAge: z.coerce.number().optional(),
 });
 
 export async function addUser(formData: FormData) {
@@ -22,7 +35,7 @@ export async function addUser(formData: FormData) {
     return { error: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, role } = validatedFields.data;
+  const { name, email, password, role, ...otherDetails } = validatedFields.data;
 
   try {
     await dbConnect();
@@ -31,18 +44,34 @@ export async function addUser(formData: FormData) {
     if (existingUser) {
       return { error: { form: "An account with this email already exists." } };
     }
+    
+    if (otherDetails.membershipNumber) {
+        const existingMemberNumber = await User.findOne({ membershipNumber: otherDetails.membershipNumber });
+        if (existingMemberNumber) {
+            return { error: { form: "This membership number is already assigned to another user."}};
+        }
+    }
+
 
     await User.create({
       name,
       email,
       password,
       role,
+      ...otherDetails
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Add User Error:", error);
-    if ((error as any).code === 11000) {
-      return { error: { form: "An account with this email already exists." } };
+    if (error.code === 11000) {
+      // This can be triggered by either email or membershipNumber
+      const field = Object.keys(error.keyValue)[0];
+      if (field === 'email') {
+        return { error: { form: "An account with this email already exists." } };
+      }
+      if (field === 'membershipNumber') {
+          return { error: { form: "This membership number is already assigned to another user." } };
+      }
     }
     return { error: { form: "An unexpected error occurred. Please try again." } };
   }
