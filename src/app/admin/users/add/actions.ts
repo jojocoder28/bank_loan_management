@@ -57,18 +57,23 @@ export async function addUser(prevState: any, formData: FormData) {
 
     const userData: any = {
       name,
-      email,
+      email: email.toLowerCase(),
       password, // The password will be hashed by the pre-save hook in the User model
       role,
-      ...otherDetails
     };
 
-    // Make sure optional number fields that are empty are not sent as 0
-    if (!otherDetails.age) userData.age = undefined;
-    if (!otherDetails.nomineeAge) userData.nomineeAge = undefined;
-    if (!otherDetails.shareFund) userData.shareFund = undefined;
-    if (!otherDetails.guaranteedFund) userData.guaranteedFund = undefined;
-    if (!otherDetails.gender) userData.gender = undefined;
+    // Only add optional fields if they are provided
+    for (const [key, value] of Object.entries(otherDetails)) {
+        if (value !== undefined && value !== null && value !== '') {
+            userData[key] = value;
+        }
+    }
+    
+    // Ensure gender is not an empty string if not selected
+    if (!userData.gender) {
+        delete userData.gender;
+    }
+
 
     await User.create(userData);
 
