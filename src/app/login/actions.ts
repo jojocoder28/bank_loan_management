@@ -21,33 +21,38 @@ export async function login(formData: FormData) {
 
   const { email, password } = validatedFields.data;
 
+  let user;
   try {
     await dbConnect();
 
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) {
+    const foundUser = await User.findOne({ email }).select('+password');
+    if (!foundUser) {
       return { error: 'Invalid email or password.' };
     }
     
-    const isPasswordCorrect = await user.comparePassword(password);
+    const isPasswordCorrect = await foundUser.comparePassword(password);
     if (!isPasswordCorrect) {
       return { error: 'Invalid email or password.' };
     }
-
-    await createSession({
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    });
-
-    if (user.role === 'admin') {
-        redirect('/admin/dashboard');
-    }
+    
+    // Assign found user to the outer scope variable
+    user = foundUser;
 
   } catch (error) {
     console.error('Login error:', error);
     return { error: 'An unexpected error occurred.' };
+  }
+  
+  // Create session and redirect outside the try...catch block
+  await createSession({
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  });
+
+  if (user.role === 'admin') {
+    redirect('/admin/dashboard');
   }
 
   redirect('/dashboard');
