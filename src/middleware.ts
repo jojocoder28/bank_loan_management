@@ -8,7 +8,7 @@ import type { User } from '@/lib/types';
 const publicRoutes = ['/login', '/signup'];
 
 const userRoutes = ['/become-member', '/calculator'];
-const memberRoutes = ['/dashboard', '/apply-loan', '/calculator'];
+const memberRoutes = ['/dashboard', '/apply-loan', '/calculator', '/my-finances'];
 const adminRoutes = ['/admin/dashboard', '/admin/audit', '/admin/users', '/admin/approvals'];
 // Define board_member routes if they exist
 // const boardMemberRoutes = ['/board/dashboard'];
@@ -20,7 +20,7 @@ export default async function middleware(req: NextRequest) {
   const isPublicRoute = publicRoutes.includes(path);
 
   // 3. Decrypt the session from the cookie
-  const cookie = cookies().get('session')?.value;
+  const cookie = await cookies().get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;
   const user: User | null = session?.user ?? null;
 
@@ -48,7 +48,7 @@ export default async function middleware(req: NextRequest) {
      const isGoingToMemberRoute = memberRoutes.includes(path);
      const isGoingToUserRoute = userRoutes.includes(path);
 
-    if (user.role === 'user' && !isGoingToUserRoute) {
+    if (user.role === 'user' && !isGoingToUserRoute && !path.startsWith('/my-finances')) {
         return NextResponse.redirect(new URL('/become-member', req.nextUrl));
     }
     if (user.role === 'member' && !isGoingToMemberRoute && !isGoingToUserRoute) {
