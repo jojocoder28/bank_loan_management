@@ -24,6 +24,10 @@ export interface IUser extends Document {
   age?: number;
   gender?: Gender;
 
+  // Fund Balances
+  shareFund?: number;
+  guaranteedFund?: number;
+
   // Nominee Details
   nomineeName?: string;
   nomineeRelation?: string;
@@ -54,6 +58,10 @@ const UserSchema = new Schema<IUser>({
   bankAccountNumber: { type: String },
   age: { type: Number },
   gender: { type: String, enum: ['male', 'female', 'other'] },
+
+  // Fund Balances
+  shareFund: { type: Number, default: 0 },
+  guaranteedFund: { type: Number, default: 0 },
 
   // Nominee Details
   nomineeName: { type: String },

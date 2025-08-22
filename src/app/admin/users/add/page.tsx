@@ -51,14 +51,14 @@ export default function AddUserPage() {
 
   return (
     <form action={formAction}>
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus />
             Add New User
           </CardTitle>
           <CardDescription>
-            Create a new user account and assign them a role.
+            Create a new user account and assign them a role. All fields are optional except core credentials.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
@@ -170,6 +170,16 @@ export default function AddUserPage() {
           {/* Section: Financial Details */}
            <div className="space-y-4">
                 <p className="text-sm font-medium text-muted-foreground">Financial & Nominee Details</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="shareFund">Share Fund (Rs.)</Label>
+                        <Input id="shareFund" name="shareFund" type="number" placeholder="5000" />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="guaranteedFund">Guaranteed Fund (Rs.)</Label>
+                        <Input id="guaranteedFund" name="guaranteedFund" type="number" placeholder="5000" />
+                    </div>
+                </div>
                 <div className="grid gap-2">
                     <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
                     <Input id="bankAccountNumber" name="bankAccountNumber" placeholder="9876543210" />

@@ -21,10 +21,12 @@ const addUserSchema = z.object({
   phone: z.string().optional().or(z.literal('')),
   bankAccountNumber: z.string().optional().or(z.literal('')),
   age: z.coerce.number().optional(),
-  gender: z.enum(["male", "female", "other"]).optional(),
+  gender: z.enum(["male", "female", "other", ""]),
   nomineeName: z.string().optional().or(z.literal('')),
   nomineeRelation: z.string().optional().or(z.literal('')),
   nomineeAge: z.coerce.number().optional(),
+  shareFund: z.coerce.number().optional(),
+  guaranteedFund: z.coerce.number().optional()
 });
 
 export async function addUser(formData: FormData) {
@@ -32,6 +34,7 @@ export async function addUser(formData: FormData) {
   const validatedFields = addUserSchema.safeParse(values);
 
   if (!validatedFields.success) {
+      console.log(validatedFields.error.flatten().fieldErrors);
     return { error: validatedFields.error.flatten().fieldErrors };
   }
 
@@ -52,14 +55,22 @@ export async function addUser(formData: FormData) {
         }
     }
 
-
-    await User.create({
+    const userData: any = {
       name,
       email,
       password,
       role,
       ...otherDetails
-    });
+    };
+
+    // Make sure optional number fields that are empty are not sent as 0
+    if (!otherDetails.age) userData.age = undefined;
+    if (!otherDetails.nomineeAge) userData.nomineeAge = undefined;
+    if (!otherDetails.shareFund) userData.shareFund = undefined;
+    if (!otherDetails.guaranteedFund) userData.guaranteedFund = undefined;
+    if (!otherDetails.gender) userData.gender = undefined;
+
+    await User.create(userData);
 
   } catch (error: any) {
     console.error("Add User Error:", error);

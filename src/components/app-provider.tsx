@@ -51,6 +51,7 @@ const memberNavItems = [
 const adminNavItems = [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/users", label: "User Management", icon: Users },
+    { href: "/admin/approvals", label: "Loan Approvals", icon: UserCheck },
     { href: "/admin/audit", label: "AI Audit", icon: ShieldCheck },
 ];
 
@@ -68,6 +69,7 @@ const pageTitles: { [key: string]: string | ((pathname: string) => string) } = {
   "/admin/users": "User Management",
   "/admin/users/add": "Add New User",
   "/admin/users/[id]": (pathname) => "User Details",
+  "/admin/approvals": "Loan Approvals",
   "/board/approvals": "Loan Approvals",
   "/login": "Login",
   "/signup": "Sign Up",
