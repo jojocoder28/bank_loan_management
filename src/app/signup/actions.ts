@@ -15,8 +15,8 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
   const values = Object.fromEntries(formData.entries());
   const validatedFields = signupSchema.safeParse(values);
 
+  // 1. Validate input
   if (!validatedFields.success) {
-    // Return the first error message.
     return { error: validatedFields.error.errors[0]?.message ?? "Invalid data provided." };
   }
 
@@ -25,26 +25,26 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
   try {
     await dbConnect();
     
+    // 2. Check if user already exists (case-insensitive email)
     const existingUser = await User.findOne({ email: email.toLowerCase() });
-
     if (existingUser) {
       return { error: "An account with this email already exists." };
     }
 
+    // 3. Create the new user
+    // The pre-save hook in the User model will hash the password automatically.
+    // The default role 'user' will also be assigned by the model.
     await User.create({
       name,
       email: email.toLowerCase(),
-      password, // The pre-save hook in the model will hash this
-      role: "user", // New users are assigned the 'user' role by default
+      password,
     });
 
     return { error: null }; // Success
+
   } catch (error: any) {
     console.error("Signup Error:", error);
-    // Check for Mongoose duplicate key error, although the check above should prevent this.
-    if (error.code === 11000) {
-        return { error: "An account with this email already exists." };
-    }
-    return { error: "An unexpected error has occurred during signup." };
+    // This is a fallback for rare cases, like a database connection issue.
+    return { error: "An unexpected error occurred during signup. Please try again." };
   }
 }

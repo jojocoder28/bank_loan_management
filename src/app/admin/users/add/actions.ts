@@ -13,17 +13,17 @@ const addUserSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters."),
   role: z.enum(["admin", "board_member", "member", "user"]),
   // Optional Fields
-  workplace: z.string().optional().or(z.literal('')),
-  profession: z.string().optional().or(z.literal('')),
-  workplaceAddress: z.string().optional().or(z.literal('')),
-  personalAddress: z.string().optional().or(z.literal('')),
-  membershipNumber: z.string().optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
-  bankAccountNumber: z.string().optional().or(z.literal('')),
+  workplace: z.string().optional(),
+  profession: z.string().optional(),
+  workplaceAddress: z.string().optional(),
+  personalAddress: z.string().optional(),
+  membershipNumber: z.string().optional(),
+  phone: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
   age: z.coerce.number().optional(),
-  gender: z.enum(["male", "female", "other"]).optional(),
-  nomineeName: z.string().optional().or(z.literal('')),
-  nomineeRelation: z.string().optional().or(z.literal('')),
+  gender: z.enum(["male", "female", "other", ""]).optional(),
+  nomineeName: z.string().optional(),
+  nomineeRelation: z.string().optional(),
   nomineeAge: z.coerce.number().optional(),
   shareFund: z.coerce.number().optional(),
   guaranteedFund: z.coerce.number().optional()
@@ -34,51 +34,53 @@ export async function addUser(prevState: any, formData: FormData) {
   const validatedFields = addUserSchema.safeParse(values);
 
   if (!validatedFields.success) {
-      console.log(validatedFields.error.flatten().fieldErrors);
     return { error: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, role, ...otherDetails } = validatedFields.data;
+  const { name, email, password, role, membershipNumber, ...otherDetails } = validatedFields.data;
 
   try {
     await dbConnect();
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
+    // 1. Check for existing email
+    const existingUserByEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existingUserByEmail) {
       return { error: { form: "An account with this email already exists." } };
     }
     
-    if (otherDetails.membershipNumber) {
-        const existingMemberNumber = await User.findOne({ membershipNumber: otherDetails.membershipNumber });
-        if (existingMemberNumber) {
+    // 2. Check for existing membership number if provided
+    if (membershipNumber) {
+        const existingUserByMembership = await User.findOne({ membershipNumber });
+        if (existingUserByMembership) {
             return { error: { membershipNumber: ["This membership number is already assigned."]}};
         }
     }
 
+    // 3. Build the user data object
     const userData: any = {
       name,
       email: email.toLowerCase(),
-      password, // The password will be hashed by the pre-save hook in the User model
+      password, // Password will be hashed by the pre-save hook in the User model
       role,
     };
+    
+    if (membershipNumber) {
+        userData.membershipNumber = membershipNumber;
+    }
 
-    // Only add optional fields if they are provided
+    // Add other optional fields only if they have a value
     for (const [key, value] of Object.entries(otherDetails)) {
         if (value !== undefined && value !== null && value !== '') {
             userData[key] = value;
         }
     }
-    
-    // Ensure gender is not an empty string if not selected
-    if (!userData.gender) {
-        delete userData.gender;
-    }
 
-
+    // 4. Create the user
     await User.create(userData);
 
   } catch (error: any) {
     console.error("Add User Error:", error);
+    // Handle potential race condition duplicate key errors from the database
     if (error.code === 11000) {
       const field = Object.keys(error.keyValue)[0];
       if (field === 'email') {
@@ -91,6 +93,7 @@ export async function addUser(prevState: any, formData: FormData) {
     return { error: { form: "An unexpected error occurred. Please try again." } };
   }
 
+  // 5. Revalidate and redirect on success
   revalidatePath("/admin/users");
   redirect("/admin/users");
 }
