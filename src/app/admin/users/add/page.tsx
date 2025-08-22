@@ -133,6 +133,7 @@ export default function AddUserPage() {
                      <Select name="gender">
                         <SelectTrigger id="gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="">Not Specified</SelectItem>
                             <SelectItem value="male">Male</SelectItem>
                             <SelectItem value="female">Female</SelectItem>
                             <SelectItem value="other">Other</SelectItem>

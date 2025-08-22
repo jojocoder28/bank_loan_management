@@ -58,7 +58,7 @@ export async function addUser(prevState: any, formData: FormData) {
     const userData: any = {
       name,
       email,
-      password,
+      password, // The password will be hashed by the pre-save hook in the User model
       role,
       ...otherDetails
     };
@@ -68,7 +68,7 @@ export async function addUser(prevState: any, formData: FormData) {
     if (!otherDetails.nomineeAge) userData.nomineeAge = undefined;
     if (!otherDetails.shareFund) userData.shareFund = undefined;
     if (!otherDetails.guaranteedFund) userData.guaranteedFund = undefined;
-    if (!otherDetails.gender) userData.gender = undefined;
+    if (!otherDetails.gender || otherDetails.gender === "") userData.gender = undefined;
 
     await User.create(userData);
 
