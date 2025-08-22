@@ -57,7 +57,7 @@ export async function addUser(prevState: any, formData: FormData) {
         const userData: any = {
             name,
             email: email.toLowerCase(),
-            password, // This is the critical fix. Password must be included.
+            password,
             role,
         };
 
@@ -68,6 +68,11 @@ export async function addUser(prevState: any, formData: FormData) {
             }
         }
         
+        // Ensure gender is not an empty string if provided
+        if (userData.gender === '') {
+            delete userData.gender;
+        }
+
         await User.create(userData);
 
     } catch (error: any) {
