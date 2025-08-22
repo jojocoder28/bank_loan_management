@@ -21,7 +21,7 @@ const addUserSchema = z.object({
   phone: z.string().optional().or(z.literal('')),
   bankAccountNumber: z.string().optional().or(z.literal('')),
   age: z.coerce.number().optional(),
-  gender: z.enum(["male", "female", "other", ""]),
+  gender: z.enum(["male", "female", "other"]).optional(),
   nomineeName: z.string().optional().or(z.literal('')),
   nomineeRelation: z.string().optional().or(z.literal('')),
   nomineeAge: z.coerce.number().optional(),
@@ -68,7 +68,7 @@ export async function addUser(prevState: any, formData: FormData) {
     if (!otherDetails.nomineeAge) userData.nomineeAge = undefined;
     if (!otherDetails.shareFund) userData.shareFund = undefined;
     if (!otherDetails.guaranteedFund) userData.guaranteedFund = undefined;
-    if (!otherDetails.gender || otherDetails.gender === "") userData.gender = undefined;
+    if (!otherDetails.gender) userData.gender = undefined;
 
     await User.create(userData);
 
