@@ -3,7 +3,7 @@ import mongoose, { Document, Model, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
 export type UserRole = 'admin' | 'board_member' | 'member';
-export type Gender = 'male' | 'female' | 'other';
+export type Gender = 'male' | 'female' | 'other' | '';
 export type MembershipStatus = 'provisional' | 'pending' | 'active';
 
 // Interface for the User document
