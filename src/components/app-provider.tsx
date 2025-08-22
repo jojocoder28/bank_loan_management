@@ -80,6 +80,11 @@ const pageTitles: { [key: string]: string | ((pathname: string) => string) } = {
 
 export function AppProvider({ children, user }: { children: React.ReactNode, user: User | null }) {
   const pathname = usePathname();
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
+
+  if (isAuthPage) {
+    return <main className="flex-1">{children}</main>;
+  }
   
   const getNavItems = () => {
     switch (user?.role) {
@@ -91,12 +96,6 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
       default:
         return memberNavItems;
     }
-  }
-  
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
-
-  if (isAuthPage) {
-    return <main className="flex-1">{children}</main>;
   }
   
   const getPageTitle = (path: string): string => {
