@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useFormStatus } from "react-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +47,7 @@ export default function ApplyLoanPage() {
   const [isLoadingFunds, setIsLoadingFunds] = useState(true);
 
   const { toast } = useToast();
-  const [state, formAction] = useFormState(applyForLoan, initialState);
+  const [state, formAction] = useActionState(applyForLoan, initialState);
 
   useEffect(() => {
     async function fetchFunds() {
@@ -204,4 +204,3 @@ export default function ApplyLoanPage() {
     </div>
   );
 }
-

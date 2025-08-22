@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,7 +47,7 @@ function SubmitButton() {
 }
 
 export default function AddUserPage() {
-  const [state, formAction] = useFormState(addUser, initialState);
+  const [state, formAction] = useActionState(addUser, initialState);
 
   return (
     <form action={formAction}>
