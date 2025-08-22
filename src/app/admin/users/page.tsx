@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getUsers } from "./actions";
-import { UserRole, MembershipStatus } from "@/models/user";
+import { UserRole, MembershipStatus, IUser } from "@/models/user";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
+import { DeleteUserButton } from "./_components/delete-user-button";
 
 export default async function UsersPage() {
   const users = await getUsers();
@@ -47,6 +48,7 @@ export default async function UsersPage() {
               <TableHead>Membership Status</TableHead>
               <TableHead>Membership #</TableHead>
               <TableHead>Member Since</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -70,6 +72,9 @@ export default async function UsersPage() {
                 </TableCell>
                 <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="text-right">
+                    <DeleteUserButton userId={user._id.toString()} userName={user.name} />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
