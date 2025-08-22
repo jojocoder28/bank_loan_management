@@ -43,9 +43,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import type { User } from "@/lib/types";
 import { logout } from "@/app/logout/actions";
 
-const memberNavItems = [
+const userNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/become-member", label: "Become a Member", icon: UserPlus },
+  { href: "/calculator", label: "Loan Calculator", icon: Calculator },
+];
+
+const memberNavItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/apply-loan", label: "Apply for Loan", icon: Handshake },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
 ];
@@ -93,8 +98,11 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
       case 'board_member':
         return boardMemberNavItems;
       case 'member':
-      default:
         return memberNavItems;
+      case 'user':
+        return userNavItems;
+      default:
+        return userNavItems;
     }
   }
   
