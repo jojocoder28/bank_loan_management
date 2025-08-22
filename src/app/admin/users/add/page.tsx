@@ -130,10 +130,9 @@ export default function AddUserPage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="gender">Gender</Label>
-                     <Select name="gender" defaultValue="">
+                     <Select name="gender">
                         <SelectTrigger id="gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Not Specified</SelectItem>
                             <SelectItem value="male">Male</SelectItem>
                             <SelectItem value="female">Female</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
@@ -215,3 +214,5 @@ export default function AddUserPage() {
     </form>
   );
 }
+
+    

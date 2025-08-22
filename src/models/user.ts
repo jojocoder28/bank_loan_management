@@ -59,7 +59,7 @@ const UserSchema = new Schema<IUser>({
   phone: { type: String },
   bankAccountNumber: { type: String },
   age: { type: Number },
-  gender: { type: String, enum: ['male', 'female', 'other'] },
+  gender: { type: String, enum: ['male', 'female', 'other', ''] },
 
   // Fund Balances
   shareFund: { type: Number, default: 0 },
@@ -98,3 +98,5 @@ UserSchema.methods.comparePassword = function (password: string): Promise<boolea
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
 export default User;
+
+    
