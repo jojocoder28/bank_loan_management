@@ -18,7 +18,8 @@ export async function applyForMembership() {
          return { error: 'Could not find your user profile.' }
     }
 
-    // Only users with the 'user' role can apply.
+    // A user can only apply if their role is 'user'.
+    // If they are already a member, admin, etc., they cannot re-apply.
     if (user.role !== 'user') {
         return { error: `You cannot apply. Your current role is already '${user.role}'.` }
     }
