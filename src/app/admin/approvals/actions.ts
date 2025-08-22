@@ -66,7 +66,11 @@ export async function rejectLoan(formData: FormData) {
     await updateLoanStatus(formData, 'rejected');
 }
 
-export async function approveMembership(formData: FormData) {
+type ApproveMembershipState = {
+    error: string | null;
+}
+
+export async function approveMembership(prevState: ApproveMembershipState, formData: FormData): Promise<ApproveMembershipState> {
     const userId = formData.get('userId') as string;
     const membershipNumber = formData.get('membershipNumber') as string;
 
@@ -89,4 +93,6 @@ export async function approveMembership(formData: FormData) {
 
     revalidatePath('/admin/approvals');
     revalidatePath('/admin/users');
+
+    return { error: null };
 }
