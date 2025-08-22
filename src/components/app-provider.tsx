@@ -59,7 +59,7 @@ const boardMemberNavItems = [
     { href: "/board/approvals", label: "Loan Approvals", icon: UserCheck },
 ]
 
-const pageTitles: { [key: string]: string } = {
+const pageTitles: { [key: string]: string | ((pathname: string) => string) } = {
   "/dashboard": "Member Dashboard",
   "/apply-loan": "Apply for a New Loan",
   "/calculator": "Loan Payment Calculator",
@@ -67,6 +67,7 @@ const pageTitles: { [key: string]: string } = {
   "/admin/audit": "AI Financial Auditor",
   "/admin/users": "User Management",
   "/admin/users/add": "Add New User",
+  "/admin/users/[id]": (pathname) => "User Details",
   "/board/approvals": "Loan Approvals",
   "/login": "Login",
   "/signup": "Sign Up",
@@ -91,6 +92,27 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
 
   if (isAuthPage) {
     return <main className="flex-1">{children}</main>;
+  }
+  
+  const getPageTitle = (path: string): string => {
+    // Exact match
+    if (pageTitles[path]) {
+      const title = pageTitles[path];
+      return typeof title === 'function' ? title(path) : title;
+    }
+
+    // Dynamic route match (e.g., /admin/users/[id])
+    const dynamicRoute = Object.keys(pageTitles).find(key => {
+        const regex = new RegExp(`^${key.replace(/\[.*?\]/g, '[^/]+')}$`);
+        return regex.test(path);
+    });
+
+    if (dynamicRoute) {
+        const title = pageTitles[dynamicRoute];
+        return typeof title === 'function' ? title(path) : title;
+    }
+    
+    return "Co-op Bank Manager";
   }
 
 
@@ -136,7 +158,7 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
           </div>
           <div className="flex-1">
             <h1 className="text-xl font-semibold font-headline">
-              {pageTitles[pathname] || "Co-op Bank Manager"}
+              {getPageTitle(pathname)}
             </h1>
           </div>
           <div className="hidden md:block">

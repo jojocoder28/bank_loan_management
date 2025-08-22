@@ -46,7 +46,11 @@ export default async function UsersPage() {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user._id.toString()}>
-                <TableCell className="font-medium">{user.name}</TableCell>
+                <TableCell className="font-medium">
+                   <Link href={`/admin/users/${user._id.toString()}`} className="text-primary hover:underline">
+                      {user.name}
+                    </Link>
+                </TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
                   <Badge variant={roleVariant[user.role] || "outline"}>
