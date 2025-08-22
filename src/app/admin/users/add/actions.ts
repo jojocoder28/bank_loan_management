@@ -23,7 +23,7 @@ const addUserSchema = z.object({
   age: z.coerce.number().optional(),
   gender: z.enum(["male", "female", "other", ""]).optional(),
   nomineeName: z.string().optional(),
-  nomineeRelation: z_string().optional(),
+  nomineeRelation: z.string().optional(),
   nomineeAge: z.coerce.number().optional(),
   shareFund: z.coerce.number().optional(),
   guaranteedFund: z.coerce.number().optional()
