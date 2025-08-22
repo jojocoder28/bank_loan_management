@@ -30,7 +30,7 @@ const addUserSchema = z.object({
   guaranteedFund: z.coerce.number().optional()
 });
 
-export async function addUser(formData: FormData) {
+export async function addUser(prevState: any, formData: FormData) {
   const values = Object.fromEntries(formData.entries());
   const validatedFields = addUserSchema.safeParse(values);
 
