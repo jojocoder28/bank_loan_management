@@ -23,7 +23,7 @@ const addUserSchema = z.object({
   age: z.coerce.number().optional(),
   gender: z.enum(["male", "female", "other", ""]).optional(),
   nomineeName: z.string().optional(),
-  nomineeRelation: z.string().optional(),
+  nomineeRelation: z_string().optional(),
   nomineeAge: z.coerce.number().optional(),
   shareFund: z.coerce.number().optional(),
   guaranteedFund: z.coerce.number().optional()
@@ -37,7 +37,7 @@ export async function addUser(prevState: any, formData: FormData) {
         return { error: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { name, email, password, role, membershipNumber, ...otherDetails } = validatedFields.data;
+    const { name, email, password, role, ...otherDetails } = validatedFields.data;
 
     try {
         await dbConnect();
@@ -47,8 +47,8 @@ export async function addUser(prevState: any, formData: FormData) {
             return { error: { form: "An account with this email already exists." } };
         }
         
-        if (membershipNumber) {
-            const existingUserByMembership = await User.findOne({ membershipNumber });
+        if (otherDetails.membershipNumber) {
+            const existingUserByMembership = await User.findOne({ membershipNumber: otherDetails.membershipNumber });
             if (existingUserByMembership) {
                 return { error: { membershipNumber: ["This membership number is already assigned."]}};
             }
@@ -57,13 +57,9 @@ export async function addUser(prevState: any, formData: FormData) {
         const userData: any = {
             name,
             email: email.toLowerCase(),
-            password, // Hashing is handled by the model's pre-save hook
+            password, // This is the critical fix. Password must be included.
             role,
         };
-        
-        if (membershipNumber) {
-            userData.membershipNumber = membershipNumber;
-        }
 
         // Add other optional fields only if they have a non-empty value
         for (const [key, value] of Object.entries(otherDetails)) {
@@ -72,11 +68,6 @@ export async function addUser(prevState: any, formData: FormData) {
             }
         }
         
-        // Ensure empty gender string is not sent to the database
-        if (userData.gender === "") {
-            delete userData.gender;
-        }
-
         await User.create(userData);
 
     } catch (error: any) {
