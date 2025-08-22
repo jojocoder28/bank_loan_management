@@ -30,70 +30,69 @@ const addUserSchema = z.object({
 });
 
 export async function addUser(prevState: any, formData: FormData) {
-  const values = Object.fromEntries(formData.entries());
-  const validatedFields = addUserSchema.safeParse(values);
+    const values = Object.fromEntries(formData.entries());
+    const validatedFields = addUserSchema.safeParse(values);
 
-  if (!validatedFields.success) {
-    return { error: validatedFields.error.flatten().fieldErrors };
-  }
-
-  const { name, email, password, role, membershipNumber, ...otherDetails } = validatedFields.data;
-
-  try {
-    await dbConnect();
-
-    // 1. Check for existing email
-    const existingUserByEmail = await User.findOne({ email: email.toLowerCase() });
-    if (existingUserByEmail) {
-      return { error: { form: "An account with this email already exists." } };
+    if (!validatedFields.success) {
+        return { error: validatedFields.error.flatten().fieldErrors };
     }
-    
-    // 2. Check for existing membership number if provided
-    if (membershipNumber) {
-        const existingUserByMembership = await User.findOne({ membershipNumber });
-        if (existingUserByMembership) {
-            return { error: { membershipNumber: ["This membership number is already assigned."]}};
+
+    const { name, email, password, role, membershipNumber, ...otherDetails } = validatedFields.data;
+
+    try {
+        await dbConnect();
+
+        const existingUserByEmail = await User.findOne({ email: email.toLowerCase() });
+        if (existingUserByEmail) {
+            return { error: { form: "An account with this email already exists." } };
         }
-    }
-
-    // 3. Build the user data object
-    const userData: any = {
-      name,
-      email: email.toLowerCase(),
-      password, // Password will be hashed by the pre-save hook in the User model
-      role,
-    };
-    
-    if (membershipNumber) {
-        userData.membershipNumber = membershipNumber;
-    }
-
-    // Add other optional fields only if they have a value
-    for (const [key, value] of Object.entries(otherDetails)) {
-        if (value !== undefined && value !== null && value !== '') {
-            userData[key] = value;
+        
+        if (membershipNumber) {
+            const existingUserByMembership = await User.findOne({ membershipNumber });
+            if (existingUserByMembership) {
+                return { error: { membershipNumber: ["This membership number is already assigned."]}};
+            }
         }
+
+        const userData: any = {
+            name,
+            email: email.toLowerCase(),
+            password, // Hashing is handled by the model's pre-save hook
+            role,
+        };
+        
+        if (membershipNumber) {
+            userData.membershipNumber = membershipNumber;
+        }
+
+        // Add other optional fields only if they have a non-empty value
+        for (const [key, value] of Object.entries(otherDetails)) {
+            if (value !== undefined && value !== null && value !== '') {
+                userData[key] = value;
+            }
+        }
+        
+        // Ensure empty gender string is not sent to the database
+        if (userData.gender === "") {
+            delete userData.gender;
+        }
+
+        await User.create(userData);
+
+    } catch (error: any) {
+        console.error("Add User Error:", error);
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyValue)[0];
+            if (field === 'email') {
+                return { error: { form: "An account with this email already exists." } };
+            }
+            if (field === 'membershipNumber') {
+                return { error: { membershipNumber: ["This membership number is already assigned."] } };
+            }
+        }
+        return { error: { form: "An unexpected error occurred. Please try again." } };
     }
 
-    // 4. Create the user
-    await User.create(userData);
-
-  } catch (error: any) {
-    console.error("Add User Error:", error);
-    // Handle potential race condition duplicate key errors from the database
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyValue)[0];
-      if (field === 'email') {
-        return { error: { form: "An account with this email already exists." } };
-      }
-      if (field === 'membershipNumber') {
-          return { error: { membershipNumber: ["This membership number is already assigned."] } };
-      }
-    }
-    return { error: { form: "An unexpected error occurred. Please try again." } };
-  }
-
-  // 5. Revalidate and redirect on success
-  revalidatePath("/admin/users");
-  redirect("/admin/users");
+    revalidatePath("/admin/users");
+    redirect("/admin/users");
 }
