@@ -1,9 +1,8 @@
 
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,7 +45,7 @@ function SubmitButton({ canApply }: { canApply: boolean }) {
 export default function ApplyLoanPage() {
   const [loanAmount, setLoanAmount] = useState(100000);
   const [monthlyPrincipal, setMonthlyPrincipal] = useState(2000);
-  const [userData, setUserData] = useState({ shareFund: 0, guaranteedFund: 0, membershipStatus: 'provisional' });
+  const [userData, setUserData] = useState({ shareFund: 0, guaranteedFund: 0, role: 'user' });
   const [isLoading, setIsLoading] = useState(true);
 
   const { toast } = useToast();
@@ -90,24 +89,21 @@ export default function ApplyLoanPage() {
     );
   }
 
-  if (userData.membershipStatus !== 'active') {
+  if (userData.role !== 'member') {
     return (
       <div className="flex justify-center items-start pt-8">
         <Card className="w-full max-w-lg text-center">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 justify-center"><ShieldCheck className="size-8 text-primary"/> Become a Member</CardTitle>
-                <CardDescription>You must be an active member to apply for a loan.</CardDescription>
+                <CardDescription>You must be an active and approved member to apply for a loan.</CardDescription>
             </CardHeader>
             <CardContent>
-                {userData.membershipStatus === 'provisional' && <p>Your membership has not been activated yet. Please apply to become a member.</p>}
-                {userData.membershipStatus === 'pending' && <p>Your membership application is pending approval. You will be able to apply for a loan once it is approved.</p>}
+                <p>Your account is not registered as a member. Please apply for membership to access loan services.</p>
             </CardContent>
             <CardFooter>
-                 {userData.membershipStatus === 'provisional' && (
-                    <Button asChild className="w-full">
-                        <Link href="/become-member">Apply for Membership <ArrowRight className="ml-2" /></Link>
-                    </Button>
-                )}
+                <Button asChild className="w-full">
+                    <Link href="/become-member">Apply for Membership <ArrowRight className="ml-2" /></Link>
+                </Button>
             </CardFooter>
         </Card>
       </div>

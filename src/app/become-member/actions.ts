@@ -18,21 +18,25 @@ export async function applyForMembership() {
          return { error: 'Could not find your user profile.' }
     }
 
-    if (user.membershipStatus !== 'provisional') {
-        return { error: `You cannot apply. Your current status is: ${user.membershipStatus}` }
+    if (user.role !== 'user') {
+        return { error: `You cannot apply. Your current role is: ${user.role}` }
+    }
+    
+    if (user.membershipApplied) {
+        return { error: `Your application is already pending approval.` }
     }
 
     // This is a simplified process. In a real-world scenario, this would
     // likely redirect to a payment gateway to handle the initial deposit.
     // For now, we'll assume the user has made the payment offline and we
     // just update their status to pending.
-    user.membershipStatus = 'pending';
+    user.membershipApplied = true;
     // For the demo, we'll auto-credit the initial amount.
     user.shareFund = (user.shareFund || 0) + 5000;
     
     await user.save();
 
-    revalidatePath('/apply-loan');
+    revalidatePath('/become-member');
     revalidatePath('/admin/approvals');
 
     return { success: true, error: null }

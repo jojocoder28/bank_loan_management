@@ -14,12 +14,12 @@ import { MembershipApprovals } from "./_components/membership-approvals";
 
 export default async function ApprovalsPage() {
   const pendingLoans = await getPendingLoans();
-  const pendingMemberships = await getPendingMemberships();
+  const pendingUsers = await getPendingMemberships();
 
   return (
     <Tabs defaultValue="memberships" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="memberships">Membership Applications ({pendingMemberships.length})</TabsTrigger>
+        <TabsTrigger value="memberships">Membership Applications ({pendingUsers.length})</TabsTrigger>
         <TabsTrigger value="loans">Loan Applications ({pendingLoans.length})</TabsTrigger>
       </TabsList>
       <TabsContent value="memberships">
@@ -27,11 +27,11 @@ export default async function ApprovalsPage() {
           <CardHeader>
             <CardTitle>Membership Approvals</CardTitle>
             <CardDescription>
-              Review and approve new membership applications. Approved users will become active members.
+              Review and approve new membership applications. Approving a user changes their role to 'member'.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <MembershipApprovals pendingMemberships={pendingMemberships} />
+            <MembershipApprovals pendingUsers={pendingUsers} />
           </CardContent>
         </Card>
       </TabsContent>

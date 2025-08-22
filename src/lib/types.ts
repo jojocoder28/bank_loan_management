@@ -1,3 +1,4 @@
+
 import type { UserRole } from "@/models/user";
 
 export interface User {
@@ -6,6 +7,7 @@ export interface User {
     email: string;
     role: UserRole;
     image?: string;
+    membershipApplied?: boolean;
 }
 
 export interface DecodedToken {

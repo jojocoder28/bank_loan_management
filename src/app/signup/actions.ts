@@ -35,7 +35,7 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
       name,
       email,
       password, // The pre-save hook in the model will hash this
-      role: "member",
+      role: "user", // New users are assigned the 'user' role by default
     });
 
     return { error: null }; // Success

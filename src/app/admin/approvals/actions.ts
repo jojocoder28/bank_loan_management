@@ -32,7 +32,7 @@ export async function getPendingLoans(): Promise<PopulatedLoan[]> {
 
 export async function getPendingMemberships(): Promise<IUser[]> {
     await dbConnect();
-    const users = await User.find({ membershipStatus: 'pending' }).sort({ createdAt: 'asc' }).lean();
+    const users = await User.find({ role: 'user', membershipApplied: true }).sort({ createdAt: 'asc' }).lean();
     return JSON.parse(JSON.stringify(users));
 }
 
@@ -87,12 +87,14 @@ export async function approveMembership(prevState: ApproveMembershipState, formD
     }
 
     await User.findByIdAndUpdate(userId, {
-        membershipStatus: 'active',
+        role: 'member',
         membershipNumber: membershipNumber
     });
 
     revalidatePath('/admin/approvals');
     revalidatePath('/admin/users');
+    revalidatePath('/become-member');
+    revalidatePath('/apply-loan');
 
     return { error: null };
 }

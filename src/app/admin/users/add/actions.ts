@@ -11,8 +11,7 @@ const addUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Invalid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
-  role: z.enum(["admin", "board_member", "member"]),
-  membershipStatus: z.enum(["provisional", "pending", "active"]),
+  role: z.enum(["admin", "board_member", "member", "user"]),
   // Optional Fields
   workplace: z.string().optional().or(z.literal('')),
   profession: z.string().optional().or(z.literal('')),
@@ -39,7 +38,7 @@ export async function addUser(prevState: any, formData: FormData) {
     return { error: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, role, membershipStatus, ...otherDetails } = validatedFields.data;
+  const { name, email, password, role, ...otherDetails } = validatedFields.data;
 
   try {
     await dbConnect();
@@ -61,7 +60,6 @@ export async function addUser(prevState: any, formData: FormData) {
       email,
       password,
       role,
-      membershipStatus,
       ...otherDetails
     };
 

@@ -73,7 +73,7 @@ export default function AddUserPage() {
 
           {/* Section: Core Credentials */}
           <div className="space-y-4">
-             <p className="text-sm font-medium text-muted-foreground">Core Credentials & Status</p>
+             <p className="text-sm font-medium text-muted-foreground">Core Credentials & Role</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="name">Full Name</Label>
@@ -86,7 +86,7 @@ export default function AddUserPage() {
                     {state?.error?.email && <p className="text-sm text-destructive">{state.error.email[0]}</p>}
                 </div>
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="password">Password</Label>
                     <Input id="password" name="password" type="password" required minLength={6} />
@@ -94,26 +94,16 @@ export default function AddUserPage() {
                 </div>
                  <div className="grid gap-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select name="role" defaultValue="member" required>
+                    <Select name="role" defaultValue="user" required>
                         <SelectTrigger id="role"><SelectValue placeholder="Select a role" /></SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
                             <SelectItem value="member">Member</SelectItem>
                             <SelectItem value="board_member">Board Member</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                     </Select>
                     {state?.error?.role && <p className="text-sm text-destructive">{state.error.role[0]}</p>}
-                </div>
-                 <div className="grid gap-2">
-                    <Label htmlFor="membershipStatus">Membership Status</Label>
-                    <Select name="membershipStatus" defaultValue="provisional" required>
-                        <SelectTrigger id="membershipStatus"><SelectValue placeholder="Select status" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="provisional">Provisional</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                        </SelectContent>
-                    </Select>
                 </div>
             </div>
           </div>

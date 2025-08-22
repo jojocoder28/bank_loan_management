@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Info, Library, ListChecks, Loader2, Milestone, ShieldCheck } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { applyForMembership } from "./actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { getSession } from "@/lib/session";
+import { User } from "@/lib/types";
 
 
 const initialState = {

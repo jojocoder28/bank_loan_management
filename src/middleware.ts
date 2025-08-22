@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
@@ -6,8 +7,9 @@ import type { User } from '@/lib/types';
 // 1. Specify public routes
 const publicRoutes = ['/login', '/signup'];
 
+const userRoutes = ['/become-member', '/calculator'];
 const memberRoutes = ['/dashboard', '/apply-loan', '/calculator'];
-const adminRoutes = ['/admin/dashboard', '/admin/audit', '/admin/users'];
+const adminRoutes = ['/admin/dashboard', '/admin/audit', '/admin/users', '/admin/approvals'];
 // Define board_member routes if they exist
 // const boardMemberRoutes = ['/board/dashboard'];
 
@@ -24,11 +26,12 @@ export default async function middleware(req: NextRequest) {
 
   // 4. Redirect logged in users from public routes
   if (isPublicRoute && user) {
-    let targetDashboard = '/dashboard'; // Default for members
+    let targetDashboard = '/become-member'; // Default for non-member users
     if (user.role === 'admin') {
       targetDashboard = '/admin/dashboard';
+    } else if (user.role === 'member') {
+      targetDashboard = '/dashboard';
     } else if (user.role === 'board_member') {
-      // redirect to board member dashboard if it exists
       targetDashboard = '/dashboard';
     }
     return NextResponse.redirect(new URL(targetDashboard, req.nextUrl));
@@ -41,14 +44,18 @@ export default async function middleware(req: NextRequest) {
 
   // 6. Role-based access control for protected routes
   if (!isPublicRoute && user) {
-    if (user.role === 'member' && !memberRoutes.includes(path)) {
+     const isGoingToAdminRoute = path.startsWith('/admin');
+     const isGoingToMemberRoute = memberRoutes.includes(path);
+     const isGoingToUserRoute = userRoutes.includes(path);
+
+    if (user.role === 'user' && !isGoingToUserRoute) {
+        return NextResponse.redirect(new URL('/become-member', req.nextUrl));
+    }
+    if (user.role === 'member' && !isGoingToMemberRoute && !isGoingToUserRoute) {
         return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
     }
-    if (user.role === 'admin' && !adminRoutes.includes(path) && !path.startsWith('/admin')) {
-        // Allow admins to access member routes too
-         if (!memberRoutes.includes(path)) {
-            return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
-         }
+    if (user.role === 'admin' && !isGoingToAdminRoute && !isGoingToMemberRoute && !isGoingToUserRoute) {
+        return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
     }
     // Add board_member logic here if needed
   }

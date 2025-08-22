@@ -2,9 +2,8 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
-export type UserRole = 'admin' | 'board_member' | 'member';
+export type UserRole = 'admin' | 'board_member' | 'member' | 'user';
 export type Gender = 'male' | 'female' | 'other' | '';
-export type MembershipStatus = 'provisional' | 'pending' | 'active';
 
 // Interface for the User document
 export interface IUser extends Document {
@@ -13,7 +12,7 @@ export interface IUser extends Document {
   password?: string;
   role: UserRole;
   createdAt: Date;
-  membershipStatus: MembershipStatus;
+  membershipApplied?: boolean;
 
   // New Fields
   workplace?: string;
@@ -45,14 +44,10 @@ const UserSchema = new Schema<IUser>({
   password: { type: String, required: true, select: false }, // Hide password by default
   role: {
     type: String,
-    enum: ['admin', 'board_member', 'member'],
-    default: 'member',
+    enum: ['admin', 'board_member', 'member', 'user'],
+    default: 'user',
   },
-  membershipStatus: {
-    type: String,
-    enum: ['provisional', 'pending', 'active'],
-    default: 'provisional',
-  },
+  membershipApplied: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   
   // New Fields

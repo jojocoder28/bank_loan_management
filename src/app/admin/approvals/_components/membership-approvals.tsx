@@ -23,16 +23,16 @@ const initialState = {
     error: null
 }
 
-function SubmitButton() {
+function SubmitButton({ userId, isInputFilled }: { userId: string, isInputFilled: boolean }) {
     const { pending } = useFormStatus();
     return (
-        <Button size="sm" type="submit" disabled={pending}>
+        <Button size="sm" type="submit" form={`form-${userId}`} disabled={pending || !isInputFilled}>
             <Check className="mr-2 size-4" /> {pending ? "Approving..." : "Approve"}
         </Button>
     )
 }
 
-export function MembershipApprovals({ pendingMemberships }: { pendingMemberships: IUser[] }) {
+export function MembershipApprovals({ pendingUsers }: { pendingUsers: IUser[] }) {
     const [state, formAction] = useActionState(approveMembership, initialState);
     const { toast } = useToast();
     const [membershipNumbers, setMembershipNumbers] = useState<{ [key: string]: string }>({});
@@ -51,7 +51,7 @@ export function MembershipApprovals({ pendingMemberships }: { pendingMemberships
         setMembershipNumbers(prev => ({ ...prev, [userId]: value }));
     }
 
-    if (pendingMemberships.length === 0) {
+    if (pendingUsers.length === 0) {
         return (
             <div className="text-center text-muted-foreground py-12">
                 <p>There are no pending membership applications to review.</p>
@@ -66,14 +66,13 @@ export function MembershipApprovals({ pendingMemberships }: { pendingMemberships
                     <TableHead>Applicant</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Applied On</TableHead>
-                    <TableHead>Share Fund</TableHead>
                     <TableHead>Assign Membership #</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {pendingMemberships.map((user) => (
-                    <TableRow key={user._id.toString()}>
+                {pendingUsers.map((user) => (
+                     <TableRow key={user._id.toString()}>
                         <TableCell className="font-medium">
                             <Link href={`/admin/users/${user._id.toString()}`} className="text-primary hover:underline">
                                 {user.name}
@@ -81,9 +80,8 @@ export function MembershipApprovals({ pendingMemberships }: { pendingMemberships
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>₹{user.shareFund?.toLocaleString()}</TableCell>
                         <TableCell>
-                            <form action={formAction} id={`form-${user._id.toString()}`}>
+                             <form action={formAction} id={`form-${user._id.toString()}`}>
                                 <input type="hidden" name="userId" value={user._id.toString()} />
                                 <Input
                                     name="membershipNumber"
@@ -94,8 +92,8 @@ export function MembershipApprovals({ pendingMemberships }: { pendingMemberships
                                 />
                             </form>
                         </TableCell>
-                        <TableCell className="text-right">
-                           <SubmitButton />
+                         <TableCell className="text-right">
+                           <SubmitButton userId={user._id.toString()} isInputFilled={!!membershipNumbers[user._id.toString()]} />
                         </TableCell>
                     </TableRow>
                 ))}
@@ -103,4 +101,3 @@ export function MembershipApprovals({ pendingMemberships }: { pendingMemberships
         </Table>
     );
 }
-
