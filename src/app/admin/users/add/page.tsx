@@ -72,7 +72,7 @@ export default function AddUserPage() {
 
           {/* Section: Core Credentials */}
           <div className="space-y-4">
-             <p className="text-sm font-medium text-muted-foreground">Core Credentials</p>
+             <p className="text-sm font-medium text-muted-foreground">Core Credentials & Status</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="name">Full Name</Label>
@@ -85,7 +85,7 @@ export default function AddUserPage() {
                     {state?.error?.email && <p className="text-sm text-destructive">{state.error.email[0]}</p>}
                 </div>
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="password">Password</Label>
                     <Input id="password" name="password" type="password" required minLength={6} />
@@ -102,6 +102,17 @@ export default function AddUserPage() {
                         </SelectContent>
                     </Select>
                     {state?.error?.role && <p className="text-sm text-destructive">{state.error.role[0]}</p>}
+                </div>
+                 <div className="grid gap-2">
+                    <Label htmlFor="membershipStatus">Membership Status</Label>
+                    <Select name="membershipStatus" defaultValue="provisional" required>
+                        <SelectTrigger id="membershipStatus"><SelectValue placeholder="Select status" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="provisional">Provisional</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
           </div>
@@ -140,6 +151,7 @@ export default function AddUserPage() {
                  <div className="grid gap-2">
                     <Label htmlFor="membershipNumber">Membership Number</Label>
                     <Input id="membershipNumber" name="membershipNumber" placeholder="MEM12345" />
+                    {state?.error?.membershipNumber && <p className="text-sm text-destructive">{state.error.membershipNumber[0]}</p>}
                 </div>
              </div>
           </div>

@@ -26,6 +26,7 @@ import {
   LogOut,
   Handshake,
   UserCheck,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -44,6 +45,7 @@ import { logout } from "@/app/logout/actions";
 
 const memberNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/become-member", label: "Become a Member", icon: UserPlus },
   { href: "/apply-loan", label: "Apply for Loan", icon: Handshake },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
 ];
@@ -51,7 +53,7 @@ const memberNavItems = [
 const adminNavItems = [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/users", label: "User Management", icon: Users },
-    { href: "/admin/approvals", label: "Loan Approvals", icon: UserCheck },
+    { href: "/admin/approvals", label: "Approvals", icon: UserCheck },
     { href: "/admin/audit", label: "AI Audit", icon: ShieldCheck },
 ];
 
@@ -64,12 +66,13 @@ const pageTitles: { [key: string]: string | ((pathname: string) => string) } = {
   "/dashboard": "Member Dashboard",
   "/apply-loan": "Apply for a New Loan",
   "/calculator": "Loan Payment Calculator",
+  "/become-member": "Become a Member",
   "/admin/dashboard": "Admin Dashboard",
   "/admin/audit": "AI Financial Auditor",
   "/admin/users": "User Management",
   "/admin/users/add": "Add New User",
   "/admin/users/[id]": (pathname) => "User Details",
-  "/admin/approvals": "Loan Approvals",
+  "/admin/approvals": "Approvals",
   "/board/approvals": "Loan Approvals",
   "/login": "Login",
   "/signup": "Sign Up",

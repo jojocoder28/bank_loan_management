@@ -16,11 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { calculateRequiredFunds, calculateMonthlyInterest } from "@/lib/coop-calculations";
-import { Handshake, Info, TrendingUp, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { calculateRequiredFunds } from "@/lib/coop-calculations";
+import { Handshake, Info, AlertTriangle, CheckCircle2, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
 import { applyForLoan } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import { getUserFunds } from "./data-actions";
+import { getUserFundsAndStatus } from "./data-actions";
+import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const initialState = {
   error: null,
@@ -43,20 +45,20 @@ function SubmitButton({ canApply }: { canApply: boolean }) {
 export default function ApplyLoanPage() {
   const [loanAmount, setLoanAmount] = useState(100000);
   const [monthlyPrincipal, setMonthlyPrincipal] = useState(2000);
-  const [userFunds, setUserFunds] = useState({ shareFund: 0, guaranteedFund: 0 });
-  const [isLoadingFunds, setIsLoadingFunds] = useState(true);
+  const [userData, setUserData] = useState({ shareFund: 0, guaranteedFund: 0, membershipStatus: 'provisional' });
+  const [isLoading, setIsLoading] = useState(true);
 
   const { toast } = useToast();
   const [state, formAction] = useActionState(applyForLoan, initialState);
 
   useEffect(() => {
-    async function fetchFunds() {
-      setIsLoadingFunds(true);
-      const funds = await getUserFunds();
-      setUserFunds(funds);
-      setIsLoadingFunds(false);
+    async function fetchUserData() {
+      setIsLoading(true);
+      const data = await getUserFundsAndStatus();
+      setUserData(data);
+      setIsLoading(false);
     }
-    fetchFunds();
+    fetchUserData();
   }, []);
   
   useEffect(() => {
@@ -70,13 +72,53 @@ export default function ApplyLoanPage() {
   }, [state, toast])
 
 
-  const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(loanAmount);
-  const monthlyInterest = calculateMonthlyInterest(loanAmount, 10); // 10% monthly interest rate
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-start pt-8">
+        <Card className="w-full max-w-4xl">
+          <CardHeader>
+            <Skeleton className="h-8 w-1/2" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardHeader>
+          <CardContent className="grid gap-8">
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const shareFundShortfall = Math.max(0, requiredShare - userFunds.shareFund);
-  const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userFunds.guaranteedFund);
+  if (userData.membershipStatus !== 'active') {
+    return (
+      <div className="flex justify-center items-start pt-8">
+        <Card className="w-full max-w-lg text-center">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 justify-center"><ShieldCheck className="size-8 text-primary"/> Become a Member</CardTitle>
+                <CardDescription>You must be an active member to apply for a loan.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {userData.membershipStatus === 'provisional' && <p>Your membership has not been activated yet. Please apply to become a member.</p>}
+                {userData.membershipStatus === 'pending' && <p>Your membership application is pending approval. You will be able to apply for a loan once it is approved.</p>}
+            </CardContent>
+            <CardFooter>
+                 {userData.membershipStatus === 'provisional' && (
+                    <Button asChild className="w-full">
+                        <Link href="/become-member">Apply for Membership <ArrowRight className="ml-2" /></Link>
+                    </Button>
+                )}
+            </CardFooter>
+        </Card>
+      </div>
+    )
+  }
+
+  const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(loanAmount);
+  
+  const shareFundShortfall = Math.max(0, requiredShare - userData.shareFund);
+  const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userData.guaranteedFund);
   const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
-  const canApply = totalShortfall === 0 && !isLoadingFunds;
+  const canApply = totalShortfall === 0 && !isLoading;
 
   return (
     <div className="flex justify-center items-start pt-8">
@@ -92,7 +134,6 @@ export default function ApplyLoanPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-8">
-            {/* Hidden inputs to pass to server action */}
             <input type="hidden" name="loanAmount" value={loanAmount} />
             <input type="hidden" name="monthlyPrincipal" value={monthlyPrincipal} />
             
@@ -159,11 +200,11 @@ export default function ApplyLoanPage() {
                         </div>
                         <div className="flex justify-between font-bold border-t pt-2 mt-1">
                             <span>Your Share Fund</span>
-                            <span>Rs. {userFunds.shareFund.toLocaleString()}</span>
+                            <span>Rs. {userData.shareFund.toLocaleString()}</span>
                         </div>
                          <div className="flex justify-between font-bold">
                             <span>Your Guaranteed Fund</span>
-                            <span>Rs. {userFunds.guaranteedFund.toLocaleString()}</span>
+                            <span>Rs. {userData.guaranteedFund.toLocaleString()}</span>
                         </div>
                     </CardContent>
                 </Card>

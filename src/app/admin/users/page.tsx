@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getUsers } from "./actions";
-import { UserRole } from "@/models/user";
+import { UserRole, MembershipStatus } from "@/models/user";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
@@ -15,6 +15,12 @@ export default async function UsersPage() {
     admin: "default",
     board_member: "secondary",
     member: "outline",
+  };
+  
+  const statusVariant: { [key in MembershipStatus]: "default" | "secondary" | "outline" | "destructive" } = {
+    active: 'default',
+    pending: 'outline',
+    provisional: 'secondary',
   };
 
   return (
@@ -38,8 +44,8 @@ export default async function UsersPage() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Membership Status</TableHead>
               <TableHead>Membership #</TableHead>
-              <TableHead>Phone</TableHead>
               <TableHead>Member Since</TableHead>
             </TableRow>
           </TableHeader>
@@ -53,12 +59,16 @@ export default async function UsersPage() {
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Badge variant={roleVariant[user.role] || "outline"}>
+                  <Badge variant={roleVariant[user.role] || "outline"} className="capitalize">
                     {user.role.replace("_", " ")}
                   </Badge>
                 </TableCell>
+                 <TableCell>
+                  <Badge variant={statusVariant[user.membershipStatus] || "outline"} className="capitalize">
+                    {user.membershipStatus}
+                  </Badge>
+                </TableCell>
                 <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
-                <TableCell>{user.phone || 'N/A'}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
               </TableRow>
             ))}

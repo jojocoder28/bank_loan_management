@@ -30,6 +30,12 @@ export async function getPendingLoans(): Promise<PopulatedLoan[]> {
     return JSON.parse(JSON.stringify(loans));
 }
 
+export async function getPendingMemberships(): Promise<IUser[]> {
+    await dbConnect();
+    const users = await User.find({ membershipStatus: 'pending' }).sort({ createdAt: 'asc' }).lean();
+    return JSON.parse(JSON.stringify(users));
+}
+
 
 async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejected'): Promise<void> {
     const loanId = formData.get('loanId') as string;
@@ -48,8 +54,8 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
     await Loan.findByIdAndUpdate(loanId, updateData);
 
     revalidatePath('/admin/approvals');
-    revalidatePath('/dashboard'); // To update member's dashboard
-    revalidatePath('/admin/users'); // To update loan history on user detail page
+    revalidatePath('/dashboard'); 
+    revalidatePath('/admin/users'); 
 }
 
 export async function approveLoan(formData: FormData) {
@@ -58,4 +64,29 @@ export async function approveLoan(formData: FormData) {
 
 export async function rejectLoan(formData: FormData) {
     await updateLoanStatus(formData, 'rejected');
+}
+
+export async function approveMembership(formData: FormData) {
+    const userId = formData.get('userId') as string;
+    const membershipNumber = formData.get('membershipNumber') as string;
+
+    if (!userId || !membershipNumber) {
+        return { error: 'User ID and Membership Number are required.' }
+    }
+
+    await dbConnect();
+
+    // Check if membership number is already taken
+    const existingUser = await User.findOne({ membershipNumber });
+    if (existingUser) {
+        return { error: 'This membership number is already assigned.' }
+    }
+
+    await User.findByIdAndUpdate(userId, {
+        membershipStatus: 'active',
+        membershipNumber: membershipNumber
+    });
+
+    revalidatePath('/admin/approvals');
+    revalidatePath('/admin/users');
 }

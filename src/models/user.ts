@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 
 export type UserRole = 'admin' | 'board_member' | 'member';
 export type Gender = 'male' | 'female' | 'other';
+export type MembershipStatus = 'provisional' | 'pending' | 'active';
 
 // Interface for the User document
 export interface IUser extends Document {
@@ -12,6 +13,7 @@ export interface IUser extends Document {
   password?: string;
   role: UserRole;
   createdAt: Date;
+  membershipStatus: MembershipStatus;
 
   // New Fields
   workplace?: string;
@@ -45,6 +47,11 @@ const UserSchema = new Schema<IUser>({
     type: String,
     enum: ['admin', 'board_member', 'member'],
     default: 'member',
+  },
+  membershipStatus: {
+    type: String,
+    enum: ['provisional', 'pending', 'active'],
+    default: 'provisional',
   },
   createdAt: { type: Date, default: Date.now },
   
