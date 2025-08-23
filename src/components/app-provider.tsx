@@ -46,6 +46,7 @@ import type { User } from "@/lib/types";
 import { logout } from "@/app/logout/actions";
 
 const userNavItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/become-member", label: "Become a Member", icon: UserPlus },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
 ];
