@@ -4,87 +4,48 @@ import { decrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/types';
 
-// 1. Specify public routes
+// 1. Specify public routes that do not require authentication.
 const publicRoutes = ['/login', '/signup'];
 
-// 2. Specify protected routes for each role
-const userRoutes = ['/become-member', '/calculator', '/profile'];
-const memberRoutes = ['/dashboard', '/apply-loan', '/my-finances', '/calculator', '/profile'];
-const adminRoutes = ['/admin/dashboard', '/admin/audit', '/admin/users', '/admin/approvals'];
-// Define board_member routes if they exist
-// const boardMemberRoutes = ['/board/dashboard'];
-
+const getDashboardPath = (user: User | null): string => {
+    if (!user) return '/login';
+    switch (user.role) {
+        case 'admin':
+            return '/admin/dashboard';
+        case 'member':
+            return '/dashboard';
+        case 'board_member':
+            return '/dashboard';
+        case 'user':
+            return user.membershipApplied ? '/calculator' : '/become-member';
+        default:
+            return '/login';
+    }
+}
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const isPublicRoute = publicRoutes.includes(path);
 
-  // 3. Decrypt the session from the cookie
+  // 2. Decrypt the session from the cookie
   const cookie = await cookies().get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;
   const user: User | null = session?.user ?? null;
 
-  // 4. Redirect logged-in users from public routes
+  // 3. Handle redirects
   if (isPublicRoute && user) {
-    let targetPath = '/login';
-    switch (user.role) {
-      case 'admin':
-        targetPath = '/admin/dashboard';
-        break;
-      case 'member':
-        targetPath = '/dashboard';
-        break;
-      case 'board_member':
-         targetPath = '/dashboard';
-         break;
-      case 'user':
-        targetPath = user.membershipApplied ? '/calculator' : '/become-member';
-        break;
-    }
-    return NextResponse.redirect(new URL(targetPath, req.nextUrl));
+    // If the user is logged in and tries to access a public route (like /login),
+    // redirect them to their appropriate dashboard.
+    return NextResponse.redirect(new URL(getDashboardPath(user), req.nextUrl));
   }
-
-  // 5. Redirect unauthenticated users from protected routes
+  
   if (!isPublicRoute && !user) {
+    // If the user is not logged in and tries to access a protected route,
+    // redirect them to the login page.
     return NextResponse.redirect(new URL('/login', req.nextUrl));
   }
-
-  // 6. Role-based access control for protected routes
-  if (user && !isPublicRoute) {
-    const allowedRoutes: string[] = [];
-    let defaultRedirect = '/login';
-
-    switch (user.role) {
-      case 'admin':
-        allowedRoutes.push(...adminRoutes, ...memberRoutes, ...userRoutes);
-        defaultRedirect = '/admin/dashboard';
-        break;
-      case 'member':
-        allowedRoutes.push(...memberRoutes, ...userRoutes);
-        defaultRedirect = '/dashboard';
-        break;
-      case 'board_member':
-        // Add specific board member routes if any, for now they get member access
-        allowedRoutes.push(...memberRoutes, ...userRoutes, '/board/approvals');
-        defaultRedirect = '/dashboard';
-        break;
-      case 'user':
-        allowedRoutes.push(...userRoutes);
-        defaultRedirect = user.membershipApplied ? '/calculator' : '/become-member';
-        break;
-    }
-
-    // Check if the current path is allowed for the user's role
-    // This logic handles dynamic routes like /admin/users/[id]
-    const isPathAllowed = allowedRoutes.some(route => path.startsWith(route));
-    
-    if (!isPathAllowed) {
-        // If not allowed, redirect to their default page
-        return NextResponse.redirect(new URL(defaultRedirect, req.nextUrl));
-    }
-  }
-
-
+  
+  // 4. If none of the above conditions are met, continue to the requested page.
   return NextResponse.next();
 }
 
