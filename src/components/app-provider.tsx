@@ -103,9 +103,7 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
       case 'board_member':
         return boardMemberNavItems;
       case 'member':
-         const memberNavs = [...memberNavItems];
-         // Add profile link for members
-         return memberNavs;
+         return memberNavItems;
       case 'user':
          const navs = userNavItems;
          // If user has applied, don't show "Become a member"
