@@ -65,7 +65,7 @@ const adminNavItems = [
 ];
 
 const boardMemberNavItems = [
-    { href: "/dashboard", label: "Member View", icon: LayoutDashboard }, // Can see what a member sees
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, 
     { href: "/board/approvals", label: "Loan Approvals", icon: UserCheck },
 ]
 
@@ -154,7 +154,7 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href)}
+                  isActive={pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) && (item.href !== '/dashboard' || pathname === item.href)}
                   tooltip={{ children: item.label }}
                 >
                   <Link href={item.href}>

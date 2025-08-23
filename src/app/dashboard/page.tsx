@@ -183,6 +183,52 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+       <Card>
+          <CardHeader>
+            <CardTitle>Recent Loan History</CardTitle>
+            <CardDescription>
+              Your last 5 loan applications.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+             {loanHistory.length > 0 ? (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Applied On</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loanHistory.map(loan => (
+                             <TableRow key={loan._id.toString()}>
+                                <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
+                                <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
+                                <TableCell>
+                                    <Badge variant={loanStatusVariant[loan.status]} className="capitalize">{loan.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" asChild>
+                                        <Link href="/my-finances">View Details</Link>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+             ) : (
+                <p className="text-sm text-muted-foreground">No loan history to display.</p>
+             )}
+          </CardContent>
+           <CardFooter>
+                <Button variant="link" asChild>
+                    <Link href="/my-finances">View All Loan History &rarr;</Link>
+                </Button>
+            </CardFooter>
+        </Card>
+
     </div>
   );
 }
