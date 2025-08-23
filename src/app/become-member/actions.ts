@@ -7,7 +7,9 @@ import User from "@/models/user";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { v2 as cloudinary } from 'cloudinary';
+import { config } from 'dotenv';
 
+config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
