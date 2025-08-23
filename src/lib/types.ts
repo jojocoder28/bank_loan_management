@@ -6,7 +6,7 @@ export interface User {
     name: string;
     email: string;
     role: UserRole;
-    image?: string;
+    photoUrl?: string;
     membershipApplied?: boolean;
 }
 

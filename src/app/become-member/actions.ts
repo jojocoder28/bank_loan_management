@@ -19,6 +19,7 @@ const applicationSchema = z.object({
   nomineeName: z.string().min(1, 'Nominee name is required.'),
   nomineeRelation: z.string().min(1, 'Nominee relation is required.'),
   nomineeAge: z.coerce.number().min(1, 'Nominee age is required.'),
+  photo: z.any().optional(),
 });
 
 
@@ -49,8 +50,30 @@ export async function applyForMembership(prevState: any, formData: FormData) {
         return { error: `Your application is already pending approval.` }
     }
 
+    // Handle photo upload
+    const { photo, ...applicationData } = validatedFields.data;
+    let photoUrl = user.photoUrl; // Keep existing photo if no new one is uploaded
+
+    if (photo && photo.size > 0) {
+      // ** CLOUDINARY UPLOAD LOGIC GOES HERE **
+      // 1. You would typically use a library like 'cloudinary'.
+      // 2. Configure it with your cloud_name, api_key, and api_secret.
+      // 3. The 'photo' object is a File object. You need to handle it as a stream or buffer.
+      //    const fileBuffer = Buffer.from(await photo.arrayBuffer());
+      //    const result = await cloudinary.uploader.upload_stream(..., (err, res) => ...).end(fileBuffer);
+      // 4. On success, Cloudinary returns a secure_url.
+      // photoUrl = result.secure_url;
+      //
+      // For now, we will just log a placeholder message.
+      console.log("Photo upload would happen here. A Cloudinary URL would be generated.");
+      // In a real implementation, you would get the photoUrl from your Cloudinary upload result.
+      // For the sake of this demo, we'll use a placeholder.
+      // photoUrl = "https://placehold.co/200x200.png";
+    }
+
     // Update user with all the new details
-    Object.assign(user, validatedFields.data);
+    Object.assign(user, applicationData);
+    user.photoUrl = photoUrl;
 
     // This is a simplified process. In a real-world scenario, this would
     // likely redirect to a payment gateway to handle the initial deposit.

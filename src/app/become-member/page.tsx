@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Info, Library, ListChecks, Loader2, Milestone, ShieldCheck, UserRound, Building, Banknote, Shield, Award } from "lucide-react";
-import { useActionState, useEffect, useState } from "react";
+import { Check, Info, Library, ListChecks, Loader2, Milestone, ShieldCheck, UserRound, Building, Banknote, Shield, Award, Upload, User } from "lucide-react";
+import { useActionState, useEffect, useState, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { applyForMembership } from "./actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const initialState = {
     error: null,
@@ -47,6 +49,8 @@ export default function BecomeMemberPage() {
     const { toast } = useToast();
     const [hasApplied, setHasApplied] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
       async function fetchStatus() {
@@ -74,6 +78,17 @@ export default function BecomeMemberPage() {
             })
         }
     }, [state, toast])
+
+    const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhotoPreview(reader.result as string);
+            }
+            reader.readAsDataURL(file);
+        }
+    }
     
     if (isLoading) {
         return (
@@ -151,7 +166,7 @@ export default function BecomeMemberPage() {
                                     </div>
                                 </div>
                             </CardContent>
-                        </Card>>
+                        </Card>
                         {/* Benefits Card */}
                         <Card className="bg-secondary/30">
                             <CardHeader>
@@ -183,7 +198,22 @@ export default function BecomeMemberPage() {
                         <CardHeader>
                              <CardTitle className="text-lg flex items-center gap-2"><UserRound className="size-5 text-primary"/>Personal Details</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid md:grid-cols-2 gap-4">
+                        <CardContent className="grid md:grid-cols-2 gap-6">
+                           {/* Photo Upload */}
+                            <div className="md:col-span-2 grid gap-4 items-center" style={{gridTemplateColumns: "auto 1fr"}}>
+                                <Avatar className="size-24">
+                                    {photoPreview ? (
+                                        <AvatarImage src={photoPreview} alt="Profile preview" />
+                                    ) : (
+                                        <AvatarFallback><User className="size-12"/></AvatarFallback>
+                                    )}
+                                </Avatar>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="photo">Upload Profile Photo</Label>
+                                    <Input id="photo" name="photo" type="file" accept="image/*" onChange={handlePhotoChange} ref={fileInputRef}/>
+                                    <p className="text-xs text-muted-foreground">Recommended size: 200x200px. Max 2MB.</p>
+                                </div>
+                            </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="phone">Phone Number</Label>
                                 <Input id="phone" name="phone" placeholder="e.g. 9876543210" required />
@@ -283,5 +313,3 @@ export default function BecomeMemberPage() {
         </div>
       );
 }
-
-    

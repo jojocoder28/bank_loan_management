@@ -15,6 +15,7 @@ export interface IUser extends Document {
   membershipApplied?: boolean;
 
   // New Fields
+  photoUrl?: string;
   workplace?: string;
   profession?: string;
   workplaceAddress?: string;
@@ -51,6 +52,7 @@ const UserSchema = new Schema<IUser>({
   createdAt: { type: Date, default: Date.now },
   
   // New Fields
+  photoUrl: { type: String },
   workplace: { type: String },
   profession: { type: String },
   workplaceAddress: { type: String },
@@ -79,7 +81,7 @@ UserSchema.pre<IUser>('save', async function (next) {
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    return next();
+    return next(err as Error);
   } catch (err) {
     return next(err as Error);
   }
@@ -98,5 +100,3 @@ UserSchema.methods.comparePassword = function (password: string): Promise<boolea
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
 export default User;
-
-    

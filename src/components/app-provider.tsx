@@ -103,7 +103,12 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
       case 'member':
         return memberNavItems;
       case 'user':
-        return userNavItems;
+         const navs = userNavItems;
+         // If user has applied, don't show "Become a member"
+         if (user.membershipApplied) {
+            return navs.filter(item => item.href !== '/become-member');
+         }
+         return navs;
       default:
         return user.membershipApplied ? userNavItems.filter(item => item.href !== '/become-member') : userNavItems;
     }
@@ -207,7 +212,7 @@ function UserMenu({ user }: { user: User | null }) {
           className="w-full justify-start gap-2"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.image ?? undefined} />
+            <AvatarImage src={user.photoUrl ?? undefined} />
             <AvatarFallback>{user.name?.[0]}</AvatarFallback>
           </Avatar>
           <span className="truncate">{user.name}</span>

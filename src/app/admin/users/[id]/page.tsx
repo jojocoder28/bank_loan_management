@@ -77,6 +77,7 @@ export default async function UserDetailsPage({
         <Card>
           <CardHeader className="flex-row items-center gap-4">
             <Avatar className="h-16 w-16">
+              <AvatarImage src={user.photoUrl ?? undefined} />
               <AvatarFallback>{user.name?.[0]}</AvatarFallback>
             </Avatar>
             <div>

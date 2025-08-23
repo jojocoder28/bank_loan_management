@@ -1,3 +1,4 @@
+
 'use server';
 
 import { SignJWT, jwtVerify } from 'jose';
@@ -67,7 +68,18 @@ export async function updateSession(request: NextRequest) {
 
 export async function createSession(user: User) {
     const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-    const session = await encrypt({ user, exp: expires.getTime() / 1000 });
+    
+    // We only want to store the essential, non-sensitive parts in the session
+    const sessionUser: User = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        photoUrl: user.photoUrl,
+        membershipApplied: user.membershipApplied
+    }
+
+    const session = await encrypt({ user: sessionUser, exp: expires.getTime() / 1000 });
 
     cookies().set('session', session, { expires, httpOnly: true });
 }
