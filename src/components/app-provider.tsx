@@ -221,7 +221,9 @@ function UserMenu({ user }: { user: User | null }) {
       <DropdownMenuContent side="right" align="start" className="w-56">
         <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Profile</DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard">Profile</Link>
+        </DropdownMenuItem>
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => logout()}>
