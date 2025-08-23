@@ -105,9 +105,6 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
       case 'member':
          return memberNavItems;
       case 'user':
-        if (user.membershipApplied) {
-          return userNavItems.filter((item) => item.href !== '/become-member');
-        }
         return userNavItems;
       default:
         return [];
@@ -138,55 +135,57 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
 
   return (
     <SidebarProvider>
-      <Sidebar
-        variant="sidebar"
-        collapsible="icon"
-        className="border-sidebar-border"
-      >
-        <SidebarHeader>
-          <Logo />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {getNavItems().map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) && (item.href !== '/dashboard' || pathname === item.href)}
-                  tooltip={{ children: item.label }}
-                >
-                  <Link href={item.href}>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-          <UserMenu user={user}/>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-2 md:hidden">
-            <SidebarTrigger>
-              <PanelLeft />
-            </SidebarTrigger>
+      <div className="flex min-h-screen">
+        <Sidebar
+          variant="sidebar"
+          collapsible="icon"
+          className="border-sidebar-border"
+        >
+          <SidebarHeader>
             <Logo />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-xl font-semibold font-headline">
-              {getPageTitle(pathname)}
-            </h1>
-          </div>
-          <div className="hidden md:block">
-            <UserMenu user={user} />
-          </div>
-        </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
-      </SidebarInset>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {getNavItems().map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) && (item.href !== '/dashboard' || pathname === item.href)}
+                    tooltip={{ children: item.label }}
+                  >
+                    <Link href={item.href}>
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter>
+            <UserMenu user={user}/>
+          </SidebarFooter>
+        </Sidebar>
+        <SidebarInset>
+          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+            <div className="flex items-center gap-2 md:hidden">
+              <SidebarTrigger>
+                <PanelLeft />
+              </SidebarTrigger>
+              <Logo />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-xl font-semibold font-headline">
+                {getPageTitle(pathname)}
+              </h1>
+            </div>
+            <div className="hidden md:block">
+              <UserMenu user={user} />
+            </div>
+          </header>
+          <main className="flex-1 p-4 md:p-6">{children}</main>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }
