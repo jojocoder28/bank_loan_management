@@ -6,6 +6,15 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/user";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { v2 as cloudinary } from 'cloudinary';
+
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 
 const applicationSchema = z.object({
   personalAddress: z.string().min(1, 'Personal address is required.'),
@@ -55,20 +64,32 @@ export async function applyForMembership(prevState: any, formData: FormData) {
     let photoUrl = user.photoUrl; // Keep existing photo if no new one is uploaded
 
     if (photo && photo.size > 0) {
-      // ** CLOUDINARY UPLOAD LOGIC GOES HERE **
-      // 1. You would typically use a library like 'cloudinary'.
-      // 2. Configure it with your cloud_name, api_key, and api_secret.
-      // 3. The 'photo' object is a File object. You need to handle it as a stream or buffer.
-      //    const fileBuffer = Buffer.from(await photo.arrayBuffer());
-      //    const result = await cloudinary.uploader.upload_stream(..., (err, res) => ...).end(fileBuffer);
-      // 4. On success, Cloudinary returns a secure_url.
-      // photoUrl = result.secure_url;
-      //
-      // For now, we will just log a placeholder message.
-      console.log("Photo upload would happen here. A Cloudinary URL would be generated.");
-      // In a real implementation, you would get the photoUrl from your Cloudinary upload result.
-      // For the sake of this demo, we'll use a placeholder.
-      // photoUrl = "https://placehold.co/200x200.png";
+      try {
+        const fileBuffer = Buffer.from(await photo.arrayBuffer());
+
+        const uploadResult = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: "coop_loan_members", // Optional: organize uploads in a folder
+                    resource_type: "image",
+                },
+                (error, result) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
+                }
+            );
+            uploadStream.end(fileBuffer);
+        });
+
+        photoUrl = (uploadResult as any).secure_url;
+
+      } catch (error) {
+         console.error("Cloudinary Upload Error:", error);
+         return { error: 'Failed to upload image. Please try again.' };
+      }
     }
 
     // Update user with all the new details
