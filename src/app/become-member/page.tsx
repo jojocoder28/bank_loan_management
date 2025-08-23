@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Info, Library, ListChecks, Loader2, Milestone, ShieldCheck, UserRound, Building, Banknote, Shield } from "lucide-react";
+import { Check, Info, Library, ListChecks, Loader2, Milestone, ShieldCheck, UserRound, Building, Banknote, Shield, Award } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { applyForMembership } from "./actions";
@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 const initialState = {
     error: null,
@@ -124,32 +125,58 @@ export default function BecomeMemberPage() {
                     Membership Application
                   </CardTitle>
                   <CardDescription>
-                    Fill out the form below to become an active member.
+                    Fill out the form below to become an active member and enjoy our benefits.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-8">
                     {/* Requirements Card */}
-                    <Card className="bg-secondary/30">
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2"><ListChecks className="size-5 text-primary"/>Membership Requirements</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-4 text-sm">
-                            <div className="flex items-start gap-3">
-                                <Milestone className="size-5 mt-1 text-accent"/>
-                                <div>
-                                    <h4 className="font-semibold">Initial Share Fund Deposit</h4>
-                                    <p className="text-muted-foreground">You must make an initial deposit of <strong>₹5,000</strong> into your Share Fund (SFund). This is a one-time requirement upon joining.</p>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <Card className="bg-secondary/30">
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2"><ListChecks className="size-5 text-primary"/>Requirements</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid gap-4 text-sm">
+                                <div className="flex items-start gap-3">
+                                    <Milestone className="size-5 mt-1 text-accent"/>
+                                    <div>
+                                        <h4 className="font-semibold">Initial Share Fund Deposit</h4>
+                                        <p className="text-muted-foreground">You must make an initial deposit of <strong>₹5,000</strong> into your Share Fund (SFund). This is a one-time requirement upon joining.</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <Library className="size-5 mt-1 text-accent"/>
-                                <div>
-                                    <h4 className="font-semibold">Monthly Contribution</h4>
-                                    <p className="text-muted-foreground">A recurring monthly contribution of <strong>₹1,000</strong> is required to maintain active membership status.</p>
+                                <div className="flex items-start gap-3">
+                                    <Library className="size-5 mt-1 text-accent"/>
+                                    <div>
+                                        <h4 className="font-semibold">Monthly Contribution</h4>
+                                        <p className="text-muted-foreground">A recurring monthly contribution of <strong>₹1,000</strong> is required to maintain active membership status.</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>>
+                        {/* Benefits Card */}
+                        <Card className="bg-secondary/30">
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2"><Award className="size-5 text-primary"/>Membership Benefits</CardTitle>
+                            </CardHeader>
+                             <CardContent className="grid gap-3 text-sm">
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-background/50">
+                                    <p className="font-medium">Annual Durga Puja Dividend</p>
+                                    <Badge variant="outline">10-12% on Share Fund</Badge>
+                                </div>
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-background/50">
+                                    <p className="font-medium">One-Day Picnic</p>
+                                    <Badge variant="outline">Fully Bank-Sponsored</Badge>
+                                </div>
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-background/50">
+                                    <p className="font-medium">Annual Tour Support</p>
+                                    <Badge variant="outline">Contribution from Profits</Badge>
+                                </div>
+                                <div className="flex items-center justify-between p-2 rounded-lg bg-background/50">
+                                    <p className="font-medium">Yearly Gift</p>
+                                    <Badge variant="outline">From Bank Profits</Badge>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                     
                     {/* Personal Details */}
                     <Card>
@@ -256,3 +283,5 @@ export default function BecomeMemberPage() {
         </div>
       );
 }
+
+    
