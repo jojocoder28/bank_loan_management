@@ -105,14 +105,12 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
       case 'member':
          return memberNavItems;
       case 'user':
-         const navs = userNavItems;
-         // If user has applied, don't show "Become a member"
-         if (user.membershipApplied) {
-            return navs.filter(item => item.href !== '/become-member');
-         }
-         return navs;
+        if (user.membershipApplied) {
+          return userNavItems.filter((item) => item.href !== '/become-member');
+        }
+        return userNavItems;
       default:
-        return user.membershipApplied ? userNavItems.filter(item => item.href !== '/become-member') : userNavItems;
+        return [];
     }
   }
   

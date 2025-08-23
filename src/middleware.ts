@@ -7,16 +7,16 @@ import type { User } from '@/lib/types';
 // 1. Specify public routes
 const publicRoutes = ['/login', '/signup'];
 
+// 2. Specify protected routes for each role
 const userRoutes = ['/become-member', '/calculator', '/profile'];
-const memberRoutes = ['/dashboard', '/apply-loan', '/calculator', '/my-finances', '/profile'];
+const memberRoutes = ['/dashboard', '/apply-loan', '/my-finances', '/calculator', '/profile'];
 const adminRoutes = ['/admin/dashboard', '/admin/audit', '/admin/users', '/admin/approvals'];
 // Define board_member routes if they exist
 // const boardMemberRoutes = ['/board/dashboard'];
 
+
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-
-  // 2. Check if the current route is public
   const isPublicRoute = publicRoutes.includes(path);
 
   // 3. Decrypt the session from the cookie
@@ -24,17 +24,24 @@ export default async function middleware(req: NextRequest) {
   const session = cookie ? await decrypt(cookie) : null;
   const user: User | null = session?.user ?? null;
 
-  // 4. Redirect logged in users from public routes
+  // 4. Redirect logged-in users from public routes
   if (isPublicRoute && user) {
-    let targetDashboard = '/become-member'; // Default for non-member users
-    if (user.role === 'admin') {
-      targetDashboard = '/admin/dashboard';
-    } else if (user.role === 'member') {
-      targetDashboard = '/dashboard';
-    } else if (user.role === 'board_member') {
-      targetDashboard = '/dashboard';
+    let targetPath = '/login';
+    switch (user.role) {
+      case 'admin':
+        targetPath = '/admin/dashboard';
+        break;
+      case 'member':
+        targetPath = '/dashboard';
+        break;
+      case 'board_member':
+         targetPath = '/dashboard';
+         break;
+      case 'user':
+        targetPath = user.membershipApplied ? '/calculator' : '/become-member';
+        break;
     }
-    return NextResponse.redirect(new URL(targetDashboard, req.nextUrl));
+    return NextResponse.redirect(new URL(targetPath, req.nextUrl));
   }
 
   // 5. Redirect unauthenticated users from protected routes
@@ -43,21 +50,38 @@ export default async function middleware(req: NextRequest) {
   }
 
   // 6. Role-based access control for protected routes
-  if (!isPublicRoute && user) {
-     const isGoingToAdminRoute = path.startsWith('/admin');
-     const isGoingToMemberRoute = memberRoutes.some(p => path.startsWith(p));
-     const isGoingToUserRoute = userRoutes.some(p => path.startsWith(p));
+  if (user && !isPublicRoute) {
+    const allowedRoutes: string[] = [];
+    let defaultRedirect = '/login';
 
-    if (user.role === 'user' && !isGoingToUserRoute && !path.startsWith('/my-finances')) {
-        return NextResponse.redirect(new URL('/become-member', req.nextUrl));
+    switch (user.role) {
+      case 'admin':
+        allowedRoutes.push(...adminRoutes, ...memberRoutes, ...userRoutes);
+        defaultRedirect = '/admin/dashboard';
+        break;
+      case 'member':
+        allowedRoutes.push(...memberRoutes, ...userRoutes);
+        defaultRedirect = '/dashboard';
+        break;
+      case 'board_member':
+        // Add specific board member routes if any, for now they get member access
+        allowedRoutes.push(...memberRoutes, ...userRoutes, '/board/approvals');
+        defaultRedirect = '/dashboard';
+        break;
+      case 'user':
+        allowedRoutes.push(...userRoutes);
+        defaultRedirect = user.membershipApplied ? '/calculator' : '/become-member';
+        break;
     }
-    if (user.role === 'member' && !isGoingToMemberRoute && !isGoingToUserRoute) {
-        return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
+
+    // Check if the current path is allowed for the user's role
+    // This logic handles dynamic routes like /admin/users/[id]
+    const isPathAllowed = allowedRoutes.some(route => path.startsWith(route));
+    
+    if (!isPathAllowed) {
+        // If not allowed, redirect to their default page
+        return NextResponse.redirect(new URL(defaultRedirect, req.nextUrl));
     }
-    if (user.role === 'admin' && !isGoingToAdminRoute && !isGoingToMemberRoute && !isGoingToUserRoute) {
-        return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
-    }
-    // Add board_member logic here if needed
   }
 
 
