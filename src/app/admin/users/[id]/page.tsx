@@ -26,6 +26,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ILoan } from "@/models/loan";
+import { RoleManagement } from "./_components/role-management";
+import { getSession } from "@/lib/session";
 
 export default async function UserDetailsPage({
   params,
@@ -33,6 +35,7 @@ export default async function UserDetailsPage({
   params: { id: string };
 }) {
   const { user, loans } = await getUserDetails(params.id);
+  const session = await getSession();
 
   if (!user) {
     notFound();
@@ -45,6 +48,7 @@ export default async function UserDetailsPage({
     admin: "default",
     board_member: "secondary",
     member: "outline",
+    user: "outline"
   };
   
   const loanStatusVariant: { [key: string]: "default" | "secondary" | "outline" | "destructive" } = {
@@ -63,6 +67,8 @@ export default async function UserDetailsPage({
         </div>
       </div>
   )
+  
+  const canEditRole = session?.id !== user._id && user.role !== 'admin';
 
   return (
     <div className="grid gap-8 lg:grid-cols-3">
@@ -76,12 +82,20 @@ export default async function UserDetailsPage({
             <div>
               <CardTitle>{user.name}</CardTitle>
               <CardDescription>{user.email}</CardDescription>
-              <Badge variant={roleVariant[user.role]} className="mt-2 capitalize">
+              <Badge variant={roleVariant[user.role] || "outline"} className="mt-2 capitalize">
                 {user.role.replace("_", " ")}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="grid gap-4">
+            <Separator />
+            {canEditRole ? (
+                <RoleManagement userId={user._id.toString()} currentRole={user.role} />
+            ) : (
+                <div className="text-sm text-muted-foreground p-2 bg-secondary rounded-md">
+                    {user.role === 'admin' ? "Admin roles cannot be changed." : "You cannot change your own role."}
+                </div>
+            )}
             <Separator />
             <div className="grid grid-cols-2 gap-y-4 gap-x-2">
                  <InfoField icon={<User className="size-4"/>} label="Gender" value={user.gender} />
@@ -163,7 +177,7 @@ const LoanTable = ({ loans, statusVariant }: { loans: ILoan[], statusVariant: an
         <TableBody>
             {loans.map(loan => (
                 <TableRow key={loan._id.toString()}>
-                    <TableCell>{new Date(loan.issueDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{loan.issueDate ? new Date(loan.issueDate).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
                     <TableCell>₹{loan.principal.toLocaleString()}</TableCell>
                     <TableCell>{loan.interestRate}%</TableCell>
