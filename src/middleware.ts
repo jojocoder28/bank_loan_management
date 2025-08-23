@@ -7,8 +7,8 @@ import type { User } from '@/lib/types';
 // 1. Specify public routes
 const publicRoutes = ['/login', '/signup'];
 
-const userRoutes = ['/become-member', '/calculator'];
-const memberRoutes = ['/dashboard', '/apply-loan', '/calculator', '/my-finances'];
+const userRoutes = ['/become-member', '/calculator', '/profile'];
+const memberRoutes = ['/dashboard', '/apply-loan', '/calculator', '/my-finances', '/profile'];
 const adminRoutes = ['/admin/dashboard', '/admin/audit', '/admin/users', '/admin/approvals'];
 // Define board_member routes if they exist
 // const boardMemberRoutes = ['/board/dashboard'];
@@ -45,8 +45,8 @@ export default async function middleware(req: NextRequest) {
   // 6. Role-based access control for protected routes
   if (!isPublicRoute && user) {
      const isGoingToAdminRoute = path.startsWith('/admin');
-     const isGoingToMemberRoute = memberRoutes.includes(path);
-     const isGoingToUserRoute = userRoutes.includes(path);
+     const isGoingToMemberRoute = memberRoutes.some(p => path.startsWith(p));
+     const isGoingToUserRoute = userRoutes.some(p => path.startsWith(p));
 
     if (user.role === 'user' && !isGoingToUserRoute && !path.startsWith('/my-finances')) {
         return NextResponse.redirect(new URL('/become-member', req.nextUrl));

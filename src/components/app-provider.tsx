@@ -28,6 +28,7 @@ import {
   UserCheck,
   UserPlus,
   FileText,
+  User as UserIcon,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -74,6 +75,7 @@ const pageTitles: { [key: string]: string | ((pathname: string) => string) } = {
   "/apply-loan": "Apply for a New Loan",
   "/calculator": "Loan Payment Calculator",
   "/become-member": "Become a Member",
+  "/profile": "My Profile",
   "/admin/dashboard": "Admin Dashboard",
   "/admin/audit": "AI Financial Auditor",
   "/admin/users": "User Management",
@@ -101,7 +103,9 @@ export function AppProvider({ children, user }: { children: React.ReactNode, use
       case 'board_member':
         return boardMemberNavItems;
       case 'member':
-        return memberNavItems;
+         const memberNavs = [...memberNavItems];
+         // Add profile link for members
+         return memberNavs;
       case 'user':
          const navs = userNavItems;
          // If user has applied, don't show "Become a member"
@@ -222,7 +226,10 @@ function UserMenu({ user }: { user: User | null }) {
         <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard">Profile</Link>
+          <Link href="/profile">
+            <UserIcon className="mr-2" />
+            Profile
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />

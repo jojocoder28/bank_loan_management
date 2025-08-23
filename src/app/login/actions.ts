@@ -25,7 +25,7 @@ export async function login(formData: FormData) {
   try {
     await dbConnect();
 
-    const foundUser = await User.findOne({ email }).select('+password');
+    const foundUser = await User.findOne({ email }).select('+password photoUrl membershipApplied');
     if (!foundUser) {
       return { error: 'Invalid email or password.' };
     }
@@ -49,6 +49,8 @@ export async function login(formData: FormData) {
     name: user.name,
     email: user.email,
     role: user.role,
+    photoUrl: user.photoUrl,
+    membershipApplied: user.membershipApplied
   });
 
   if (user.role === 'admin') {
