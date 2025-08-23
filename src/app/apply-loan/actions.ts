@@ -38,31 +38,43 @@ export async function applyForLoan(formData: FormData) {
       return { error: 'Could not find your user profile.' };
     }
 
-    const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(loanAmount);
-    const userShareFund = user.shareFund || 0;
-    const userGuaranteedFund = user.guaranteedFund || 0;
-
-    if (userShareFund < requiredShare || userGuaranteedFund < requiredGuaranteed) {
-      return { error: 'Your fund balances do not meet the requirements for this loan amount.' };
+    if (user.role !== 'member') {
+        return { error: 'You must be a member to apply for a loan.' };
     }
 
-    // Check if user has an existing active loan
+    // Check for existing loans
     const existingActiveLoan = await Loan.findOne({ user: user._id, status: 'active' });
     if (existingActiveLoan) {
         return { error: 'You already have an active loan. You cannot apply for a new one until it is paid off.' };
     }
-    
-    // Check if user has an existing pending loan
     const existingPendingLoan = await Loan.findOne({ user: user._id, status: 'pending' });
     if (existingPendingLoan) {
         return { error: 'You already have a loan application pending approval. Please wait for it to be processed.' };
     }
 
+    // Calculate required funds and any shortfall
+    const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(loanAmount);
+    const userShareFund = user.shareFund || 0;
+    const userGuaranteedFund = user.guaranteedFund || 0;
+    
+    const shareFundShortfall = Math.max(0, requiredShare - userShareFund);
+    const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userGuaranteedFund);
+    const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
 
+    // The actual loan amount to be disbursed, including any shortfall
+    const finalLoanAmount = loanAmount + totalShortfall;
+
+    // Update user's funds with the shortfall amount
+    if (totalShortfall > 0) {
+        user.shareFund = userShareFund + shareFundShortfall;
+        user.guaranteedFund = userGuaranteedFund + guaranteedFundShortfall;
+        await user.save();
+    }
+    
     await Loan.create({
       user: user._id,
-      loanAmount: loanAmount,
-      principal: loanAmount, // Initially, outstanding principal is the full amount
+      loanAmount: finalLoanAmount,
+      principal: finalLoanAmount, // Initially, outstanding principal is the full adjusted amount
       interestRate: 10, // Hardcoded 10% annual interest rate
       issueDate: new Date(), // This will be updated upon approval
       status: 'pending',
