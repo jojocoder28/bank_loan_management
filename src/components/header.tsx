@@ -55,20 +55,6 @@ const userNavItems = [
     { href: '/calculator', label: 'Loan Calculator' },
 ];
 
-function getNavItems(role: User['role']) {
-  switch (role) {
-    case 'admin':
-      return adminNavItems;
-    case 'member':
-    case 'board_member':
-      return memberNavItems;
-    case 'user':
-        return userNavItems;
-    default:
-      return [];
-  }
-}
-
 export function Header({ user }: { user: User | null }) {
   const pathname = usePathname();
 
@@ -76,7 +62,22 @@ export function Header({ user }: { user: User | null }) {
     return null;
   }
 
-  const navItems = getNavItems(user.role);
+  let navItems = [];
+  switch (user.role) {
+    case 'admin':
+      navItems = adminNavItems;
+      break;
+    case 'member':
+    case 'board_member':
+      navItems = memberNavItems;
+      break;
+    case 'user':
+      navItems = userNavItems;
+      break;
+    default:
+      navItems = [];
+      break;
+  }
 
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
