@@ -43,6 +43,7 @@ export async function getSession(): Promise<User | null> {
   const expires = session.exp * 1000;
   if (expires - now < 15 * 60 * 1000) {
     const newExpires = new Date(now + 60 * 60 * 1000); // 1 hour from now
+    // Re-encrypt with the same user data but a new expiration time
     const newSessionToken = await encrypt({ user: session.user, exp: newExpires.getTime() / 1000 });
     cookies().set('session', newSessionToken, { expires: newExpires, httpOnly: true });
   }
