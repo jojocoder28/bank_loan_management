@@ -35,8 +35,9 @@ import { logout } from "@/app/logout/actions";
 
 const userNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/become-member", label: "Become a Member", icon: UserPlus },
+  { href: "/apply-loan", label: "Apply for Loan", icon: Handshake },
   { href: "/calculator", label: "Loan Calculator", icon: Calculator },
+  { href: "/become-member", label: "Become a Member", icon: UserPlus },
 ];
 
 const memberNavItems = [
