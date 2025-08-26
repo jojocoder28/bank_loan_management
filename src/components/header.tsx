@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   Calculator,
   LayoutDashboard,
-  PanelLeft,
   ShieldCheck,
   Users,
   LogOut,
