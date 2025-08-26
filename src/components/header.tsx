@@ -185,4 +185,3 @@ function UserMenu({ user }: { user: User | null }) {
     </DropdownMenu>
   );
 }
-
