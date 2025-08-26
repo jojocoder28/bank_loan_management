@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -59,11 +60,10 @@ function getNavItems(role: User['role']) {
     case 'admin':
       return adminNavItems;
     case 'member':
+    case 'board_member':
       return memberNavItems;
     case 'user':
         return userNavItems;
-    case 'board_member':
-        return memberNavItems; // Assuming board members have same nav as members
     default:
       return [];
   }
@@ -132,7 +132,7 @@ export function Header({ user }: { user: User | null }) {
             <Button variant="secondary" size="icon" className="rounded-full">
               <Avatar>
                   <AvatarImage src={user.photoUrl} />
-                  <AvatarFallback>{user.name[0]}</AvatarFallback>
+                  <AvatarFallback>{user.name?.[0] ?? 'U'}</AvatarFallback>
               </Avatar>
               <span className="sr-only">Toggle user menu</span>
             </Button>
