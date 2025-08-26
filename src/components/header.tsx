@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -110,6 +110,7 @@ export function Header({ user }: { user: User | null }) {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left">
+                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     <nav className="grid gap-6 text-lg font-medium">
                         <Link
                             href={user?.role === 'admin' ? '/admin/dashboard' : '/dashboard'}
