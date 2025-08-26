@@ -6,10 +6,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ShieldCheck, Users, Activity } from 'lucide-react';
+import { ShieldCheck, Users, Activity, FileCheck, Landmark, HandCoins, UserCheck, UserCog } from 'lucide-react';
 import Link from 'next/link';
+import { getAdminStats, AdminStats } from './actions';
+
 
 const adminFeatures = [
+    {
+        title: "Approvals",
+        description: "Review membership and loan applications.",
+        href: "/admin/approvals",
+        icon: <FileCheck className="size-8 text-primary" />
+    },
     {
         title: "User Management",
         description: "View and manage all registered user accounts.",
@@ -22,16 +30,24 @@ const adminFeatures = [
         href: "/admin/audit",
         icon: <ShieldCheck className="size-8 text-primary" />
     },
-    {
-        title: "System Activity",
-        description: "Monitor real-time system logs and activities.",
-        href: "#",
-        icon: <Activity className="size-8 text-primary" />
-    }
 ]
 
+const StatCard = ({ title, value, icon }: { title: string, value: number, icon: React.ReactNode }) => (
+    <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            {icon}
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+        </CardContent>
+    </Card>
+);
 
-export default function AdminDashboardPage() {
+
+export default async function AdminDashboardPage() {
+    const stats = await getAdminStats();
+
   return (
     <div className="grid gap-8">
         <Card>
@@ -42,6 +58,16 @@ export default function AdminDashboardPage() {
                 </CardDescription>
             </CardHeader>
         </Card>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <StatCard title="Active Loans" value={stats.activeLoans} icon={<Landmark className="size-4 text-muted-foreground" />} />
+            <StatCard title="Pending Loans" value={stats.pendingLoans} icon={<HandCoins className="size-4 text-muted-foreground" />} />
+            <StatCard title="Total Loans" value={stats.totalLoans} icon={<Landmark className="size-4 text-muted-foreground" />} />
+            <StatCard title="Members" value={stats.totalMembers} icon={<UserCheck className="size-4 text-muted-foreground" />} />
+            <StatCard title="Board Members" value={stats.totalBoardMembers} icon={<UserCog className="size-4 text-muted-foreground" />} />
+            <StatCard title="Total Users" value={stats.totalUsers} icon={<Users className="size-4 text-muted-foreground" />} />
+        </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {adminFeatures.map((feature) => (
              <Card key={feature.title} className="flex flex-col">
