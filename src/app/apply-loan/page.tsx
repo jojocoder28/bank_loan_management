@@ -169,6 +169,9 @@ export default function ApplyLoanPage() {
                         step={500}
                         min={1000}
                     />
+                     <div className="text-sm text-muted-foreground capitalize bg-secondary/30 p-2 rounded-md border text-center">
+                        {numberToWords(monthlyPrincipal)} Rupees Only
+                    </div>
                     <Slider
                       value={[monthlyPrincipal]}
                       onValueChange={(value) => setMonthlyPrincipal(value[0])}
