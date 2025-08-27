@@ -67,8 +67,8 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     // The actual loan amount to be disbursed, including any shortfall
     const finalLoanAmount = loanAmount + totalShortfall;
 
-    // Calculate loan tenure AFTER finalLoanAmount is determined
-    const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
+    // Based on the requirement, the tenure is simply the total amount divided by the fixed monthly principal payment.
+    const tenureMonths = Math.ceil(finalLoanAmount / monthlyPrincipal);
 
     await Loan.create({
       user: user._id,
@@ -78,7 +78,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       status: 'pending',
       payments: [],
       monthlyPrincipalPayment: monthlyPrincipal,
-      loanTenureMonths: tenureMonths !== Infinity ? tenureMonths : undefined,
+      loanTenureMonths: tenureMonths, // Use the correctly calculated tenure
       fundShortfall: {
           share: shareFundShortfall,
           guaranteed: guaranteedFundShortfall
