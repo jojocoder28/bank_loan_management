@@ -45,7 +45,10 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
 
 export default function ApplyLoanPage() {
   const [loanAmount, setLoanAmount] = useState(100000);
-  const [monthlyPrincipal, setMonthlyPrincipal] = useState(2000);
+  
+  const minMonthlyPayment = Math.ceil(loanAmount / 60);
+  const [monthlyPrincipal, setMonthlyPrincipal] = useState(minMonthlyPayment);
+  
   const [userData, setUserData] = useState({ shareFund: 0, guaranteedFund: 0, role: 'user' });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -62,6 +65,12 @@ export default function ApplyLoanPage() {
     fetchUserData();
   }, []);
   
+  useEffect(() => {
+      const newMin = Math.ceil(loanAmount / 60);
+      setMonthlyPrincipal(prev => Math.max(prev, newMin));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loanAmount]);
+
   useEffect(() => {
       if(state?.error) {
           toast({
@@ -167,7 +176,7 @@ export default function ApplyLoanPage() {
                         onChange={(e) => setMonthlyPrincipal(Number(e.target.value))}
                         className="text-lg font-bold"
                         step={500}
-                        min={1000}
+                        min={minMonthlyPayment}
                     />
                      <div className="text-sm text-muted-foreground capitalize bg-secondary/30 p-2 rounded-md border text-center">
                         {numberToWords(monthlyPrincipal)} Rupees Only
@@ -175,8 +184,8 @@ export default function ApplyLoanPage() {
                     <Slider
                       value={[monthlyPrincipal]}
                       onValueChange={(value) => setMonthlyPrincipal(value[0])}
-                      min={1000}
-                      max={25000}
+                      min={minMonthlyPayment}
+                      max={Math.max(minMonthlyPayment, 25000)}
                       step={500}
                     />
                   </div>
