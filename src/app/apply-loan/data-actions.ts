@@ -24,10 +24,10 @@ export async function getUserFundsAndSettings(): Promise<UserData> {
 
     try {
         await dbConnect();
-        const [user, bankSettings, activeLoan] = await Promise.all([
+        const [user, bankSettings, activeLoans] = await Promise.all([
              User.findById(session.id).select('shareFund guaranteedFund role').lean(),
              getBankSettings(),
-             Loan.findOne({ user: session.id, status: 'active' }).select('principal').lean()
+             Loan.find({ user: session.id, status: 'active' }).select('principal').lean()
         ]);
         
         if (!user) {
@@ -36,13 +36,15 @@ export async function getUserFundsAndSettings(): Promise<UserData> {
         if (!bankSettings) {
              throw new Error("Bank settings not found.");
         }
+
+        const totalActivePrincipal = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
         
         return {
             shareFund: user.shareFund || 0,
             guaranteedFund: user.guaranteedFund || 0,
             role: user.role || 'user',
             bankSettings: bankSettings,
-            activeLoanPrincipal: activeLoan?.principal || 0
+            activeLoanPrincipal: totalActivePrincipal
         };
     } catch (error) {
         console.error("Failed to get user funds and settings:", error);

@@ -45,9 +45,11 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const { user, activeLoan, loanHistory } = data;
+  const { user, activeLoans, loanHistory } = data;
 
-  const loanProgress = activeLoan ? ((activeLoan.loanAmount - activeLoan.principal) / activeLoan.loanAmount) * 100 : 0;
+  const totalLoanAmount = activeLoans.reduce((sum, loan) => sum + loan.loanAmount, 0);
+  const totalPrincipalLeft = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
+  const loanProgress = totalLoanAmount > 0 ? ((totalLoanAmount - totalPrincipalLeft) / totalLoanAmount) * 100 : 0;
 
   const loanStatusVariant: { [key: string]: "default" | "secondary" | "outline" | "destructive" } = {
       active: 'default',
@@ -66,38 +68,34 @@ export default async function DashboardPage() {
                 <Landmark className="size-6 text-primary" />
               </div>
               <div>
-                <CardTitle>Active Loan Overview</CardTitle>
+                <CardTitle>Active Loans Overview</CardTitle>
                 <CardDescription>
-                  {activeLoan ? `Loan issued on ${new Date(activeLoan.issueDate).toLocaleDateString()}`: 'You have no active loans.'}
+                  {activeLoans.length > 0 ? `You have ${activeLoans.length} active loan(s).`: 'You have no active loans.'}
                 </CardDescription>
               </div>
             </div>
              <Button asChild>
-                <Link href="/apply-loan">Apply for Loan <ArrowRight className="ml-2" /></Link>
+                <Link href="/apply-loan">Apply for New Loan <ArrowRight className="ml-2" /></Link>
             </Button>
           </CardHeader>
           <CardContent className="grid gap-6">
-            {activeLoan ? (
+            {activeLoans.length > 0 ? (
               <div>
-                <div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-center pb-6'>
+                <div className='grid grid-cols-2 md:grid-cols-3 gap-4 text-center pb-6'>
                     <div>
-                        <p className="text-sm text-muted-foreground">Total Loan</p>
-                        <p className="text-2xl font-bold">₹{activeLoan.loanAmount.toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Total Loan Amount</p>
+                        <p className="text-2xl font-bold">₹{totalLoanAmount.toLocaleString()}</p>
                     </div>
                      <div>
-                        <p className="text-sm text-muted-foreground">Principal Left</p>
-                        <p className="text-2xl font-bold">₹{activeLoan.principal.toLocaleString()}</p>
-                    </div>
-                     <div>
-                        <p className="text-sm text-muted-foreground">Interest Rate</p>
-                        <p className="text-2xl font-bold">{activeLoan.interestRate}%</p>
+                        <p className="text-sm text-muted-foreground">Total Principal Left</p>
+                        <p className="text-2xl font-bold">₹{totalPrincipalLeft.toLocaleString()}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground">Status</p>
-                        <Badge className="text-lg capitalize">{activeLoan.status}</Badge>
+                        <p className="text-sm text-muted-foreground">Active Loans</p>
+                        <p className="text-2xl font-bold">{activeLoans.length}</p>
                     </div>
                 </div>
-                <Progress value={loanProgress} aria-label={`${loanProgress.toFixed(0)}% of loan paid`} />
+                <Progress value={loanProgress} aria-label={`${loanProgress.toFixed(0)}% of total loans paid`} />
                 <p className="text-right text-sm text-muted-foreground pt-2">{loanProgress.toFixed(2)}% Paid</p>
               </div>
             ) : (
@@ -106,6 +104,11 @@ export default async function DashboardPage() {
               </div>
             )}
           </CardContent>
+           <CardFooter>
+                <Button variant="link" asChild>
+                    <Link href="/my-finances">Manage Loans & View Details &rarr;</Link>
+                </Button>
+            </CardFooter>
         </Card>
         <Card>
           <CardHeader>

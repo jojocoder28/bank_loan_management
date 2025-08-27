@@ -15,7 +15,7 @@ export interface DashboardData {
         guaranteedFund: number;
         thriftFund?: number;
     };
-    activeLoan: ILoan | null;
+    activeLoans: ILoan[];
     loanHistory: ILoan[];
 }
 
@@ -32,7 +32,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
             return null;
         }
 
-        const activeLoan = await Loan.findOne({ user: user._id, status: 'active' }).lean();
+        const activeLoans = await Loan.find({ user: user._id, status: 'active' }).lean();
         const loanHistory = await Loan.find({ 
             user: user._id, 
             status: { $in: ['paid', 'rejected', 'pending'] } 
@@ -47,7 +47,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
                 guaranteedFund: user.guaranteedFund || 0,
                 thriftFund: user.thriftFund || 0
             },
-            activeLoan: JSON.parse(JSON.stringify(activeLoan)),
+            activeLoans: JSON.parse(JSON.stringify(activeLoans)),
             loanHistory: JSON.parse(JSON.stringify(loanHistory)),
         };
 

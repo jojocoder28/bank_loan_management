@@ -52,8 +52,8 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     }
 
     // Check for existing loans
-    const existingActiveLoan = await Loan.findOne({ user: user._id, status: 'active' });
-    const totalExistingPrincipal = existingActiveLoan ? existingActiveLoan.principal : 0;
+    const existingActiveLoans = await Loan.find({ user: user._id, status: 'active' });
+    const totalExistingPrincipal = existingActiveLoans.reduce((sum, loan) => sum + loan.principal, 0);
     
     if ((totalExistingPrincipal + loanAmount) > bankSettings.maxLoanAmount) {
          return { error: `The requested amount of ₹${loanAmount.toLocaleString()} exceeds the maximum loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}, considering your existing loan balance.` };
