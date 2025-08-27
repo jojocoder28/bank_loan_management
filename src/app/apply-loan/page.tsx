@@ -222,7 +222,10 @@ export default function ApplyLoanPage() {
                         id="loan-amount"
                         type="number"
                         value={loanAmount}
-                        onChange={(e) => setLoanAmount(Number(e.target.value))}
+                        onChange={(e) => {
+                            const newValue = Number(e.target.value);
+                            setLoanAmount(newValue > maxLoanForUser ? maxLoanForUser : newValue);
+                        }}
                         className="text-lg font-bold"
                         step={1000}
                         min={10000}
