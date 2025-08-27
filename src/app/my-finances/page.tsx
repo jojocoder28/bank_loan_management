@@ -16,10 +16,11 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PiggyBank, ShieldCheck, Download, Calendar, Handshake, Info, TrendingUp, CircleDollarSign } from 'lucide-react';
+import { PiggyBank, ShieldCheck, Download, Handshake } from 'lucide-react';
 import { getMyFinancesData } from './actions';
 import { redirect } from 'next/navigation';
 import { ILoan } from '@/models/loan';
+import { LoanWalkthrough } from './_components/loan-walkthrough';
 
 export default async function MyFinancesPage() {
   const data = await getMyFinancesData();
@@ -85,9 +86,8 @@ export default async function MyFinancesPage() {
                             <TableHead>Applied On</TableHead>
                             <TableHead>Loan Amount</TableHead>
                             <TableHead>Outstanding</TableHead>
-                            <TableHead>Interest Rate</TableHead>
-                            <TableHead>Issued On</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Walkthrough</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -96,10 +96,17 @@ export default async function MyFinancesPage() {
                                 <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
                                 <TableCell>₹{loan.principal.toLocaleString()}</TableCell>
-                                <TableCell>{loan.interestRate}%</TableCell>
-                                <TableCell>{loan.status === 'pending' ? 'N/A' : new Date(loan.issueDate).toLocaleDateString()}</TableCell>
                                 <TableCell>
                                     <Badge variant={loanStatusVariant[loan.status]} className="capitalize">{loan.status}</Badge>
+                                </TableCell>
+                                 <TableCell className="text-right">
+                                    {['active', 'paid'].includes(loan.status) ? (
+                                        <LoanWalkthrough loan={loan} />
+                                    ) : (
+                                        <Button variant="outline" size="sm" disabled>
+                                            N/A
+                                        </Button>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}
