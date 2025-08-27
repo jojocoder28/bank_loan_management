@@ -134,15 +134,15 @@ export default function ApplyLoanPage() {
             <input type="hidden" name="monthlyPrincipal" value={monthlyPrincipal} />
             
           <div className="grid md:grid-cols-2 gap-8">
-              <div className="grid gap-6">
-                <div className="grid gap-4">
+              <div className="grid gap-8">
+                <div className="grid gap-2">
                     <Label htmlFor="loan-amount">Loan Amount (Rs.)</Label>
-                    <Input
+                     <Input
                         id="loan-amount"
                         type="number"
                         value={loanAmount}
                         onChange={(e) => setLoanAmount(Number(e.target.value))}
-                        className="text-2xl font-bold h-12"
+                        className="text-lg font-bold"
                         step={1000}
                     />
                     <Slider
@@ -153,14 +153,14 @@ export default function ApplyLoanPage() {
                         step={5000}
                     />
                 </div>
-                 <div className="grid gap-4">
+                 <div className="grid gap-2">
                     <Label htmlFor="monthly-principal">Your Chosen Monthly Principal Payment (Rs.)</Label>
                     <Input
                         type="number"
                         id="monthly-principal"
                         value={monthlyPrincipal}
                         onChange={(e) => setMonthlyPrincipal(Number(e.target.value))}
-                        className="text-2xl font-bold h-12"
+                        className="text-lg font-bold"
                         step={500}
                     />
                      <Slider
@@ -232,3 +232,4 @@ export default function ApplyLoanPage() {
     </div>
   );
 }
+
