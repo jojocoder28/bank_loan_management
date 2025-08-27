@@ -64,17 +64,17 @@ export default async function LedgerPage() {
       <div className="grid gap-4 md:grid-cols-3">
           <StatCard 
             title="Total Capital (Share + Guaranteed)" 
-            value={`₹${totalCapital.total.toLocaleString()}`} 
+            value={`₹${(totalCapital?.total ?? 0).toLocaleString()}`} 
             icon={<DollarSign className="size-4 text-muted-foreground" />}
           />
           <StatCard 
             title="Total Share Fund" 
-            value={`₹${totalCapital.shareFund.toLocaleString()}`}
+            value={`₹${(totalCapital?.shareFund ?? 0).toLocaleString()}`}
             icon={<PiggyBank className="size-4 text-muted-foreground" />}
            />
           <StatCard 
             title="Total Guaranteed Fund" 
-            value={`₹${totalCapital.guaranteedFund.toLocaleString()}`}
+            value={`₹${(totalCapital?.guaranteedFund ?? 0).toLocaleString()}`}
             icon={<ShieldCheck className="size-4 text-muted-foreground" />}
            />
       </div>
@@ -107,16 +107,16 @@ export default async function LedgerPage() {
                     </Link>
                     <p className="text-xs text-muted-foreground">{loan.user.email}</p>
                   </TableCell>
-                  <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
-                  <TableCell>₹{loan.principal.toLocaleString()}</TableCell>
-                  <TableCell>₹{loan.monthlyPrincipalPayment.toLocaleString()}</TableCell>
+                  <TableCell>₹{(loan.loanAmount ?? 0).toLocaleString()}</TableCell>
+                  <TableCell>₹{(loan.principal ?? 0).toLocaleString()}</TableCell>
+                  <TableCell>₹{(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}</TableCell>
                   <TableCell>
                     <Badge variant={loanStatusVariant[loan.status]} className="capitalize">
                       {loan.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {loan.status !== 'pending' ? new Date(loan.issueDate).toLocaleDateString() : 'N/A'}
+                    {loan.issueDate && loan.status !== 'pending' ? new Date(loan.issueDate).toLocaleDateString() : 'N/A'}
                   </TableCell>
                 </TableRow>
               ))}
