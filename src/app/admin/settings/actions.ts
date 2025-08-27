@@ -21,6 +21,9 @@ export async function getBankSettings(): Promise<IBank> {
         settings = await Bank.create({
             loanInterestRate: 10,
             thriftFundInterestRate: 6,
+            shareFundDividendRate: 12,
+            initialShareFundDeposit: 5000,
+            monthlyThriftContribution: 1000,
         });
     }
     return JSON.parse(JSON.stringify(settings));
@@ -29,6 +32,9 @@ export async function getBankSettings(): Promise<IBank> {
 const settingsSchema = z.object({
   loanInterestRate: z.coerce.number().min(0, "Loan interest rate must be non-negative."),
   thriftFundInterestRate: z.coerce.number().min(0, "Thrift fund interest rate must be non-negative."),
+  shareFundDividendRate: z.coerce.number().min(0, "Dividend rate must be non-negative."),
+  initialShareFundDeposit: z.coerce.number().min(0, "Initial deposit must be non-negative."),
+  monthlyThriftContribution: z.coerce.number().min(0, "Monthly contribution must be non-negative."),
 });
 
 
@@ -38,10 +44,7 @@ export async function updateBankSettings(prevState: any, formData: FormData) {
         return { error: "Unauthorized access." };
     }
     
-    const validatedFields = settingsSchema.safeParse({
-        loanInterestRate: formData.get("loanInterestRate"),
-        thriftFundInterestRate: formData.get("thriftFundInterestRate"),
-    });
+    const validatedFields = settingsSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validatedFields.success) {
         return {
@@ -51,7 +54,7 @@ export async function updateBankSettings(prevState: any, formData: FormData) {
     
     try {
         await dbConnect();
-        const settings = await Bank.findOneAndUpdate(
+        await Bank.findOneAndUpdate(
             { singleton: 'bank-settings' },
             { $set: validatedFields.data },
             { new: true, upsert: true } // upsert ensures it's created if it doesn't exist
@@ -64,6 +67,7 @@ export async function updateBankSettings(prevState: any, formData: FormData) {
 
     revalidatePath("/admin/settings");
     revalidatePath("/apply-loan"); // Revalidate where the rates are used
+    revalidatePath("/become-member");
     
     return { error: null, success: "Bank settings updated successfully." };
 }

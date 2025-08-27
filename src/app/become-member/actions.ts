@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { v2 as cloudinary } from 'cloudinary';
 import { config } from 'dotenv';
+import { getBankSettings } from "../admin/settings/actions";
 
 config();
 
@@ -48,9 +49,17 @@ export async function applyForMembership(prevState: any, formData: FormData) {
     }
 
     await dbConnect();
-    const user = await User.findById(session.id);
+    const [user, bankSettings] = await Promise.all([
+        User.findById(session.id),
+        getBankSettings()
+    ]);
+
     if (!user) {
          return { error: 'Could not find your user profile.' }
+    }
+    
+    if (!bankSettings) {
+      return { error: 'Bank settings are not configured. Please contact an administrator.' };
     }
 
     if (user.role !== 'user') {
@@ -103,8 +112,8 @@ export async function applyForMembership(prevState: any, formData: FormData) {
     // For now, we'll assume the user has made the payment offline and we
     // just update their status to pending.
     user.membershipApplied = true;
-    // For the demo, we'll auto-credit the initial amount.
-    user.shareFund = (user.shareFund || 0) + 5000;
+    // For the demo, we'll auto-credit the initial amount from the bank settings.
+    user.shareFund = (user.shareFund || 0) + bankSettings.initialShareFundDeposit;
     
     await user.save();
 

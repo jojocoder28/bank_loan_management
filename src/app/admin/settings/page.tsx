@@ -19,6 +19,7 @@ import { Loader2, Save, Settings as SettingsIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { IBank } from "@/models/bank";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 
 const initialFormState = {
   error: null,
@@ -95,6 +96,10 @@ export default function AdminSettingsPage() {
                     <Skeleton className="h-4 w-1/4" />
                     <Skeleton className="h-10 w-full" />
                 </div>
+                 <div className="grid gap-2">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
             </CardContent>
             <CardFooter>
                  <Skeleton className="h-10 w-32" />
@@ -130,7 +135,7 @@ export default function AdminSettingsPage() {
               <p className="text-xs text-muted-foreground">The annual interest rate charged on all active loans.</p>
                {formState.error?.loanInterestRate && <p className="text-sm text-destructive">{formState.error.loanInterestRate[0]}</p>}
           </div>
-            <div className="grid gap-2">
+          <div className="grid gap-2">
               <Label htmlFor="thriftFundInterestRate">Thrift Fund Interest Rate (%)</Label>
               <Input 
                 id="thriftFundInterestRate" 
@@ -142,6 +147,46 @@ export default function AdminSettingsPage() {
               />
                <p className="text-xs text-muted-foreground">The annual interest rate paid to members for their thrift fund balance.</p>
               {formState.error?.thriftFundInterestRate && <p className="text-sm text-destructive">{formState.error.thriftFundInterestRate[0]}</p>}
+          </div>
+          <div className="grid gap-2">
+              <Label htmlFor="shareFundDividendRate">Share Fund Dividend Rate (%)</Label>
+              <Input 
+                id="shareFundDividendRate" 
+                name="shareFundDividendRate" 
+                type="number" 
+                defaultValue={settings?.shareFundDividendRate ?? 12}
+                step="0.1"
+                required 
+              />
+               <p className="text-xs text-muted-foreground">The annual dividend percentage paid to members on their share fund balance.</p>
+              {formState.error?.shareFundDividendRate && <p className="text-sm text-destructive">{formState.error.shareFundDividendRate[0]}</p>}
+          </div>
+          <Separator />
+          <div className="grid gap-2">
+              <Label htmlFor="initialShareFundDeposit">Initial Share Fund Deposit (₹)</Label>
+              <Input 
+                id="initialShareFundDeposit" 
+                name="initialShareFundDeposit" 
+                type="number" 
+                defaultValue={settings?.initialShareFundDeposit ?? 5000}
+                step="100"
+                required 
+              />
+               <p className="text-xs text-muted-foreground">The one-time deposit required for a new user to become a member.</p>
+              {formState.error?.initialShareFundDeposit && <p className="text-sm text-destructive">{formState.error.initialShareFundDeposit[0]}</p>}
+          </div>
+           <div className="grid gap-2">
+              <Label htmlFor="monthlyThriftContribution">Monthly Thrift Contribution (₹)</Label>
+              <Input 
+                id="monthlyThriftContribution" 
+                name="monthlyThriftContribution" 
+                type="number" 
+                defaultValue={settings?.monthlyThriftContribution ?? 1000}
+                step="50"
+                required 
+              />
+               <p className="text-xs text-muted-foreground">The recurring monthly contribution required from all active members.</p>
+              {formState.error?.monthlyThriftContribution && <p className="text-sm text-destructive">{formState.error.monthlyThriftContribution[0]}</p>}
           </div>
         </CardContent>
         <CardFooter className="flex justify-end">
