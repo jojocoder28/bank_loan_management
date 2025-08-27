@@ -39,10 +39,12 @@ export function AppLayout({
         isCollapsed={isSidebarCollapsed} 
         toggleSidebar={toggleSidebar} 
       />
-      <div className="flex flex-col flex-1">
+      <div className={cn("flex flex-col flex-1 transition-all duration-300", isSidebarCollapsed ? "md:ml-20" : "md:ml-64")}>
         <Header user={user} />
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/40">
-          {children}
+        <main className="flex-1 overflow-y-auto">
+            <div className="p-4 md:gap-8 md:p-8">
+             {children}
+            </div>
         </main>
       </div>
     </div>

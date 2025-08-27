@@ -116,7 +116,7 @@ export function Sidebar({ user, isCollapsed, toggleSidebar }: { user: User, isCo
     if (!user) return null;
 
     return (
-        <div className={cn("hidden md:flex flex-col h-screen border-r bg-muted/40 transition-all duration-300", isCollapsed ? "w-20" : "w-64")}>
+        <div className={cn("hidden md:flex flex-col h-full border-r bg-muted/40 transition-all duration-300 fixed", isCollapsed ? "w-20" : "w-64")}>
             <div className="flex h-14 items-center border-b px-4">
                 <Link href={user.role === 'admin' ? "/admin/dashboard" : "/dashboard"} className="flex items-center gap-2 font-semibold">
                     <Landmark className="h-6 w-6" />
