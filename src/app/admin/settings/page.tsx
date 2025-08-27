@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,18 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 import { IBank } from "@/models/bank";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type PageState = {
-  settings: IBank | null;
-  loading: boolean;
-  formState: {
-    error: any | null;
-    success: string | null;
-  }
-};
-
-const initialState: PageState['formState'] = {
+const initialFormState = {
   error: null,
-  success: null
+  success: null,
 };
 
 function SubmitButton() {
@@ -54,41 +45,41 @@ function SubmitButton() {
 }
 
 export default function AdminSettingsPage() {
-  const [pageState, setPageState] = useActionState(async (prevState: PageState, formData: FormData) => {
-    const result = await updateBankSettings(prevState.formState, formData);
-    return { ...prevState, formState: result };
-  }, { settings: null, loading: true, formState: initialState });
-
+  const [formState, formAction] = useActionState(updateBankSettings, initialFormState);
+  const [settings, setSettings] = useState<IBank | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     async function loadSettings() {
-      const settings = await getBankSettings();
-      setPageState(prev => ({...prev, settings, loading: false}));
+      setLoading(true);
+      const fetchedSettings = await getBankSettings();
+      setSettings(fetchedSettings);
+      setLoading(false);
     }
     loadSettings();
   }, []);
   
   useEffect(() => {
-    if (pageState.formState?.error) {
-      const errorMsg = typeof pageState.formState.error === 'object' 
-        ? Object.values(pageState.formState.error).flat().join(', ')
-        : pageState.formState.error;
+    if (formState?.error) {
+      const errorMsg = typeof formState.error === 'object' 
+        ? Object.values(formState.error).flat().join(', ')
+        : formState.error;
       toast({
         variant: "destructive",
         title: "Update Failed",
         description: errorMsg,
       });
     }
-     if (pageState.formState?.success) {
+     if (formState?.success) {
       toast({
         title: "Success",
-        description: pageState.formState.success,
+        description: formState.success,
       });
     }
-  }, [pageState.formState, toast]);
+  }, [formState, toast]);
 
-  if (pageState.loading) {
+  if (loading) {
     return (
         <Card className="max-w-2xl mx-auto">
             <CardHeader>
@@ -114,7 +105,7 @@ export default function AdminSettingsPage() {
 
 
   return (
-    <form action={setPageState}>
+    <form action={formAction}>
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -132,12 +123,12 @@ export default function AdminSettingsPage() {
                 id="loanInterestRate" 
                 name="loanInterestRate" 
                 type="number"
-                defaultValue={pageState.settings?.loanInterestRate ?? 10}
+                defaultValue={settings?.loanInterestRate ?? 10}
                 step="0.1"
                 required 
                />
               <p className="text-xs text-muted-foreground">The annual interest rate charged on all active loans.</p>
-               {pageState.formState.error?.loanInterestRate && <p className="text-sm text-destructive">{pageState.formState.error.loanInterestRate[0]}</p>}
+               {formState.error?.loanInterestRate && <p className="text-sm text-destructive">{formState.error.loanInterestRate[0]}</p>}
           </div>
             <div className="grid gap-2">
               <Label htmlFor="thriftFundInterestRate">Thrift Fund Interest Rate (%)</Label>
@@ -145,12 +136,12 @@ export default function AdminSettingsPage() {
                 id="thriftFundInterestRate" 
                 name="thriftFundInterestRate" 
                 type="number" 
-                defaultValue={pageState.settings?.thriftFundInterestRate ?? 6}
+                defaultValue={settings?.thriftFundInterestRate ?? 6}
                 step="0.1"
                 required 
               />
                <p className="text-xs text-muted-foreground">The annual interest rate paid to members for their thrift fund balance.</p>
-              {pageState.formState.error?.thriftFundInterestRate && <p className="text-sm text-destructive">{pageState.formState.error.thriftFundInterestRate[0]}</p>}
+              {formState.error?.thriftFundInterestRate && <p className="text-sm text-destructive">{formState.error.thriftFundInterestRate[0]}</p>}
           </div>
         </CardContent>
         <CardFooter className="flex justify-end">
