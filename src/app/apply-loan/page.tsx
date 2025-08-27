@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getUserFundsAndStatus } from "./data-actions";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
 
 const initialState = {
   error: null,
@@ -145,6 +146,13 @@ export default function ApplyLoanPage() {
                         step={1000}
                         min={10000}
                     />
+                    <Slider
+                      value={[loanAmount]}
+                      onValueChange={(value) => setLoanAmount(value[0])}
+                      min={10000}
+                      max={500000} // Increased max value
+                      step={1000}
+                    />
                 </div>
                  <div className="grid gap-2">
                     <Label htmlFor="monthly-principal">Your Chosen Monthly Principal Payment (Rs.)</Label>
@@ -156,6 +164,13 @@ export default function ApplyLoanPage() {
                         className="text-lg font-bold"
                         step={500}
                         min={1000}
+                    />
+                    <Slider
+                      value={[monthlyPrincipal]}
+                      onValueChange={(value) => setMonthlyPrincipal(value[0])}
+                      min={1000}
+                      max={25000} // Increased max value
+                      step={500}
                     />
                   </div>
               </div>
