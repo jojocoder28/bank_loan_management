@@ -9,6 +9,7 @@ import Loan from '@/models/loan';
 import { calculateRequiredFunds } from '@/lib/coop-calculations';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { calculateLoanTenure } from '@/lib/calculations';
 
 const applyLoanSchema = z.object({
   loanAmount: z.coerce.number().min(10000, 'Minimum loan amount is Rs. 10,000.'),
@@ -30,6 +31,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
   }
 
   const { loanAmount, monthlyPrincipal } = validatedFields.data;
+  const interestRate = 10; // 10% annual interest
 
   try {
     await dbConnect();
@@ -72,15 +74,19 @@ export async function applyForLoan(prevState: any, formData: FormData) {
         await user.save();
     }
     
+    // Calculate loan tenure
+    const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
+
     await Loan.create({
       user: user._id,
       loanAmount: finalLoanAmount,
       principal: finalLoanAmount, // Initially, outstanding principal is the full adjusted amount
-      interestRate: 10, // Hardcoded 10% annual interest rate
+      interestRate,
       issueDate: new Date(), // This will be updated upon approval
       status: 'pending',
       payments: [],
       monthlyPrincipalPayment: monthlyPrincipal,
+      loanTenureMonths: tenureMonths !== Infinity ? tenureMonths : undefined
     });
 
   } catch (error) {

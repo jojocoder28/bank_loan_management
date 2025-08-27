@@ -51,8 +51,9 @@ export function LoanApprovals({ pendingLoans }: { pendingLoans: PopulatedLoan[] 
             <TableHeader>
                 <TableRow>
                     <TableHead>Applicant</TableHead>
-                    <TableHead>Email</TableHead>
                     <TableHead>Loan Amount</TableHead>
+                    <TableHead>Monthly Payment</TableHead>
+                    <TableHead>Tenure (Months)</TableHead>
                     <TableHead>Share Fund</TableHead>
                     <TableHead>Guaranteed Fund</TableHead>
                     <TableHead>Applied On</TableHead>
@@ -66,9 +67,11 @@ export function LoanApprovals({ pendingLoans }: { pendingLoans: PopulatedLoan[] 
                             <Link href={`/admin/users/${loan.user._id}`} className="text-primary hover:underline">
                                 {loan.user.name}
                             </Link>
+                             <p className="text-xs text-muted-foreground">{loan.user.email}</p>
                         </TableCell>
-                        <TableCell>{loan.user.email}</TableCell>
                         <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
+                        <TableCell>₹{loan.monthlyPrincipalPayment.toLocaleString()}</TableCell>
+                        <TableCell>{loan.loanTenureMonths ? `${loan.loanTenureMonths} months` : 'N/A'}</TableCell>
                         <TableCell>₹{loan.user.shareFund.toLocaleString()}</TableCell>
                         <TableCell>₹{loan.user.guaranteedFund.toLocaleString()}</TableCell>
                         <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
