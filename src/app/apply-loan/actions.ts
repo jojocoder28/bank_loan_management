@@ -15,7 +15,7 @@ const applyLoanSchema = z.object({
   monthlyPrincipal: z.coerce.number().min(1000, 'Minimum principal payment is Rs. 1,000.'),
 });
 
-export async function applyForLoan(formData: FormData) {
+export async function applyForLoan(prevState: any, formData: FormData) {
   const userSession = await getSession();
   if (!userSession) {
     return { error: 'You must be logged in to apply for a loan.' };
@@ -25,7 +25,8 @@ export async function applyForLoan(formData: FormData) {
   const validatedFields = applyLoanSchema.safeParse(values);
 
   if (!validatedFields.success) {
-    return { error: validatedFields.error.flatten().fieldErrors.loanAmount?.[0] };
+    const firstError = Object.values(validatedFields.error.flatten().fieldErrors)[0]?.[0];
+    return { error: firstError || 'Invalid input.' };
   }
 
   const { loanAmount } = validatedFields.data;
@@ -90,4 +91,5 @@ export async function applyForLoan(formData: FormData) {
   revalidatePath('/admin/approvals');
   redirect('/dashboard');
 }
+
 
