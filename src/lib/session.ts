@@ -38,16 +38,6 @@ export async function getSession(): Promise<User | null> {
   const session = await decrypt(sessionCookie);
   if (!session) return null;
 
-  // Refresh the session if it's about to expire (e.g., in the last 15 minutes)
-  const now = Date.now();
-  const expires = session.exp * 1000;
-  if (expires - now < 15 * 60 * 1000) {
-    const newExpires = new Date(now + 60 * 60 * 1000); // 1 hour from now
-    // Re-encrypt with the same user data but a new expiration time
-    const newSessionToken = await encrypt({ user: session.user, exp: newExpires.getTime() / 1000 });
-    cookies().set('session', newSessionToken, { expires: newExpires, httpOnly: true });
-  }
-
   return session.user;
 }
 

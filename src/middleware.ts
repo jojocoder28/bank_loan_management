@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from '@/lib/session';
+import { decrypt, encrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/types';
 
@@ -42,8 +42,25 @@ export default async function middleware(req: NextRequest) {
           return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
       }
   }
+
+  // 6. Refresh the session if it's about to expire
+  if (session?.exp) {
+      const now = Date.now();
+      const expires = session.exp * 1000;
+      if (expires - now < 15 * 60 * 1000) { // Less than 15 minutes left
+          const newExpires = new Date(now + 60 * 60 * 1000); // 1 hour from now
+          const newSessionToken = await encrypt({ user: session.user, exp: newExpires.getTime() / 1000 });
+          
+          const response = NextResponse.next();
+          response.cookies.set('session', newSessionToken, {
+              expires: newExpires,
+              httpOnly: true,
+          });
+          return response;
+      }
+  }
   
-  // 6. If none of the above, allow the request to continue
+  // 7. If none of the above, allow the request to continue
   return NextResponse.next();
 }
 

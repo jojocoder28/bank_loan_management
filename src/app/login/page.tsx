@@ -36,8 +36,14 @@ export default function LoginPage() {
       
       const result = await login(formData);
 
-      if (result?.error) {
+      if (result.error) {
         setError(result.error);
+      } else {
+        // Handle redirection on the client side
+        const dashboardPath = result.role === 'admin' ? '/admin/dashboard' : '/dashboard';
+        router.push(dashboardPath);
+        // We call router.refresh() to ensure the new session is picked up by the layout
+        router.refresh();
       }
     });
   };

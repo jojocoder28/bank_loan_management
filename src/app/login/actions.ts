@@ -12,7 +12,8 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-export async function login(formData: FormData) {
+// Return type updated to send role or error
+export async function login(formData: FormData): Promise<{ error: string; role?: never; } | { error: null; role: 'admin' | 'user' | 'member' | 'board_member' }> {
   const values = Object.fromEntries(formData.entries());
   const validatedFields = loginSchema.safeParse(values);
 
@@ -36,7 +37,6 @@ export async function login(formData: FormData) {
       return { error: 'Invalid email or password.' };
     }
     
-    // Assign found user to the outer scope variable
     user = foundUser;
 
   } catch (error) {
@@ -44,7 +44,6 @@ export async function login(formData: FormData) {
     return { error: 'An unexpected error occurred.' };
   }
   
-  // Create session and redirect outside the try...catch block
   await createSession({
     id: user._id.toString(),
     name: user.name,
@@ -54,9 +53,6 @@ export async function login(formData: FormData) {
     membershipApplied: user.membershipApplied
   });
 
-  if (user.role === 'admin') {
-    redirect('/admin/dashboard');
-  }
-
-  redirect('/dashboard');
+  // Return role instead of redirecting
+  return { error: null, role: user.role };
 }
