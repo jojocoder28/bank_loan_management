@@ -23,17 +23,20 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
 
     const generateSchedule = (): ScheduleRow[] => {
         const schedule: ScheduleRow[] = [];
-        let currentPrincipal = loan.loanAmount;
+        let currentPrincipal = loan.principal; // Start with the most up-to-date principal
         let currentDate = new Date(loan.issueDate || new Date());
         
-        // Sort approved modifications by date
-        const approvedAmountIncreases = [...loan.modificationRequests]
-            .filter(r => r.type === 'increase_amount' && r.status === 'approved' && r.approvalDate)
-            .sort((a, b) => new Date(a.approvalDate!).getTime() - new Date(b.approvalDate!).getTime());
+        // Find the date of the first payment
+        currentDate.setDate(1);
+        currentDate.setMonth(currentDate.getMonth() + 1);
             
         const approvedPaymentChanges = [...loan.modificationRequests]
             .filter(r => r.type === 'change_payment' && r.status === 'approved' && r.effectiveYear !== undefined && r.effectiveMonth !== undefined)
             .sort((a,b) => (a.effectiveYear!*12 + a.effectiveMonth!) - (b.effectiveYear!*12 + b.effectiveMonth!));
+        
+        const approvedAmountIncreases = [...loan.modificationRequests]
+            .filter(r => r.type === 'increase_amount' && r.status === 'approved' && r.approvalDate)
+            .sort((a, b) => new Date(a.approvalDate!).getTime() - new Date(b.approvalDate!).getTime());
 
         let monthCounter = 1;
 
@@ -42,13 +45,13 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
             let month = currentDate.getMonth();
             let year = currentDate.getFullYear();
             
-            // Check for amount increases in the current month
-            for (const increase of approvedAmountIncreases) {
-                const approvalDate = new Date(increase.approvalDate!);
-                if (approvalDate.getFullYear() === year && approvalDate.getMonth() === month) {
-                     currentPrincipal += increase.requestedValue;
-                     notes += `Loan increased by ₹${increase.requestedValue.toLocaleString()}. `;
-                }
+            // Find if this month has an approved loan increase. This is for annotation only.
+            const increaseThisMonth = approvedAmountIncreases.find(inc => {
+                const approvalDate = new Date(inc.approvalDate!);
+                return approvalDate.getFullYear() === year && approvalDate.getMonth() === month;
+            });
+            if(increaseThisMonth) {
+                notes += `Loan increased by ₹${increaseThisMonth.requestedValue.toLocaleString()}. `;
             }
             
             // Determine principal payment for the current month
@@ -81,6 +84,9 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
             monthCounter++;
             if (monthCounter > 1200) { // Safety break after 100 years
                  console.error("Loan schedule generation exceeded 100 years, breaking.");
+                 schedule.push({
+                     month: 0, year: 0, openingBalance: 0, interestPayment: 0, principalPayment: 0, totalPayment: 0, closingBalance: 0, notes: "ERROR: Schedule too long."
+                 })
                  break;
             }
         }
