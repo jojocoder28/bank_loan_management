@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -25,7 +26,7 @@ export async function login(formData: FormData) {
   try {
     await dbConnect();
 
-    const foundUser = await User.findOne({ email }).select('+password photoUrl membershipApplied');
+    const foundUser = await User.findOne({ email }).select('+password +photoUrl +membershipApplied +name +email +role');
     if (!foundUser) {
       return { error: 'Invalid email or password.' };
     }
