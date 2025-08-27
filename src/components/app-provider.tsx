@@ -7,7 +7,7 @@ import type { User } from "@/lib/types";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
 
-function AppLayout({
+export function AppProvider({
   children,
   user,
 }: {
@@ -33,15 +33,3 @@ function AppLayout({
     </div>
   );
 }
-
-
-export function AppProvider({
-  children,
-  user,
-}: {
-  children: React.ReactNode;
-  user: User | null;
-}) {
-  return <AppLayout user={user}>{children}</AppLayout>
-}
-
