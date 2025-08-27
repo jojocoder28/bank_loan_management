@@ -9,7 +9,6 @@ import Loan from '@/models/loan';
 import { calculateRequiredFunds } from '@/lib/coop-calculations';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { calculateLoanTenure } from '@/lib/calculations';
 
 const applyLoanSchema = z.object({
   loanAmount: z.coerce.number().min(10000, 'Minimum loan amount is Rs. 10,000.'),
@@ -31,7 +30,6 @@ export async function applyForLoan(prevState: any, formData: FormData) {
   }
 
   const { loanAmount, monthlyPrincipal } = validatedFields.data;
-  const interestRate = 10; // 10% annual interest
 
   try {
     await dbConnect();
@@ -67,6 +65,11 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     // The actual loan amount to be disbursed, including any shortfall
     const finalLoanAmount = loanAmount + totalShortfall;
 
+    // **DEBUG FIX**: Ensure monthlyPrincipal is positive to prevent division by zero.
+    if (monthlyPrincipal <= 0) {
+      return { error: 'Monthly principal payment must be a positive number.' };
+    }
+
     // Based on the requirement, the tenure is simply the total amount divided by the fixed monthly principal payment.
     const tenureMonths = Math.ceil(finalLoanAmount / monthlyPrincipal);
 
@@ -74,11 +77,11 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       user: user._id,
       loanAmount: finalLoanAmount,
       principal: finalLoanAmount, 
-      interestRate,
+      interestRate: 10, // Hardcoded 10% annual interest
       status: 'pending',
       payments: [],
       monthlyPrincipalPayment: monthlyPrincipal,
-      loanTenureMonths: tenureMonths, // Use the correctly calculated tenure
+      loanTenureMonths: tenureMonths,
       fundShortfall: {
           share: shareFundShortfall,
           guaranteed: guaranteedFundShortfall
