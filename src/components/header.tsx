@@ -28,12 +28,16 @@ export function Header({ user }: { user: User | null }) {
       </nav>
       
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        <div className="ml-auto flex-1 sm:flex-initial">
+        {/* Display user's name next to the logo, but hide on small screens */}
+        <div className="hidden md:flex items-center gap-2 text-sm font-semibold ml-auto">
+            <span>Welcome, {user.name}</span>
+        </div>
+        <div className="ml-auto flex-1 sm:flex-initial flex justify-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar>
-                  <AvatarImage src={user.photoUrl} alt={user.name} />
+                  <AvatarImage src={user.photoUrl ?? undefined} alt={user.name ?? 'User'} />
                   <AvatarFallback>{user.name?.[0] ?? 'U'}</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>
