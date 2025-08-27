@@ -28,10 +28,10 @@ const initialState = {
   error: null,
 };
 
-function SubmitButton({ canApply }: { canApply: boolean }) {
+function SubmitButton({ disabled }: { disabled: boolean }) {
     const { pending } = useFormStatus();
     return (
-        <Button type="submit" disabled={!canApply || pending}>
+        <Button type="submit" disabled={disabled || pending}>
             {pending ? (
                 <>
                     <Loader2 className="mr-2 animate-spin" /> Submitting...
@@ -115,7 +115,6 @@ export default function ApplyLoanPage() {
   const shareFundShortfall = Math.max(0, requiredShare - userData.shareFund);
   const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userData.guaranteedFund);
   const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
-  const canApply = totalShortfall === 0 && !isLoading;
 
   return (
     <div className="flex justify-center items-start pt-8">
@@ -210,24 +209,21 @@ export default function ApplyLoanPage() {
           
 
           <div>
-            {canApply ? (
-                 <Alert variant="default" className="bg-green-600/10 border-green-600/30 text-green-700 dark:text-green-400">
+            {totalShortfall > 0 ? (
+                 <Alert variant="default" className="bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400">
+                    <Info className="h-4 w-4 text-amber-600" />
+                    <AlertTitle>Automatic Fund Top-Up</AlertTitle>
+                    <AlertDescription>
+                        You have a total fund shortfall of <strong>Rs. {totalShortfall.toLocaleString()}</strong>.
+                        This amount will be added to your total loan, and your Share and Guaranteed funds will be topped up automatically upon approval. Your final loan amount will be <strong>Rs. {(loanAmount + totalShortfall).toLocaleString()}</strong>.
+                    </AlertDescription>
+                </Alert>
+            ) : (
+                <Alert variant="default" className="bg-green-600/10 border-green-600/30 text-green-700 dark:text-green-400">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <AlertTitle>Ready to Apply!</AlertTitle>
                     <AlertDescription>
                         Your current fund balances meet the requirements for this loan amount.
-                    </AlertDescription>
-                </Alert>
-            ) : (
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Fund Shortfall</AlertTitle>
-                    <AlertDescription>
-                        You cannot apply for this loan amount. You need to increase your funds.
-                        <ul className="list-disc pl-5 mt-2">
-                            {shareFundShortfall > 0 && <li>Share Fund shortfall: Rs. {shareFundShortfall.toLocaleString()}</li>}
-                            {guaranteedFundShortfall > 0 && <li>Guaranteed Fund shortfall: Rs. {guaranteedFundShortfall.toLocaleString()}</li>}
-                        </ul>
                     </AlertDescription>
                 </Alert>
             )}
@@ -235,7 +231,7 @@ export default function ApplyLoanPage() {
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
           <Button variant="ghost" type="reset">Cancel</Button>
-          <SubmitButton canApply={canApply} />
+          <SubmitButton disabled={isLoading} />
         </CardFooter>
         </form>
       </Card>

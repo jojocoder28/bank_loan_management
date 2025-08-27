@@ -90,3 +90,4 @@ export async function applyForLoan(formData: FormData) {
   revalidatePath('/admin/approvals');
   redirect('/dashboard');
 }
+
