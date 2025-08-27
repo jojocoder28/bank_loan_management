@@ -102,7 +102,7 @@ export default async function MyFinancesPage() {
                                     {loan.status === 'active' ? (
                                         <UpdatePaymentForm loan={loan} />
                                     ) : (
-                                        `₹${loan.monthlyPrincipalPayment.toLocaleString()}`
+                                        `₹${(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}`
                                     )}
                                 </TableCell>
                                 <TableCell>
