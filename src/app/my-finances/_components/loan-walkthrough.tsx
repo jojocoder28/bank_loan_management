@@ -67,6 +67,7 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
                 const approvalDate = new Date(inc.approvalDate!);
                 return approvalDate.getFullYear() === year && approvalDate.getMonth() === month;
             });
+
             if(increaseThisMonth) {
                 notes += `Loan increased by ₹${increaseThisMonth.requestedValue.toLocaleString()}. `;
             }
@@ -78,7 +79,7 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
                 notes += `Monthly payment for this month changed to ₹${principalPayment.toLocaleString()}. `;
             }
 
-            const interestPayment = calculateMonthlyInterest(currentPrincipal, loan.interestRate);
+            const interestPayment = Math.round(calculateMonthlyInterest(currentPrincipal, loan.interestRate));
             const actualPrincipalPayment = Math.min(currentPrincipal, principalPayment);
             const totalPayment = interestPayment + actualPrincipalPayment;
             const closingBalance = currentPrincipal - actualPrincipalPayment;
@@ -86,11 +87,11 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
             scheduleData.push({
                 month: month + 1,
                 year: year,
-                openingBalance: currentPrincipal,
+                openingBalance: Math.round(currentPrincipal),
                 interestPayment,
-                principalPayment: actualPrincipalPayment,
-                totalPayment,
-                closingBalance,
+                principalPayment: Math.round(actualPrincipalPayment),
+                totalPayment: Math.round(totalPayment),
+                closingBalance: Math.round(closingBalance),
                 notes: notes.trim()
             });
             
@@ -135,11 +136,11 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
                 [
                     row.month,
                     row.year,
-                    row.openingBalance.toFixed(2),
-                    row.principalPayment.toFixed(2),
-                    row.interestPayment.toFixed(2),
-                    row.totalPayment.toFixed(2),
-                    row.closingBalance.toFixed(2),
+                    Math.round(row.openingBalance),
+                    Math.round(row.principalPayment),
+                    Math.round(row.interestPayment),
+                    Math.round(row.totalPayment),
+                    Math.round(row.closingBalance),
                     `"${row.notes.replace(/"/g, '""')}"`
                 ].join(',')
             );
@@ -191,11 +192,11 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
                             {schedule.map((row, index) => (
                                 <TableRow key={index}>
                                     <TableCell>{row.month}/{row.year}</TableCell>
-                                    <TableCell className="text-right">₹{row.openingBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                                    <TableCell className="text-right">₹{row.principalPayment.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                                    <TableCell className="text-right">₹{row.interestPayment.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                                    <TableCell className="text-right">₹{row.totalPayment.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                                    <TableCell className="text-right">₹{row.closingBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                                    <TableCell className="text-right">₹{row.openingBalance.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">₹{row.principalPayment.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">₹{row.interestPayment.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">₹{row.totalPayment.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">₹{row.closingBalance.toLocaleString()}</TableCell>
                                     <TableCell className="text-xs">{row.notes}</TableCell>
                                 </TableRow>
                             ))}
