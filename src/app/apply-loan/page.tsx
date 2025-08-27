@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { calculateRequiredFunds } from "@/lib/coop-calculations";
 import { Handshake, Info, AlertTriangle, CheckCircle2, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
@@ -144,13 +143,7 @@ export default function ApplyLoanPage() {
                         onChange={(e) => setLoanAmount(Number(e.target.value))}
                         className="text-lg font-bold"
                         step={1000}
-                    />
-                    <Slider
-                        value={[loanAmount]}
-                        onValueChange={(value) => setLoanAmount(value[0])}
                         min={10000}
-                        max={500000}
-                        step={5000}
                     />
                 </div>
                  <div className="grid gap-2">
@@ -162,13 +155,7 @@ export default function ApplyLoanPage() {
                         onChange={(e) => setMonthlyPrincipal(Number(e.target.value))}
                         className="text-lg font-bold"
                         step={500}
-                    />
-                     <Slider
-                      value={[monthlyPrincipal]}
-                      onValueChange={(value) => setMonthlyPrincipal(value[0])}
-                      min={1000}
-                      max={10000}
-                      step={500}
+                        min={1000}
                     />
                   </div>
               </div>
@@ -232,4 +219,3 @@ export default function ApplyLoanPage() {
     </div>
   );
 }
-
