@@ -23,6 +23,7 @@ import { getUserFundsAndStatus } from "./data-actions";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
+import { numberToWords } from "@/lib/number-to-words";
 
 const initialState = {
   error: null,
@@ -146,11 +147,14 @@ export default function ApplyLoanPage() {
                         step={1000}
                         min={10000}
                     />
+                    <div className="text-sm text-muted-foreground capitalize bg-secondary/30 p-2 rounded-md border text-center">
+                        {numberToWords(loanAmount)} Rupees Only
+                    </div>
                     <Slider
                       value={[loanAmount]}
                       onValueChange={(value) => setLoanAmount(value[0])}
                       min={10000}
-                      max={500000} // Increased max value
+                      max={500000}
                       step={1000}
                     />
                 </div>
@@ -169,7 +173,7 @@ export default function ApplyLoanPage() {
                       value={[monthlyPrincipal]}
                       onValueChange={(value) => setMonthlyPrincipal(value[0])}
                       min={1000}
-                      max={25000} // Increased max value
+                      max={25000}
                       step={500}
                     />
                   </div>
