@@ -26,19 +26,21 @@ export function AppLayout({
   if (isAuthPage) {
     return <main>{children}</main>;
   }
+  
+  if (!user) {
+    // This case should ideally be handled by middleware, but as a fallback:
+    return null;
+  }
 
   return (
-    <div
-      className={cn(
-        "grid min-h-screen w-full",
-        isSidebarCollapsed
-          ? "md:grid-cols-[80px_1fr]"
-          : "md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]"
-      )}
-    >
-      <Sidebar user={user} isCollapsed={isSidebarCollapsed} />
-      <div className="flex flex-col">
-        <Header user={user} onMenuClick={toggleSidebar} />
+    <div className="flex min-h-screen w-full">
+      <Sidebar 
+        user={user} 
+        isCollapsed={isSidebarCollapsed} 
+        toggleSidebar={toggleSidebar} 
+      />
+      <div className="flex flex-col flex-1">
+        <Header user={user} />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/40">
           {children}
         </main>
