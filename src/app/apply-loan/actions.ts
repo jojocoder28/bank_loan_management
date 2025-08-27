@@ -67,7 +67,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     // The actual loan amount to be disbursed, including any shortfall
     const finalLoanAmount = loanAmount + totalShortfall;
 
-    // Calculate loan tenure
+    // Calculate loan tenure AFTER finalLoanAmount is determined
     const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
 
     await Loan.create({
@@ -94,4 +94,3 @@ export async function applyForLoan(prevState: any, formData: FormData) {
   revalidatePath('/admin/approvals');
   redirect('/dashboard');
 }
-
