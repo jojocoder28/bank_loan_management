@@ -5,8 +5,9 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import type { User } from "@/lib/types";
 import { Header } from "./header";
+import { Sidebar } from "./sidebar";
 
-export function AppProvider({
+function AppLayout({
   children,
   user,
 }: {
@@ -21,11 +22,26 @@ export function AppProvider({
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <Header user={user} />
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        {children}
-      </main>
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+      <Sidebar user={user} />
+      <div className="flex flex-col">
+        <Header user={user} />
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/40">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
+
+
+export function AppProvider({
+  children,
+  user,
+}: {
+  children: React.ReactNode;
+  user: User | null;
+}) {
+  return <AppLayout user={user}>{children}</AppLayout>
+}
+
