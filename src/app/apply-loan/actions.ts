@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -8,6 +9,7 @@ import Loan from '@/models/loan';
 import { calculateRequiredFunds } from '@/lib/coop-calculations';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { calculateLoanTenure } from '@/lib/calculations';
 
 const applyLoanSchema = z.object({
   loanAmount: z.coerce.number().min(10000, 'Minimum loan amount is Rs. 10,000.'),
@@ -68,14 +70,18 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     if (monthlyPrincipal <= 0) {
       return { error: 'Monthly principal payment must be a positive number.' };
     }
-
-    const tenureMonths = Math.ceil(finalLoanAmount / monthlyPrincipal);
+    
+    const interestRate = 10;
+    const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
+    if (tenureMonths === Infinity) {
+        return { error: 'Monthly payment is too low to cover interest. Please choose a higher amount.'};
+    }
 
     await Loan.create({
       user: user._id,
       loanAmount: finalLoanAmount,
       principal: finalLoanAmount, 
-      interestRate: 10, // Hardcoded 10% annual interest
+      interestRate,
       status: 'pending',
       payments: [],
       monthlyPrincipalPayment: monthlyPrincipal,
@@ -90,7 +96,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     console.error('============== LOAN APPLICATION FAILED ==============');
     console.error('Error Object:', error);
     console.error('=====================================================');
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    const errorMessage = error.message || 'An unknown error occurred.';
     return { error: `An unexpected error occurred: ${errorMessage}` };
   }
 
