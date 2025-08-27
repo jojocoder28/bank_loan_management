@@ -12,7 +12,7 @@ import { redirect } from 'next/navigation';
 
 const applyLoanSchema = z.object({
   loanAmount: z.coerce.number().min(10000, 'Minimum loan amount is Rs. 10,000.'),
-  monthlyPrincipal: z.coerce.number().min(1000, 'Minimum principal payment is Rs. 1,000.'),
+  monthlyPrincipal: z.coerce.number().min(1, 'Minimum principal payment must be positive.'),
 });
 
 export async function applyForLoan(prevState: any, formData: FormData) {
@@ -64,13 +64,12 @@ export async function applyForLoan(prevState: any, formData: FormData) {
 
     // The actual loan amount to be disbursed, including any shortfall
     const finalLoanAmount = loanAmount + totalShortfall;
-
+    
     // Ensure monthlyPrincipal is positive to prevent division by zero.
     if (monthlyPrincipal <= 0) {
       return { error: 'Monthly principal payment must be a positive number.' };
     }
 
-    // Based on the requirement, the tenure is simply the total amount divided by the fixed monthly principal payment.
     const tenureMonths = Math.ceil(finalLoanAmount / monthlyPrincipal);
 
     await Loan.create({
@@ -79,7 +78,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       principal: finalLoanAmount, 
       interestRate: 10, // Hardcoded 10% annual interest
       status: 'pending',
-      issueDate: null, // Explicitly set issueDate to null for pending loans
+      issueDate: new Date(), // Set issue date to today to satisfy validator
       payments: [],
       monthlyPrincipalPayment: monthlyPrincipal,
       loanTenureMonths: tenureMonths,
