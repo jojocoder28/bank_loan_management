@@ -16,19 +16,28 @@ import { Logo } from "./logo";
 import type { User } from "@/lib/types";
 import { logout } from "@/app/logout/actions";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { Menu, LayoutDashboard, HandCoins, Wallet, Mail } from "lucide-react";
+import { Menu, LayoutDashboard, HandCoins, Wallet, Mail, Users, FileCheck, ShieldCheck } from "lucide-react";
 
-const navLinks = [
+const userNavLinks = [
   { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="size-4" /> },
   { href: "/apply-loan", label: "Apply for Loan", icon: <HandCoins className="size-4" /> },
   { href: "/my-finances", label: "My Finances", icon: <Wallet className="size-4" /> },
   { href: "/contact-us", label: "Contact Us", icon: <Mail className="size-4" /> },
 ];
 
+const adminNavLinks = [
+    { href: "/admin/dashboard", label: "Dashboard", icon: <LayoutDashboard className="size-4" /> },
+    { href: "/admin/approvals", label: "Approvals", icon: <FileCheck className="size-4" /> },
+    { href: "/admin/users", label: "Users", icon: <Users className="size-4" /> },
+    { href: "/admin/audit", label: "AI Auditor", icon: <ShieldCheck className="size-4" /> },
+]
+
 export function Header({ user }: { user: User | null }) {
   if (!user) {
     return null;
   }
+  
+  const navLinks = user.role === 'admin' ? adminNavLinks : userNavLinks;
 
   return (
     <header className="sticky top-0 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 md:px-6 z-50">
@@ -46,9 +55,9 @@ export function Header({ user }: { user: User | null }) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left">
-          <SheetHeader className="sr-only">
-            <SheetTitle>Navigation Menu</SheetTitle>
-            <SheetDescription>A list of links to navigate the site.</SheetDescription>
+           <SheetHeader>
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <SheetDescription className="sr-only">A list of links to navigate the site.</SheetDescription>
           </SheetHeader>
           <nav className="grid gap-6 text-base font-medium">
             <Logo />

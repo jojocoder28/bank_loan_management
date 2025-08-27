@@ -5,10 +5,15 @@ import { cookies } from 'next/headers';
 import type { User } from '@/lib/types';
 
 const publicRoutes = ['/login', '/signup'];
+const adminRoutes = ['/admin/dashboard', '/admin/approvals', '/admin/users', '/admin/audit'];
+const userRoutes = ['/dashboard', '/apply-loan', '/my-finances', '/become-member'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const isPublicRoute = publicRoutes.includes(path);
+  
+  // Normalize path for dynamic routes like /admin/users/[id]
+  const normalizedPath = path.split('/').slice(0, 3).join('/');
 
   // 1. Get the session from the cookie
   const cookie = cookies().get('session')?.value;
@@ -26,7 +31,19 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.nextUrl));
   }
   
-  // 4. If none of the above, allow the request to continue
+  if (user) {
+      // 4. Protect admin routes from non-admin users
+      if ((adminRoutes.includes(path) || normalizedPath === '/admin/users') && user.role !== 'admin') {
+          return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
+      }
+
+      // 5. Protect user routes from admin users
+      if (userRoutes.includes(path) && user.role === 'admin') {
+          return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
+      }
+  }
+  
+  // 6. If none of the above, allow the request to continue
   return NextResponse.next();
 }
 
