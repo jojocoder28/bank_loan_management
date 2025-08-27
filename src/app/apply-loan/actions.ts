@@ -65,7 +65,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     // The actual loan amount to be disbursed, including any shortfall
     const finalLoanAmount = loanAmount + totalShortfall;
 
-    // **DEBUG FIX**: Ensure monthlyPrincipal is positive to prevent division by zero.
+    // Ensure monthlyPrincipal is positive to prevent division by zero.
     if (monthlyPrincipal <= 0) {
       return { error: 'Monthly principal payment must be a positive number.' };
     }
@@ -89,8 +89,11 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     });
 
   } catch (error) {
-    console.error('Loan Application Error:', error);
-    return { error: 'An unexpected error occurred while submitting your application.' };
+    console.error('============== LOAN APPLICATION FAILED ==============');
+    console.error('An unexpected error occurred while submitting the application.');
+    console.error('Error Object:', error);
+    console.error('=====================================================');
+    return { error: 'An unexpected error occurred while submitting your application. Please check the server console for details.' };
   }
 
   revalidatePath('/dashboard');
