@@ -135,47 +135,41 @@ export default function ApplyLoanPage() {
             
           <div className="grid md:grid-cols-2 gap-8">
               <div className="grid gap-6">
-                <div className="grid gap-2">
+                <div className="grid gap-4">
                     <Label htmlFor="loan-amount">Loan Amount (Rs.)</Label>
-                    <div className="flex items-center gap-4">
-                      <span className="text-muted-foreground text-lg">Rs.</span>
-                      <Input
+                    <Input
                         id="loan-amount"
                         type="number"
                         value={loanAmount}
                         onChange={(e) => setLoanAmount(Number(e.target.value))}
-                        className="flex-1 text-lg font-bold"
+                        className="text-2xl font-bold h-12"
                         step={1000}
-                      />
-                    </div>
+                    />
                     <Slider
-                      value={[loanAmount]}
-                      onValueChange={(value) => setLoanAmount(value[0])}
-                      min={10000}
-                      max={500000}
-                      step={5000}
+                        value={[loanAmount]}
+                        onValueChange={(value) => setLoanAmount(value[0])}
+                        min={10000}
+                        max={500000}
+                        step={5000}
                     />
                 </div>
-                 <div className="grid gap-2">
+                 <div className="grid gap-4">
                     <Label htmlFor="monthly-principal">Your Chosen Monthly Principal Payment (Rs.)</Label>
+                    <Input
+                        type="number"
+                        id="monthly-principal"
+                        value={monthlyPrincipal}
+                        onChange={(e) => setMonthlyPrincipal(Number(e.target.value))}
+                        className="text-2xl font-bold h-12"
+                        step={500}
+                    />
                      <Slider
-                      id="monthly-principal"
                       value={[monthlyPrincipal]}
                       onValueChange={(value) => setMonthlyPrincipal(value[0])}
                       min={1000}
                       max={10000}
                       step={500}
                     />
-                    <div className="flex items-center gap-4">
-                      <span className="text-muted-foreground text-lg">Rs.</span>
-                      <Input
-                        type="number"
-                        value={monthlyPrincipal}
-                        onChange={(e) => setMonthlyPrincipal(Number(e.target.value))}
-                        className="flex-1 text-lg font-bold"
-                        step={500}
-                      />
-                    </div>
                   </div>
               </div>
 
