@@ -44,14 +44,30 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
     }
     
     await dbConnect();
-    
-    const updateData: { status: 'active' | 'rejected', issueDate?: Date } = { status: newStatus };
-    
-    if (newStatus === 'active') {
-        updateData.issueDate = new Date();
+
+    const loan = await Loan.findById(loanId);
+    if (!loan) {
+        throw new Error('Loan not found');
     }
 
-    await Loan.findByIdAndUpdate(loanId, updateData);
+    if (newStatus === 'active') {
+        loan.status = 'active';
+        loan.issueDate = new Date();
+
+        // If there was a fund shortfall, update the user's funds now
+        if (loan.fundShortfall && (loan.fundShortfall.share > 0 || loan.fundShortfall.guaranteed > 0)) {
+            const user = await User.findById(loan.user);
+            if (user) {
+                user.shareFund = (user.shareFund || 0) + (loan.fundShortfall.share || 0);
+                user.guaranteedFund = (user.guaranteedFund || 0) + (loan.fundShortfall.guaranteed || 0);
+                await user.save();
+            }
+        }
+    } else { // 'rejected'
+        loan.status = 'rejected';
+    }
+
+    await loan.save();
 
     revalidatePath('/admin/approvals');
     revalidatePath('/dashboard'); 

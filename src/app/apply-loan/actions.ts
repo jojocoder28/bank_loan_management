@@ -67,26 +67,22 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     // The actual loan amount to be disbursed, including any shortfall
     const finalLoanAmount = loanAmount + totalShortfall;
 
-    // Update user's funds with the shortfall amount
-    if (totalShortfall > 0) {
-        user.shareFund = userShareFund + shareFundShortfall;
-        user.guaranteedFund = userGuaranteedFund + guaranteedFundShortfall;
-        await user.save();
-    }
-    
     // Calculate loan tenure
     const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
 
     await Loan.create({
       user: user._id,
       loanAmount: finalLoanAmount,
-      principal: finalLoanAmount, // Initially, outstanding principal is the full adjusted amount
+      principal: finalLoanAmount, 
       interestRate,
-      issueDate: new Date(), // This will be updated upon approval
       status: 'pending',
       payments: [],
       monthlyPrincipalPayment: monthlyPrincipal,
-      loanTenureMonths: tenureMonths !== Infinity ? tenureMonths : undefined
+      loanTenureMonths: tenureMonths !== Infinity ? tenureMonths : undefined,
+      fundShortfall: {
+          share: shareFundShortfall,
+          guaranteed: guaranteedFundShortfall
+      }
     });
 
   } catch (error) {

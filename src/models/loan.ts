@@ -18,13 +18,17 @@ export interface ILoan extends Document {
     loanAmount: number;
     principal: number; // outstanding principal
     interestRate: number; // annual interest rate
-    issueDate: Date;
+    issueDate?: Date;
     status: LoanStatus;
     payments: IPayment[];
     createdAt: Date;
     updatedAt: Date;
     monthlyPrincipalPayment: number;
     loanTenureMonths?: number;
+    fundShortfall: {
+        share: number;
+        guaranteed: number;
+    };
 }
 
 // Mongoose Schema for Payments
@@ -41,7 +45,7 @@ const LoanSchema = new Schema<ILoan>({
     loanAmount: { type: Number, required: true },
     principal: { type: Number, required: true },
     interestRate: { type: Number, required: true }, // e.g., 10 for 10%
-    issueDate: { type: Date, required: true },
+    issueDate: { type: Date },
     status: {
         type: String,
         enum: ['pending', 'active', 'paid', 'rejected'],
@@ -51,6 +55,10 @@ const LoanSchema = new Schema<ILoan>({
     payments: [PaymentSchema],
     monthlyPrincipalPayment: { type: Number, required: true },
     loanTenureMonths: { type: Number },
+    fundShortfall: {
+        share: { type: Number, default: 0 },
+        guaranteed: { type: Number, default: 0 }
+    }
 }, { timestamps: true });
 
 
