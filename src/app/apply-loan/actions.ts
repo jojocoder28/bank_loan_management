@@ -79,6 +79,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       principal: finalLoanAmount, 
       interestRate: 10, // Hardcoded 10% annual interest
       status: 'pending',
+      issueDate: null, // Explicitly set issueDate to null for pending loans
       payments: [],
       monthlyPrincipalPayment: monthlyPrincipal,
       loanTenureMonths: tenureMonths,
