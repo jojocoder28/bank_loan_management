@@ -70,7 +70,7 @@ export function LoanApprovals({ pendingLoans }: { pendingLoans: PopulatedLoan[] 
                              <p className="text-xs text-muted-foreground">{loan.user.email}</p>
                         </TableCell>
                         <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
-                        <TableCell>₹{loan.monthlyPrincipalPayment.toLocaleString()}</TableCell>
+                        <TableCell>₹{(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}</TableCell>
                         <TableCell>{loan.loanTenureMonths ? `${loan.loanTenureMonths} months` : 'N/A'}</TableCell>
                         <TableCell>₹{loan.user.shareFund.toLocaleString()}</TableCell>
                         <TableCell>₹{loan.user.guaranteedFund.toLocaleString()}</TableCell>
