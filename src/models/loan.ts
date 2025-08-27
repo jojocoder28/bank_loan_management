@@ -45,7 +45,7 @@ const LoanSchema = new Schema<ILoan>({
     loanAmount: { type: Number, required: true },
     principal: { type: Number, required: true },
     interestRate: { type: Number, required: true }, // e.g., 10 for 10%
-    issueDate: { type: Date },
+    issueDate: { type: Date, required: false },
     status: {
         type: String,
         enum: ['pending', 'active', 'paid', 'rejected'],
