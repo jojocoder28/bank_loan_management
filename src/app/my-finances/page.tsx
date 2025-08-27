@@ -102,7 +102,7 @@ export default async function MyFinancesPage() {
                             <TableHead>Outstanding</TableHead>
                             <TableHead>Monthly Payment</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Walkthrough</TableHead>
+                            <TableHead className="text-right">Details</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
