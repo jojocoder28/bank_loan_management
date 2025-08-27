@@ -8,6 +8,8 @@ export interface IBank extends Document {
   shareFundDividendRate: number;
   initialShareFundDeposit: number;
   monthlyThriftContribution: number;
+  maxLoanTenureMonths: number;
+  maxLoanAmount: number;
   // This is a unique key to ensure we only have one document
   singleton: string; 
 }
@@ -19,6 +21,8 @@ const BankSchema = new Schema<IBank>({
   shareFundDividendRate: { type: Number, required: true, default: 12 },
   initialShareFundDeposit: { type: Number, required: true, default: 5000 },
   monthlyThriftContribution: { type: Number, required: true, default: 1000 },
+  maxLoanTenureMonths: { type: Number, required: true, default: 60 },
+  maxLoanAmount: { type: Number, required: true, default: 600000 },
   singleton: { type: String, default: 'bank-settings', unique: true }
 });
 

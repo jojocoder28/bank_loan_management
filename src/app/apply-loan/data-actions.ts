@@ -4,32 +4,44 @@
 import { getSession } from "@/lib/session";
 import dbConnect from "@/lib/mongodb";
 import User, { UserRole } from "@/models/user";
+import { getBankSettings } from "../admin/settings/actions";
+import { IBank } from "@/models/bank";
 
 interface UserData {
     shareFund: number;
     guaranteedFund: number;
     role: UserRole;
+    bankSettings: IBank;
 }
 
-export async function getUserFundsAndStatus(): Promise<UserData> {
+export async function getUserFundsAndSettings(): Promise<UserData> {
     const session = await getSession();
     if (!session) {
-        return { shareFund: 0, guaranteedFund: 0, role: 'user' };
+        throw new Error("User not authenticated.");
     }
 
     try {
         await dbConnect();
-        const user = await User.findById(session.id).select('shareFund guaranteedFund role').lean();
+        const [user, bankSettings] = await Promise.all([
+             User.findById(session.id).select('shareFund guaranteedFund role').lean(),
+             getBankSettings()
+        ]);
+        
         if (!user) {
-            return { shareFund: 0, guaranteedFund: 0, role: 'user' };
+             throw new Error("User not found.");
         }
+        if (!bankSettings) {
+             throw new Error("Bank settings not found.");
+        }
+        
         return {
             shareFund: user.shareFund || 0,
             guaranteedFund: user.guaranteedFund || 0,
-            role: user.role || 'user'
+            role: user.role || 'user',
+            bankSettings: bankSettings
         };
     } catch (error) {
-        console.error("Failed to get user funds:", error);
-        return { shareFund: 0, guaranteedFund: 0, role: 'user' };
+        console.error("Failed to get user funds and settings:", error);
+        throw new Error("Could not load required data.");
     }
 }

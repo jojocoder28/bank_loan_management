@@ -19,11 +19,13 @@ import { calculateRequiredFunds } from "@/lib/coop-calculations";
 import { Handshake, Info, AlertTriangle, CheckCircle2, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
 import { applyForLoan } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import { getUserFundsAndStatus } from "./data-actions";
+import { getUserFundsAndSettings } from "./data-actions";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { numberToWords } from "@/lib/number-to-words";
+import { IBank } from "@/models/bank";
+import { UserRole } from "@/models/user";
 
 const initialState = {
   error: null,
@@ -43,13 +45,18 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
     )
 }
 
+interface UserData {
+    shareFund: number;
+    guaranteedFund: number;
+    role: UserRole;
+    bankSettings: IBank;
+}
+
 export default function ApplyLoanPage() {
   const [loanAmount, setLoanAmount] = useState(100000);
+  const [monthlyPrincipal, setMonthlyPrincipal] = useState(2000);
   
-  const minMonthlyPayment = Math.ceil(loanAmount / 60);
-  const [monthlyPrincipal, setMonthlyPrincipal] = useState(minMonthlyPayment);
-  
-  const [userData, setUserData] = useState({ shareFund: 0, guaranteedFund: 0, role: 'user' });
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const { toast } = useToast();
@@ -58,18 +65,32 @@ export default function ApplyLoanPage() {
   useEffect(() => {
     async function fetchUserData() {
       setIsLoading(true);
-      const data = await getUserFundsAndStatus();
-      setUserData(data);
-      setIsLoading(false);
+      try {
+        const data = await getUserFundsAndSettings();
+        setUserData(data);
+        const newMin = Math.ceil(loanAmount / data.bankSettings.maxLoanTenureMonths);
+        setMonthlyPrincipal(newMin);
+      } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Failed to load page',
+            description: (error as Error).message
+        })
+      } finally {
+        setIsLoading(false);
+      }
     }
     fetchUserData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   useEffect(() => {
-      const newMin = Math.ceil(loanAmount / 60);
+    if (userData) {
+      const newMin = Math.ceil(loanAmount / userData.bankSettings.maxLoanTenureMonths);
       setMonthlyPrincipal(prev => Math.max(prev, newMin));
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loanAmount]);
+  }, [loanAmount, userData]);
 
   useEffect(() => {
       if(state?.error) {
@@ -98,6 +119,19 @@ export default function ApplyLoanPage() {
       </div>
     );
   }
+  
+  if (!userData) {
+      return (
+          <div className="flex justify-center items-start pt-8">
+              <Card className="w-full max-w-lg text-center">
+                   <CardHeader>
+                      <CardTitle className="flex items-center gap-2 justify-center"><AlertTriangle className="size-8 text-destructive"/> Error</CardTitle>
+                      <CardDescription>Could not load necessary user and bank data.</CardDescription>
+                  </CardHeader>
+              </Card>
+          </div>
+      )
+  }
 
   if (userData.role !== 'member') {
     return (
@@ -125,6 +159,9 @@ export default function ApplyLoanPage() {
   const shareFundShortfall = Math.max(0, requiredShare - userData.shareFund);
   const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userData.guaranteedFund);
   const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
+  
+  const minMonthlyPayment = Math.ceil(loanAmount / userData.bankSettings.maxLoanTenureMonths);
+
 
   return (
     <div className="flex justify-center items-start pt-8">
@@ -146,7 +183,7 @@ export default function ApplyLoanPage() {
           <div className="grid md:grid-cols-2 gap-8">
               <div className="grid gap-8">
                 <div className="grid gap-2">
-                    <Label htmlFor="loan-amount">Loan Amount (Rs.)</Label>
+                    <Label htmlFor="loan-amount">Loan Amount (Rs.) - Max: {userData.bankSettings.maxLoanAmount.toLocaleString()}</Label>
                      <Input
                         id="loan-amount"
                         type="number"
@@ -155,6 +192,7 @@ export default function ApplyLoanPage() {
                         className="text-lg font-bold"
                         step={1000}
                         min={10000}
+                        max={userData.bankSettings.maxLoanAmount}
                     />
                     <div className="text-sm text-muted-foreground capitalize bg-secondary/30 p-2 rounded-md border text-center">
                         {numberToWords(loanAmount)} Rupees Only
@@ -163,7 +201,7 @@ export default function ApplyLoanPage() {
                       value={[loanAmount]}
                       onValueChange={(value) => setLoanAmount(value[0])}
                       min={10000}
-                      max={500000}
+                      max={userData.bankSettings.maxLoanAmount}
                       step={1000}
                     />
                 </div>

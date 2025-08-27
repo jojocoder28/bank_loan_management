@@ -162,6 +162,33 @@ export default function AdminSettingsPage() {
               {formState.error?.shareFundDividendRate && <p className="text-sm text-destructive">{formState.error.shareFundDividendRate[0]}</p>}
           </div>
           <Separator />
+           <div className="grid gap-2">
+              <Label htmlFor="maxLoanAmount">Maximum Loan Amount (₹)</Label>
+              <Input 
+                id="maxLoanAmount" 
+                name="maxLoanAmount" 
+                type="number" 
+                defaultValue={settings?.maxLoanAmount ?? 600000}
+                step="10000"
+                required 
+              />
+               <p className="text-xs text-muted-foreground">The maximum total loan amount a member can have at any one time.</p>
+              {formState.error?.maxLoanAmount && <p className="text-sm text-destructive">{formState.error.maxLoanAmount[0]}</p>}
+          </div>
+           <div className="grid gap-2">
+              <Label htmlFor="maxLoanTenureMonths">Maximum Loan Tenure (Months)</Label>
+              <Input 
+                id="maxLoanTenureMonths" 
+                name="maxLoanTenureMonths" 
+                type="number" 
+                defaultValue={settings?.maxLoanTenureMonths ?? 60}
+                step="1"
+                required 
+              />
+               <p className="text-xs text-muted-foreground">The longest duration a loan can be paid back over. Affects minimum payment calculations.</p>
+              {formState.error?.maxLoanTenureMonths && <p className="text-sm text-destructive">{formState.error.maxLoanTenureMonths[0]}</p>}
+          </div>
+          <Separator />
           <div className="grid gap-2">
               <Label htmlFor="initialShareFundDeposit">Initial Share Fund Deposit (₹)</Label>
               <Input 

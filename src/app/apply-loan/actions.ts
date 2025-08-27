@@ -53,9 +53,12 @@ export async function applyForLoan(prevState: any, formData: FormData) {
 
     // Check for existing loans
     const existingActiveLoan = await Loan.findOne({ user: user._id, status: 'active' });
-    if (existingActiveLoan) {
-        return { error: 'You already have an active loan. You cannot apply for a new one until it is paid off.' };
+    const totalExistingPrincipal = existingActiveLoan ? existingActiveLoan.principal : 0;
+    
+    if ((totalExistingPrincipal + loanAmount) > bankSettings.maxLoanAmount) {
+         return { error: `The requested amount of ₹${loanAmount.toLocaleString()} exceeds the maximum loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}, considering your existing loan balance.` };
     }
+
     const existingPendingLoan = await Loan.findOne({ user: user._id, status: 'pending' });
     if (existingPendingLoan) {
         return { error: 'You already have a loan application pending approval. Please wait for it to be processed.' };
@@ -81,6 +84,10 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
     if (tenureMonths === Infinity) {
         return { error: 'Monthly payment is too low to cover interest. Please choose a higher amount.'};
+    }
+    
+     if (tenureMonths > bankSettings.maxLoanTenureMonths) {
+        return { error: `The calculated loan tenure of ${tenureMonths} months exceeds the maximum allowed tenure of ${bankSettings.maxLoanTenureMonths} months. Please increase your monthly payment.`};
     }
 
     await Loan.create({

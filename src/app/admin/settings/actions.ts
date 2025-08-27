@@ -24,6 +24,8 @@ export async function getBankSettings(): Promise<IBank> {
             shareFundDividendRate: 12,
             initialShareFundDeposit: 5000,
             monthlyThriftContribution: 1000,
+            maxLoanTenureMonths: 60,
+            maxLoanAmount: 600000,
         });
     }
     return JSON.parse(JSON.stringify(settings));
@@ -35,6 +37,8 @@ const settingsSchema = z.object({
   shareFundDividendRate: z.coerce.number().min(0, "Dividend rate must be non-negative."),
   initialShareFundDeposit: z.coerce.number().min(0, "Initial deposit must be non-negative."),
   monthlyThriftContribution: z.coerce.number().min(0, "Monthly contribution must be non-negative."),
+  maxLoanTenureMonths: z.coerce.number().int().min(1, "Max tenure must be at least 1 month."),
+  maxLoanAmount: z.coerce.number().min(10000, "Max loan amount must be at least 10,000."),
 });
 
 
