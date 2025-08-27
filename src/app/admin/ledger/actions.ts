@@ -16,6 +16,7 @@ interface PopulatedLoan extends ILoan {
 interface TotalCapital {
     shareFund: number;
     guaranteedFund: number;
+    thriftFund: number;
     total: number;
 }
 
@@ -39,23 +40,25 @@ export async function getLedgerData(): Promise<LedgerData> {
     // Calculate total capital
     const capitalAggregation = await User.aggregate([
         {
-            $match: { role: 'member' } // or whatever criteria defines who contributes to capital
+            $match: { role: 'member' } // We only count capital from active members
         },
         {
             $group: {
                 _id: null,
                 totalShareFund: { $sum: '$shareFund' },
-                totalGuaranteedFund: { $sum: '$guaranteedFund' }
+                totalGuaranteedFund: { $sum: '$guaranteedFund' },
+                totalThriftFund: { $sum: '$thriftFund' }
             }
         }
     ]);
     
-    const capital = capitalAggregation[0] || { totalShareFund: 0, totalGuaranteedFund: 0 };
+    const capital = capitalAggregation[0] || { totalShareFund: 0, totalGuaranteedFund: 0, totalThriftFund: 0 };
     
     const totalCapital: TotalCapital = {
         shareFund: capital.totalShareFund,
         guaranteedFund: capital.totalGuaranteedFund,
-        total: capital.totalShareFund + capital.totalGuaranteedFund
+        thriftFund: capital.totalThriftFund,
+        total: capital.totalShareFund + capital.totalGuaranteedFund + capital.totalThriftFund
     };
 
     return {
