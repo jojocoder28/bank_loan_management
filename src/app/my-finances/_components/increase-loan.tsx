@@ -5,12 +5,13 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { requestPaymentChange } from "../actions";
-import { Loader2, Save } from "lucide-react";
+import { requestLoanIncrease } from "../actions";
+import { Loader2, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ILoan } from "@/models/loan";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { calculateRequiredFunds } from "@/lib/coop-calculations";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
@@ -26,16 +27,16 @@ function SubmitButton() {
       {pending ? (
         <Loader2 className="mr-2 animate-spin" />
       ) : (
-        <Save className="mr-2" />
+        <TrendingUp className="mr-2" />
       )}
-      Request Change
+      Request Increase
     </Button>
   );
 }
 
-export function UpdatePaymentForm({ loan }: { loan: ILoan }) {
-  const [state, formAction] = useActionState(requestPaymentChange, initialState);
-  const [amount, setAmount] = useState(loan.monthlyPrincipalPayment ?? 0);
+export function IncreaseLoanForm({ loan }: { loan: ILoan }) {
+  const [state, formAction] = useActionState(requestLoanIncrease, initialState);
+  const [amount, setAmount] = useState(10000);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,36 +50,39 @@ export function UpdatePaymentForm({ loan }: { loan: ILoan }) {
     if (state.success) {
       toast({
         title: "Request Submitted!",
-        description: "Your request to change the monthly payment has been submitted for admin approval.",
+        description: "Your request to increase the loan amount has been submitted for admin approval.",
       });
     }
   }, [state, toast]);
+
+  const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(amount);
+  const totalRequired = requiredShare + requiredGuaranteed;
 
   return (
     <Card className="flex flex-col">
         <form action={formAction}>
         <CardHeader>
-            <CardTitle className="text-xl">Change Monthly Payment</CardTitle>
-            <CardDescription>Request a one-time change to your next monthly principal payment.</CardDescription>
+            <CardTitle className="text-xl">Increase Loan Amount</CardTitle>
+            <CardDescription>Request to add more funds to your existing loan principal.</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 space-y-4">
             <input type="hidden" name="loanId" value={loan._id.toString()} />
             <div className="space-y-2">
-                 <Label htmlFor="new-payment">New Monthly Principal</Label>
+                 <Label htmlFor="increase-amount">Amount to Increase By</Label>
                  <Input
-                    id="new-payment"
+                    id="increase-amount"
                     type="number"
-                    name="newMonthlyPayment"
+                    name="increaseAmount"
                     value={amount}
                     onChange={(e) => setAmount(Number(e.target.value))}
-                    min="0"
-                    step="100"
+                    min="1000"
+                    step="1000"
                 />
             </div>
-            <Alert variant="default" className="text-xs">
+             <Alert variant="default" className="text-xs">
                 <Info className="size-4" />
                 <AlertDescription>
-                    This is a one-time change for your next payment cycle. Your payment amount will revert to the original value afterwards. This request requires admin approval.
+                   This will require an additional <strong>₹{totalRequired.toLocaleString()}</strong> in your Share and Guaranteed funds, which will be topped up from the new loan amount upon approval.
                 </AlertDescription>
             </Alert>
         </CardContent>

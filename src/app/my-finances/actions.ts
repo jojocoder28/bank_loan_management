@@ -55,7 +55,7 @@ const updatePaymentSchema = z.object({
   newMonthlyPayment: z.coerce.number().min(0, "Monthly payment cannot be negative."),
 });
 
-export async function updateMonthlyPayment(prevState: any, formData: FormData): Promise<{ error: string | null, success: boolean }> {
+export async function requestPaymentChange(prevState: any, formData: FormData): Promise<{ error: string | null, success: boolean }> {
     const session = await getSession();
     if (!session || session.role !== 'member') {
         return { error: 'Unauthorized.', success: false };
@@ -81,21 +81,75 @@ export async function updateMonthlyPayment(prevState: any, formData: FormData): 
         if (loan.status !== 'active') {
              return { error: 'You can only change the payment amount for active loans.', success: false };
         }
+        
+        const now = new Date();
+        
+        loan.modificationRequests.push({
+            type: 'change_payment',
+            requestedValue: newMonthlyPayment,
+            status: 'pending',
+            requestDate: now,
+            effectiveMonth: now.getMonth(), // 0-indexed
+            effectiveYear: now.getFullYear(),
+        } as any);
 
-        loan.monthlyPrincipalPayment = newMonthlyPayment;
+
         await loan.save();
 
-        // In a real-world scenario, this is where you would trigger a notification to the admin.
-        // For example, by creating a notification document in a 'notifications' collection
-        // or sending an email.
-        console.log(`User ${session.id} updated monthly payment for loan ${loanId} to ${newMonthlyPayment}. Admin should be notified.`);
-
-
         revalidatePath('/my-finances');
+        revalidatePath('/admin/approvals');
         return { error: null, success: true };
 
     } catch (error) {
         console.error("Update Payment Error:", error);
+        return { error: 'An unexpected error occurred.', success: false };
+    }
+}
+
+const increaseLoanSchema = z.object({
+    loanId: z.string(),
+    increaseAmount: z.coerce.number().min(1, "Increase amount must be positive."),
+});
+
+export async function requestLoanIncrease(prevState: any, formData: FormData): Promise<{ error: string | null; success: boolean }> {
+    const session = await getSession();
+    if (!session || session.role !== 'member') {
+        return { error: 'Unauthorized.', success: false };
+    }
+
+    const validatedFields = increaseLoanSchema.safeParse(Object.fromEntries(formData.entries()));
+
+    if (!validatedFields.success) {
+        return { error: validatedFields.error.flatten().fieldErrors.increaseAmount?.[0] || 'Invalid input.', success: false };
+    }
+    
+    const { loanId, increaseAmount } = validatedFields.data;
+
+    try {
+        await dbConnect();
+
+        const loan = await Loan.findOne({ _id: loanId, user: session.id });
+        if (!loan) {
+            return { error: 'Loan not found or you do not have permission to modify it.', success: false };
+        }
+        if (loan.status !== 'active') {
+            return { error: 'You can only increase the amount for active loans.', success: false };
+        }
+
+        loan.modificationRequests.push({
+            type: 'increase_amount',
+            requestedValue: increaseAmount,
+            status: 'pending',
+            requestDate: new Date(),
+        } as any);
+
+        await loan.save();
+
+        revalidatePath('/my-finances');
+        revalidatePath('/admin/approvals');
+        return { error: null, success: true };
+    } catch (error) {
+        console.error('Loan Increase Error:', error);
         return { error: 'An unexpected error occurred.', success: false };
     }
 }

@@ -3,6 +3,9 @@ import mongoose, { Document, Model, Schema } from 'mongoose';
 import type { IUser } from './user';
 
 export type LoanStatus = 'pending' | 'active' | 'paid' | 'rejected';
+export type ModificationRequestType = 'increase_amount' | 'change_payment';
+export type ModificationRequestStatus = 'pending' | 'approved' | 'rejected';
+
 
 // Interface for a single payment record
 export interface IPayment extends Document {
@@ -12,13 +15,27 @@ export interface IPayment extends Document {
     notes?: string;
 }
 
+// Interface for a loan modification request
+export interface IModificationRequest extends Document {
+    type: ModificationRequestType;
+    requestedValue: number;
+    status: ModificationRequestStatus;
+    requestDate: Date;
+    approvalDate?: Date;
+    notes?: string;
+    // For payment changes, which month it applies to
+    effectiveMonth?: number; 
+    effectiveYear?: number;
+}
+
+
 // Interface for the Loan document
 export interface ILoan extends Document {
     user: IUser['_id'];
     loanAmount: number;
     principal: number; // outstanding principal
     interestRate: number; // annual interest rate
-    issueDate?: Date;
+    issueDate?: Date | null;
     status: LoanStatus;
     payments: IPayment[];
     createdAt: Date;
@@ -29,6 +46,7 @@ export interface ILoan extends Document {
         share: number;
         guaranteed: number;
     };
+    modificationRequests: IModificationRequest[];
 }
 
 // Mongoose Schema for Payments
@@ -37,6 +55,17 @@ const PaymentSchema = new Schema<IPayment>({
     date: { type: Date, default: Date.now },
     type: { type: String, enum: ['principal', 'interest'], required: true },
     notes: { type: String },
+});
+
+const ModificationRequestSchema = new Schema<IModificationRequest>({
+    type: { type: String, enum: ['increase_amount', 'change_payment'], required: true },
+    requestedValue: { type: Number, required: true },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    requestDate: { type: Date, default: Date.now },
+    approvalDate: { type: Date },
+    notes: { type: String },
+    effectiveMonth: { type: Number },
+    effectiveYear: { type: Number },
 });
 
 // Mongoose Schema for Loans
@@ -53,12 +82,13 @@ const LoanSchema = new Schema<ILoan>({
         required: true,
     },
     payments: [PaymentSchema],
-    monthlyPrincipalPayment: { type: Number, required: true },
+    monthlyPrincipalPayment: { type: Number, required: true, default: 0 },
     loanTenureMonths: { type: Number },
     fundShortfall: {
         share: { type: Number, default: 0 },
         guaranteed: { type: Number, default: 0 }
-    }
+    },
+    modificationRequests: [ModificationRequestSchema],
 }, { timestamps: true });
 
 

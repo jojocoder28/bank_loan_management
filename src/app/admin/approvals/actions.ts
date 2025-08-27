@@ -2,9 +2,10 @@
 "use server";
 
 import dbConnect from "@/lib/mongodb";
-import Loan, { ILoan } from "@/models/loan";
+import Loan, { ILoan, IModificationRequest, ModificationRequestStatus } from "@/models/loan";
 import User, { IUser } from "@/models/user";
 import { revalidatePath } from "next/cache";
+import { calculateRequiredFunds } from "@/lib/coop-calculations";
 
 interface PopulatedLoan extends Omit<ILoan, 'user'> {
     _id: string;
@@ -15,6 +16,16 @@ interface PopulatedLoan extends Omit<ILoan, 'user'> {
         shareFund: number;
         guaranteedFund: number;
     }
+}
+
+export interface PopulatedModificationLoan extends Omit<ILoan, 'user' | 'modificationRequests'> {
+    _id: string;
+    user: {
+        _id: string;
+        name: string;
+        email: string;
+    },
+    modificationRequests: (Omit<IModificationRequest, '_id'> & { _id: string })[];
 }
 
 export async function getPendingLoans(): Promise<PopulatedLoan[]> {
@@ -34,6 +45,29 @@ export async function getPendingMemberships(): Promise<IUser[]> {
     await dbConnect();
     const users = await User.find({ role: 'user', membershipApplied: true }).sort({ createdAt: 'asc' }).lean();
     return JSON.parse(JSON.stringify(users));
+}
+
+export async function getPendingModifications(): Promise<PopulatedModificationLoan[]> {
+    await dbConnect();
+    const loans = await Loan.find({ 
+        status: 'active',
+        'modificationRequests.status': 'pending' 
+    })
+    .populate<{user: IUser}>({
+        path: 'user',
+        select: 'name email'
+    })
+    .sort({ 'modificationRequests.requestDate': 'asc' })
+    .lean();
+
+    // We need to filter the modificationRequests array in JS because MongoDB can't filter sub-arrays and return the parent document if other sub-array elements don't match.
+    const loansWithPending = loans.map(loan => {
+        const pendingRequests = loan.modificationRequests.filter(req => req.status === 'pending');
+        return { ...loan, modificationRequests: pendingRequests };
+    }).filter(loan => loan.modificationRequests.length > 0);
+
+
+    return JSON.parse(JSON.stringify(loansWithPending));
 }
 
 
@@ -114,4 +148,62 @@ export async function approveMembership(prevState: ApproveMembershipState, formD
     revalidatePath('/apply-loan');
 
     return { error: null };
+}
+
+async function updateModificationStatus(formData: FormData, newStatus: ModificationRequestStatus) {
+    const loanId = formData.get('loanId') as string;
+    const requestId = formData.get('requestId') as string;
+
+    if (!loanId || !requestId) {
+        throw new Error('Loan ID or Request ID is missing');
+    }
+
+    await dbConnect();
+    const loan = await Loan.findById(loanId).populate('user');
+    if (!loan) {
+        throw new Error('Loan not found');
+    }
+
+    const request = loan.modificationRequests.id(requestId);
+    if (!request) {
+        throw new Error('Modification request not found');
+    }
+
+    request.status = newStatus;
+    request.approvalDate = new Date();
+
+    if (newStatus === 'approved') {
+        if (request.type === 'increase_amount') {
+            const increaseAmount = request.requestedValue;
+            
+            const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(increaseAmount);
+            const shortfall = requiredShare + requiredGuaranteed;
+            const netIncrease = increaseAmount - shortfall;
+
+            // Increase the loan principal and total amount
+            loan.principal += netIncrease;
+            loan.loanAmount += increaseAmount;
+            
+            // Top up user's funds
+            const user = loan.user as IUser;
+            user.shareFund = (user.shareFund ?? 0) + requiredShare;
+            user.guaranteedFund = (user.guaranteedFund ?? 0) + requiredGuaranteed;
+            await user.save();
+        }
+        // Note: For 'change_payment', we don't change the base `monthlyPrincipalPayment`.
+        // The change is temporary and will be handled by the payment processing/walkthrough logic.
+    }
+
+    await loan.save();
+    revalidatePath('/admin/approvals');
+    revalidatePath('/my-finances');
+}
+
+
+export async function approveModification(formData: FormData) {
+    await updateModificationStatus(formData, 'approved');
+}
+
+export async function rejectModification(formData: FormData) {
+    await updateModificationStatus(formData, 'rejected');
 }

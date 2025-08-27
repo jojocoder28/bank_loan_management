@@ -22,6 +22,7 @@ import { redirect } from 'next/navigation';
 import { ILoan } from '@/models/loan';
 import { LoanWalkthrough } from './_components/loan-walkthrough';
 import { UpdatePaymentForm } from './_components/update-payment';
+import { IncreaseLoanForm } from './_components/increase-loan';
 
 export default async function MyFinancesPage() {
   const data = await getMyFinancesData();
@@ -38,10 +39,12 @@ export default async function MyFinancesPage() {
       pending: 'outline',
       rejected: 'destructive'
   }
+  
+  const activeLoan = allLoans.find(loan => loan.status === 'active');
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Top section with Fund Balances and Download button */}
+      {/* Top section with Fund Balances */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -50,10 +53,6 @@ export default async function MyFinancesPage() {
               A complete overview of your funds and loan history.
             </CardDescription>
           </div>
-           <Button variant="outline">
-                <Download className="mr-2" />
-                Download Report
-            </Button>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2">
             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
@@ -73,11 +72,25 @@ export default async function MyFinancesPage() {
         </CardContent>
       </Card>
       
+       {/* Loan Modification Section */}
+      {activeLoan && (
+          <Card>
+              <CardHeader>
+                  <CardTitle>Active Loan Modifications</CardTitle>
+                  <CardDescription>Request changes to your active loan. All requests require admin approval.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6 md:grid-cols-2">
+                  <IncreaseLoanForm loan={activeLoan} />
+                  <UpdatePaymentForm loan={activeLoan} />
+              </CardContent>
+          </Card>
+      )}
+
       {/* Loan History Section */}
       <Card>
           <CardHeader>
               <CardTitle>Loan History</CardTitle>
-              <CardDescription>A complete record of all your loan applications.</CardDescription>
+              <CardDescription>A complete record of all your loan applications and their status.</CardDescription>
           </CardHeader>
           <CardContent>
               {allLoans.length > 0 ? (
@@ -99,11 +112,7 @@ export default async function MyFinancesPage() {
                                 <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
                                 <TableCell>₹{loan.principal.toLocaleString()}</TableCell>
                                 <TableCell>
-                                    {loan.status === 'active' ? (
-                                        <UpdatePaymentForm loan={loan} />
-                                    ) : (
-                                        `₹${(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}`
-                                    )}
+                                    ₹{(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant={loanStatusVariant[loan.status]} className="capitalize">{loan.status}</Badge>

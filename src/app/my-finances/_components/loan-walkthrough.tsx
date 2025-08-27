@@ -9,11 +9,13 @@ import { calculateMonthlyInterest } from "@/lib/coop-calculations";
 
 interface ScheduleRow {
     month: number;
+    year: number;
     openingBalance: number;
     interestPayment: number;
     principalPayment: number;
     totalPayment: number;
     closingBalance: number;
+    notes: string;
 }
 
 export function LoanWalkthrough({ loan }: { loan: ILoan }) {
@@ -22,28 +24,62 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
     const generateSchedule = (): ScheduleRow[] => {
         const schedule: ScheduleRow[] = [];
         let currentPrincipal = loan.loanAmount;
-        let month = 1;
+        let currentDate = new Date(loan.issueDate || new Date());
+        
+        // Sort approved modifications by date
+        const approvedAmountIncreases = [...loan.modificationRequests]
+            .filter(r => r.type === 'increase_amount' && r.status === 'approved' && r.approvalDate)
+            .sort((a, b) => new Date(a.approvalDate!).getTime() - new Date(b.approvalDate!).getTime());
+            
+        const approvedPaymentChanges = [...loan.modificationRequests]
+            .filter(r => r.type === 'change_payment' && r.status === 'approved' && r.effectiveYear !== undefined && r.effectiveMonth !== undefined)
+            .sort((a,b) => (a.effectiveYear!*12 + a.effectiveMonth!) - (b.effectiveYear!*12 + b.effectiveMonth!));
+
+        let monthCounter = 1;
 
         while (currentPrincipal > 0) {
+            let notes = "";
+            let month = currentDate.getMonth();
+            let year = currentDate.getFullYear();
+            
+            // Check for amount increases in the current month
+            for (const increase of approvedAmountIncreases) {
+                const approvalDate = new Date(increase.approvalDate!);
+                if (approvalDate.getFullYear() === year && approvalDate.getMonth() === month) {
+                     currentPrincipal += increase.requestedValue;
+                     notes += `Loan increased by ₹${increase.requestedValue.toLocaleString()}. `;
+                }
+            }
+            
+            // Determine principal payment for the current month
+            let principalPayment = loan.monthlyPrincipalPayment;
+            const paymentChange = approvedPaymentChanges.find(c => c.effectiveYear === year && c.effectiveMonth === month);
+            if (paymentChange) {
+                principalPayment = paymentChange.requestedValue;
+                notes += `Monthly payment for this month changed to ₹${principalPayment.toLocaleString()}. `;
+            }
+
             const interestPayment = calculateMonthlyInterest(currentPrincipal, loan.interestRate);
-            const principalPayment = Math.min(currentPrincipal, loan.monthlyPrincipalPayment);
-            const totalPayment = interestPayment + principalPayment;
-            const closingBalance = currentPrincipal - principalPayment;
+            const actualPrincipalPayment = Math.min(currentPrincipal, principalPayment);
+            const totalPayment = interestPayment + actualPrincipalPayment;
+            const closingBalance = currentPrincipal - actualPrincipalPayment;
 
             schedule.push({
-                month,
+                month: month + 1,
+                year: year,
                 openingBalance: currentPrincipal,
                 interestPayment,
-                principalPayment,
+                principalPayment: actualPrincipalPayment,
                 totalPayment,
-                closingBalance
+                closingBalance,
+                notes: notes.trim()
             });
             
             currentPrincipal = closingBalance;
-            month++;
+            currentDate.setMonth(currentDate.getMonth() + 1);
             
-            // Safety break to prevent infinite loops in case of bad data
-            if (month > 1200) {
+            monthCounter++;
+            if (monthCounter > 1200) { // Safety break after 100 years
                  console.error("Loan schedule generation exceeded 100 years, breaking.");
                  break;
             }
@@ -58,32 +94,29 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
             
             const headers = [
                 "Month",
+                "Year",
                 "Opening Balance",
                 "Principal Payment",
                 "Interest Payment",
                 "Total Monthly Payment",
-                "Closing Balance"
+                "Closing Balance",
+                "Notes"
             ];
-
-            const totalLoanAmount = `Total Loan Amount,${loan.loanAmount.toFixed(2)}`;
-            const totalInterest = `Total Interest Paid,${schedule.reduce((acc, row) => acc + row.interestPayment, 0).toFixed(2)}`;
-            const totalPaid = `Total Amount Paid,${schedule.reduce((acc, row) => acc + row.totalPayment, 0).toFixed(2)}`;
             
-            const summary = [totalLoanAmount, totalInterest, totalPaid].join("\n");
-
             const csvRows = schedule.map(row => 
                 [
                     row.month,
+                    row.year,
                     row.openingBalance.toFixed(2),
                     row.principalPayment.toFixed(2),
                     row.interestPayment.toFixed(2),
                     row.totalPayment.toFixed(2),
-                    row.closingBalance.toFixed(2)
+                    row.closingBalance.toFixed(2),
+                    `"${row.notes.replace(/"/g, '""')}"` // Escape quotes
                 ].join(',')
             );
             
             const csvContent = "data:text/csv;charset=utf-8," 
-                + summary + "\n\n"
                 + headers.join(',') + "\n"
                 + csvRows.join('\n');
             

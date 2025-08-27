@@ -7,20 +7,23 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getPendingLoans, getPendingMemberships } from "./actions";
+import { getPendingLoans, getPendingMemberships, getPendingModifications } from "./actions";
 import { LoanApprovals } from "./_components/loan-approvals";
 import { MembershipApprovals } from "./_components/membership-approvals";
+import { ModificationApprovals } from "./_components/modification-approvals";
 
 
 export default async function ApprovalsPage() {
   const pendingLoans = await getPendingLoans();
   const pendingUsers = await getPendingMemberships();
+  const pendingModifications = await getPendingModifications();
 
   return (
     <Tabs defaultValue="memberships" className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="memberships">Membership Applications ({pendingUsers.length})</TabsTrigger>
         <TabsTrigger value="loans">Loan Applications ({pendingLoans.length})</TabsTrigger>
+        <TabsTrigger value="modifications">Loan Modifications ({pendingModifications.length})</TabsTrigger>
       </TabsList>
       <TabsContent value="memberships">
         <Card>
@@ -45,6 +48,19 @@ export default async function ApprovalsPage() {
           </CardHeader>
           <CardContent>
             <LoanApprovals pendingLoans={pendingLoans} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+        <TabsContent value="modifications">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loan Modification Approvals</CardTitle>
+            <CardDescription>
+              Review and process member requests to change their active loans.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ModificationApprovals pendingModifications={pendingModifications} />
           </CardContent>
         </Card>
       </TabsContent>
