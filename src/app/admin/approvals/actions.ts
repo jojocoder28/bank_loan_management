@@ -178,14 +178,14 @@ async function updateModificationStatus(formData: FormData, newStatus: Modificat
             const increaseAmount = request.requestedValue;
             
             const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(increaseAmount);
-            const fundTopUp = requiredShare + requiredGuaranteed;
-            const netIncreaseToPrincipal = increaseAmount - fundTopUp;
 
-            // Increase the loan principal and total amount
-            loan.principal += netIncreaseToPrincipal;
+            // The outstanding principal increases by the full requested amount.
+            loan.principal += increaseAmount;
+            
+            // The total loan amount also increases by the full requested amount.
             loan.loanAmount += increaseAmount;
             
-            // Top up user's funds
+            // Top up user's funds using a portion of the new principal.
             const user = loan.user as IUser;
             user.shareFund = (user.shareFund ?? 0) + requiredShare;
             user.guaranteedFund = (user.guaranteedFund ?? 0) + requiredGuaranteed;
