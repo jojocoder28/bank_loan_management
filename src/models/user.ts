@@ -29,6 +29,7 @@ export interface IUser extends Document {
   // Fund Balances
   shareFund?: number;
   guaranteedFund?: number;
+  thriftFund?: number;
 
   // Nominee Details
   nomineeName?: string;
@@ -66,6 +67,7 @@ const UserSchema = new Schema<IUser>({
   // Fund Balances
   shareFund: { type: Number, default: 0 },
   guaranteedFund: { type: Number, default: 0 },
+  thriftFund: { type: Number, default: 0 },
 
   // Nominee Details
   nomineeName: { type: String },

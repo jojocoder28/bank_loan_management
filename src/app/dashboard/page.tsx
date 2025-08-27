@@ -30,6 +30,7 @@ import {
   CircleDollarSign,
   ArrowRight,
   UserCheck,
+  Wallet,
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
@@ -125,6 +126,13 @@ export default async function DashboardPage() {
                 <p className="font-medium">Guaranteed Fund</p>
               </div>
               <p className="font-bold text-lg">₹{user.guaranteedFund.toLocaleString()}</p>
+            </div>
+            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+              <div className="flex items-center gap-3">
+                 <div className="p-2 bg-purple-500/10 rounded-full"><Wallet className="size-5 text-purple-500" /></div>
+                <p className="font-medium">Thrift Fund</p>
+              </div>
+              <p className="font-bold text-lg">₹{(user.thriftFund ?? 0).toLocaleString()}</p>
             </div>
           </CardContent>
         </Card>

@@ -88,7 +88,8 @@ export async function approveMembership(prevState: ApproveMembershipState, formD
 
     await User.findByIdAndUpdate(userId, {
         role: 'member',
-        membershipNumber: membershipNumber
+        membershipNumber: membershipNumber,
+        thriftFund: 1000 // Initialize thrift fund with the first month's contribution
     });
 
     revalidatePath('/admin/approvals');

@@ -13,6 +13,7 @@ export interface DashboardData {
         membershipNumber?: string | null;
         shareFund: number;
         guaranteedFund: number;
+        thriftFund?: number;
     };
     activeLoan: ILoan | null;
     loanHistory: ILoan[];
@@ -44,6 +45,7 @@ export async function getDashboardData(): Promise<DashboardData | null> {
                 membershipNumber: user.membershipNumber || null,
                 shareFund: user.shareFund || 0,
                 guaranteedFund: user.guaranteedFund || 0,
+                thriftFund: user.thriftFund || 0
             },
             activeLoan: JSON.parse(JSON.stringify(activeLoan)),
             loanHistory: JSON.parse(JSON.stringify(loanHistory)),
