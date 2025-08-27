@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { User } from "@/lib/types";
 import { logout } from "@/app/logout/actions";
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { Menu } from "lucide-react";
 import { SidebarNav } from "./sidebar";
 
@@ -39,6 +39,10 @@ export function Header({ user }: { user: User | null }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
+              <SheetHeader>
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <SheetDescription className="sr-only">Main navigation links for the application.</SheetDescription>
+              </SheetHeader>
               <SidebarNav user={user} isMobile={true} />
             </SheetContent>
           </Sheet>
