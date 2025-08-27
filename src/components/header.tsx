@@ -16,7 +16,7 @@ import { Logo } from "./logo";
 import type { User } from "@/lib/types";
 import { logout } from "@/app/logout/actions";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { Menu, LayoutDashboard, HandCoins, Wallet, Mail, Users, FileCheck, ShieldCheck } from "lucide-react";
+import { Menu, LayoutDashboard, HandCoins, Wallet, Mail, Users, FileCheck, ShieldCheck, BookCopy } from "lucide-react";
 
 const userNavLinks = [
   { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="size-4" /> },
@@ -29,6 +29,7 @@ const adminNavLinks = [
     { href: "/admin/dashboard", label: "Dashboard", icon: <LayoutDashboard className="size-4" /> },
     { href: "/admin/approvals", label: "Approvals", icon: <FileCheck className="size-4" /> },
     { href: "/admin/users", label: "Users", icon: <Users className="size-4" /> },
+    { href: "/admin/ledger", label: "Loan Ledger", icon: <BookCopy className="size-4" /> },
     { href: "/admin/audit", label: "AI Auditor", icon: <ShieldCheck className="size-4" /> },
 ]
 

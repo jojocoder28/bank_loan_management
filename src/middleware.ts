@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import type { User } from '@/lib/types';
 
 const publicRoutes = ['/login', '/signup'];
-const adminRoutes = ['/admin/dashboard', '/admin/approvals', '/admin/users', '/admin/audit'];
+const adminRoutes = ['/admin/dashboard', '/admin/approvals', '/admin/users', '/admin/audit', '/admin/ledger'];
 const userRoutes = ['/dashboard', '/apply-loan', '/my-finances', '/become-member'];
 
 export default async function middleware(req: NextRequest) {

@@ -23,6 +23,7 @@ export interface ILoan extends Document {
     payments: IPayment[];
     createdAt: Date;
     updatedAt: Date;
+    monthlyPrincipalPayment: number;
 }
 
 // Mongoose Schema for Payments
@@ -47,6 +48,7 @@ const LoanSchema = new Schema<ILoan>({
         required: true,
     },
     payments: [PaymentSchema],
+    monthlyPrincipalPayment: { type: Number, required: true },
 }, { timestamps: true });
 
 

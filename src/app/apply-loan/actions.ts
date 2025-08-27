@@ -29,7 +29,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     return { error: firstError || 'Invalid input.' };
   }
 
-  const { loanAmount } = validatedFields.data;
+  const { loanAmount, monthlyPrincipal } = validatedFields.data;
 
   try {
     await dbConnect();
@@ -80,6 +80,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       issueDate: new Date(), // This will be updated upon approval
       status: 'pending',
       payments: [],
+      monthlyPrincipalPayment: monthlyPrincipal,
     });
 
   } catch (error) {
@@ -91,5 +92,3 @@ export async function applyForLoan(prevState: any, formData: FormData) {
   revalidatePath('/admin/approvals');
   redirect('/dashboard');
 }
-
-
