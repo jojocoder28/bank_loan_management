@@ -27,12 +27,12 @@ export function Header({ user }: { user: User | null }) {
         <Logo />
       </nav>
       
-      <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        {/* Display user's name next to the logo, but hide on small screens */}
-        <div className="hidden md:flex items-center gap-2 text-sm font-semibold ml-auto">
-            <span>Welcome, {user.name}</span>
-        </div>
-        <div className="ml-auto flex-1 sm:flex-initial flex justify-end">
+      <div className="flex w-full items-center gap-4 ml-auto justify-end">
+        {/* User welcome and dropdown menu */}
+        <div className="flex items-center gap-4">
+          <span className="hidden md:inline-block text-sm font-semibold">
+              Welcome, {user.name}
+          </span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
