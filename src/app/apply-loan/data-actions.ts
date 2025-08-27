@@ -6,12 +6,14 @@ import dbConnect from "@/lib/mongodb";
 import User, { UserRole } from "@/models/user";
 import { getBankSettings } from "../admin/settings/actions";
 import { IBank } from "@/models/bank";
+import Loan from "@/models/loan";
 
 interface UserData {
     shareFund: number;
     guaranteedFund: number;
     role: UserRole;
     bankSettings: IBank;
+    activeLoanPrincipal: number;
 }
 
 export async function getUserFundsAndSettings(): Promise<UserData> {
@@ -22,9 +24,10 @@ export async function getUserFundsAndSettings(): Promise<UserData> {
 
     try {
         await dbConnect();
-        const [user, bankSettings] = await Promise.all([
+        const [user, bankSettings, activeLoan] = await Promise.all([
              User.findById(session.id).select('shareFund guaranteedFund role').lean(),
-             getBankSettings()
+             getBankSettings(),
+             Loan.findOne({ user: session.id, status: 'active' }).select('principal').lean()
         ]);
         
         if (!user) {
@@ -38,7 +41,8 @@ export async function getUserFundsAndSettings(): Promise<UserData> {
             shareFund: user.shareFund || 0,
             guaranteedFund: user.guaranteedFund || 0,
             role: user.role || 'user',
-            bankSettings: bankSettings
+            bankSettings: bankSettings,
+            activeLoanPrincipal: activeLoan?.principal || 0
         };
     } catch (error) {
         console.error("Failed to get user funds and settings:", error);

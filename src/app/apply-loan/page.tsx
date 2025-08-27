@@ -50,6 +50,7 @@ interface UserData {
     guaranteedFund: number;
     role: UserRole;
     bankSettings: IBank;
+    activeLoanPrincipal: number;
 }
 
 export default function ApplyLoanPage() {
@@ -68,7 +69,10 @@ export default function ApplyLoanPage() {
       try {
         const data = await getUserFundsAndSettings();
         setUserData(data);
-        const newMin = Math.ceil(loanAmount / data.bankSettings.maxLoanTenureMonths);
+        const maxLoan = data.bankSettings.maxLoanAmount - data.activeLoanPrincipal;
+        const initialLoanAmount = Math.min(100000, maxLoan > 10000 ? maxLoan : 10000);
+        setLoanAmount(initialLoanAmount)
+        const newMin = Math.ceil(initialLoanAmount / data.bankSettings.maxLoanTenureMonths);
         setMonthlyPrincipal(newMin);
       } catch (error) {
         toast({
@@ -153,6 +157,8 @@ export default function ApplyLoanPage() {
       </div>
     )
   }
+  
+  const maxLoanForUser = userData.bankSettings.maxLoanAmount - userData.activeLoanPrincipal;
 
   const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(loanAmount);
   
@@ -161,6 +167,34 @@ export default function ApplyLoanPage() {
   const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
   
   const minMonthlyPayment = Math.ceil(loanAmount / userData.bankSettings.maxLoanTenureMonths);
+  
+   if (maxLoanForUser < 10000) {
+      return (
+         <div className="flex justify-center items-start pt-8">
+            <Card className="w-full max-w-lg text-center">
+               <CardHeader>
+                  <CardTitle className="flex items-center gap-2 justify-center">
+                     <Info className="size-8 text-primary" />
+                     Loan Limit Reached
+                  </CardTitle>
+                  <CardDescription>
+                     You have reached your maximum loan limit of ₹{userData.bankSettings.maxLoanAmount.toLocaleString()}.
+                  </CardDescription>
+               </CardHeader>
+               <CardContent>
+                  <p>
+                     Your outstanding loan principal is ₹{userData.activeLoanPrincipal.toLocaleString()}. Please pay down your existing loan to become eligible for new loans.
+                  </p>
+               </CardContent>
+                <CardFooter>
+                    <Button asChild className="w-full">
+                        <Link href="/my-finances">View My Finances <ArrowRight className="ml-2" /></Link>
+                    </Button>
+                </CardFooter>
+            </Card>
+         </div>
+      );
+   }
 
 
   return (
@@ -183,7 +217,7 @@ export default function ApplyLoanPage() {
           <div className="grid md:grid-cols-2 gap-8">
               <div className="grid gap-8">
                 <div className="grid gap-2">
-                    <Label htmlFor="loan-amount">Loan Amount (Rs.) - Max: {userData.bankSettings.maxLoanAmount.toLocaleString()}</Label>
+                    <Label htmlFor="loan-amount">Loan Amount (Rs.) - Max Available: {maxLoanForUser.toLocaleString()}</Label>
                      <Input
                         id="loan-amount"
                         type="number"
@@ -192,7 +226,7 @@ export default function ApplyLoanPage() {
                         className="text-lg font-bold"
                         step={1000}
                         min={10000}
-                        max={userData.bankSettings.maxLoanAmount}
+                        max={maxLoanForUser}
                     />
                     <div className="text-sm text-muted-foreground capitalize bg-secondary/30 p-2 rounded-md border text-center">
                         {numberToWords(loanAmount)} Rupees Only
@@ -201,7 +235,7 @@ export default function ApplyLoanPage() {
                       value={[loanAmount]}
                       onValueChange={(value) => setLoanAmount(value[0])}
                       min={10000}
-                      max={userData.bankSettings.maxLoanAmount}
+                      max={maxLoanForUser}
                       step={1000}
                     />
                 </div>
