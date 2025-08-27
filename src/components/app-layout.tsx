@@ -17,31 +17,21 @@ export function AppLayout({
 }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
-
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
-
+  
   if (isAuthPage) {
     return <main>{children}</main>;
   }
   
   if (!user) {
-    // This case should ideally be handled by middleware, but as a fallback:
     return null;
   }
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar 
-        user={user} 
-        isCollapsed={isSidebarCollapsed} 
-        toggleSidebar={toggleSidebar} 
-      />
-      <div className={cn("flex flex-col flex-1 transition-all duration-300", isSidebarCollapsed ? "md:ml-20" : "md:ml-64")}>
+      <Sidebar user={user} />
+      <div className="flex flex-col flex-1 md:ml-64">
         <Header user={user} />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-muted/40">
             <div className="p-4 md:gap-8 md:p-8">
              {children}
             </div>

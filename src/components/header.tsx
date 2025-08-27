@@ -12,7 +12,7 @@ import Link from "next/link";
 export function Header({ user }: { user: User }) {
   
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 md:hidden sticky top-0 z-40">
+    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 sticky top-0 z-40 md:hidden">
         <Sheet>
             <SheetTrigger asChild>
               <Button
