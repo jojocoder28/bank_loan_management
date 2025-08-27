@@ -146,6 +146,7 @@ export async function approveMembership(prevState: ApproveMembershipState, formD
     revalidatePath('/admin/users');
     revalidatePath('/become-member');
     revalidatePath('/apply-loan');
+    revalidatePath('/dashboard');
 
     return { error: null };
 }
