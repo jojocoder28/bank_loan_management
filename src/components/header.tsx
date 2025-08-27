@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/apply-loan", label: "Apply for Loan" },
+  { href: "/my-finances", label: "My Finances" },
   { href: "/contact-us", label: "Contact Us" },
 ];
 
@@ -32,15 +33,17 @@ export function Header({ user }: { user: User | null }) {
 
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
-      <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+      <div className="flex items-center gap-6">
         <Logo />
-        {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="text-muted-foreground transition-colors hover:text-foreground">
-                {link.label}
-            </Link>
-        ))}
-      </nav>
-      
+        <nav className="hidden md:flex md:items-center md:gap-5 lg:gap-6">
+            {navLinks.map((link) => (
+                <Link key={link.href} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                    {link.label}
+                </Link>
+            ))}
+        </nav>
+      </div>
+
        <Sheet>
         <SheetTrigger asChild>
           <Button
