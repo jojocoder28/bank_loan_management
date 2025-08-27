@@ -15,8 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "./logo";
 import type { User } from "@/lib/types";
 import { logout } from "@/app/logout/actions";
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { Menu } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -52,6 +53,10 @@ export function Header({ user }: { user: User | null }) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left">
+            <SheetHeader className="sr-only">
+                <SheetTitle>Navigation Menu</SheetTitle>
+                <SheetDescription>A list of links to navigate the site.</SheetDescription>
+            </SheetHeader>
           <nav className="grid gap-6 text-lg font-medium">
             <Logo />
              {navLinks.map((link) => (
