@@ -21,6 +21,7 @@ import { getMyFinancesData } from './actions';
 import { redirect } from 'next/navigation';
 import { ILoan } from '@/models/loan';
 import { LoanWalkthrough } from './_components/loan-walkthrough';
+import { UpdatePaymentForm } from './_components/update-payment';
 
 export default async function MyFinancesPage() {
   const data = await getMyFinancesData();
@@ -86,6 +87,7 @@ export default async function MyFinancesPage() {
                             <TableHead>Applied On</TableHead>
                             <TableHead>Loan Amount</TableHead>
                             <TableHead>Outstanding</TableHead>
+                            <TableHead>Monthly Payment</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Walkthrough</TableHead>
                         </TableRow>
@@ -96,6 +98,13 @@ export default async function MyFinancesPage() {
                                 <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
                                 <TableCell>₹{loan.principal.toLocaleString()}</TableCell>
+                                <TableCell>
+                                    {loan.status === 'active' ? (
+                                        <UpdatePaymentForm loan={loan} />
+                                    ) : (
+                                        `₹${loan.monthlyPrincipalPayment.toLocaleString()}`
+                                    )}
+                                </TableCell>
                                 <TableCell>
                                     <Badge variant={loanStatusVariant[loan.status]} className="capitalize">{loan.status}</Badge>
                                 </TableCell>
