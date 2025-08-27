@@ -23,7 +23,6 @@ export function calculateRequiredFunds(loanAmount: number): { requiredShare: num
 
 /**
  * Calculates the monthly interest payment on the outstanding loan principal.
- * The bank charges 10% annual interest, which translates to a monthly rate.
  * @param outstandingPrincipal The remaining principal amount of the loan.
  * @param annualInterestRate The annual interest rate as a percentage (e.g., 10 for 10%).
  * @returns The calculated monthly interest payment.
@@ -62,6 +61,3 @@ export function calculateDividend(shareFundBalance: number, dividendRate: number
     }
     return shareFundBalance * (dividendRate / 100);
 }
-
-
-

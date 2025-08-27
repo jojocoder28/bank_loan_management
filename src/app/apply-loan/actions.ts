@@ -10,6 +10,7 @@ import { calculateRequiredFunds } from '@/lib/coop-calculations';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { calculateLoanTenure } from '@/lib/calculations';
+import { getBankSettings } from '../admin/settings/actions';
 
 const applyLoanSchema = z.object({
   loanAmount: z.coerce.number().min(10000, 'Minimum loan amount is Rs. 10,000.'),
@@ -34,10 +35,16 @@ export async function applyForLoan(prevState: any, formData: FormData) {
 
   try {
     await dbConnect();
-    const user = await User.findById(userSession.id);
+    const [user, bankSettings] = await Promise.all([
+        User.findById(userSession.id),
+        getBankSettings()
+    ]);
 
     if (!user) {
       return { error: 'Could not find your user profile.' };
+    }
+     if (!bankSettings) {
+      return { error: 'Bank settings are not configured. Please contact an administrator.' };
     }
 
     if (user.role !== 'member') {
@@ -66,12 +73,11 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     // The actual loan amount to be disbursed, including any shortfall
     const finalLoanAmount = loanAmount + totalShortfall;
     
-    // Ensure monthlyPrincipal is positive to prevent division by zero.
     if (monthlyPrincipal <= 0) {
       return { error: 'Monthly principal payment must be a positive number.' };
     }
     
-    const interestRate = 10;
+    const interestRate = bankSettings.loanInterestRate;
     const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
     if (tenureMonths === Infinity) {
         return { error: 'Monthly payment is too low to cover interest. Please choose a higher amount.'};
