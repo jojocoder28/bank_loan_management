@@ -16,14 +16,14 @@ import { Logo } from "./logo";
 import type { User } from "@/lib/types";
 import { logout } from "@/app/logout/actions";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
-import { Menu } from "lucide-react";
+import { Menu, LayoutDashboard, HandCoins, Wallet, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/apply-loan", label: "Apply for Loan" },
-  { href: "/my-finances", label: "My Finances" },
-  { href: "/contact-us", label: "Contact Us" },
+  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="size-4" /> },
+  { href: "/apply-loan", label: "Apply for Loan", icon: <HandCoins className="size-4" /> },
+  { href: "/my-finances", label: "My Finances", icon: <Wallet className="size-4" /> },
+  { href: "/contact-us", label: "Contact Us", icon: <Mail className="size-4" /> },
 ];
 
 export function Header({ user }: { user: User | null }) {
@@ -35,44 +35,50 @@ export function Header({ user }: { user: User | null }) {
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
       <div className="flex items-center gap-6">
         <Logo />
-        <nav className="hidden md:flex md:items-center md:gap-5 lg:gap-6">
+      </div>
+
+      <div className="flex w-full items-center gap-4">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-6 ml-6">
             {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                <Link key={link.href} href={link.href} className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                    {link.icon}
                     {link.label}
                 </Link>
             ))}
         </nav>
-      </div>
+        
+        {/* Mobile Navigation Trigger */}
+        <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 md:hidden"
+              >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+                <SheetHeader className="sr-only">
+                    <SheetTitle>Navigation Menu</SheetTitle>
+                    <SheetDescription>A list of links to navigate the site.</SheetDescription>
+                </SheetHeader>
+              <nav className="grid gap-6 text-base font-medium">
+                <Logo />
+                 {navLinks.map((link) => (
+                    <Link key={link.href} href={link.href} className="flex items-center gap-4 text-muted-foreground hover:text-foreground">
+                        {link.icon}
+                        {link.label}
+                    </Link>
+                ))}
+              </nav>
+            </SheetContent>
+        </Sheet>
 
-       <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left">
-            <SheetHeader className="sr-only">
-                <SheetTitle>Navigation Menu</SheetTitle>
-                <SheetDescription>A list of links to navigate the site.</SheetDescription>
-            </SheetHeader>
-          <nav className="grid gap-6 text-lg font-medium">
-            <Logo />
-             {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="text-muted-foreground hover:text-foreground">
-                    {link.label}
-                </Link>
-            ))}
-          </nav>
-        </SheetContent>
-      </Sheet>
-
-      <div className="flex w-full items-center gap-4 ml-auto justify-end">
-        <div className="flex items-center gap-4">
+        {/* User Menu */}
+        <div className="flex items-center gap-4 ml-auto">
           <span className="hidden md:inline-block text-sm font-semibold">
               Welcome, {user.name}
           </span>
@@ -102,7 +108,6 @@ export function Header({ user }: { user: User | null }) {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                {/* Use a form to safely call the server action for logout */}
                 <form action={logout} className="w-full">
                     <button type="submit" className="w-full text-left">
                         Log out
