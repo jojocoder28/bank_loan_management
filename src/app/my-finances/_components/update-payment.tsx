@@ -31,7 +31,7 @@ function SubmitButton() {
 
 export function UpdatePaymentForm({ loan }: { loan: ILoan }) {
   const [state, formAction] = useActionState(updateMonthlyPayment, initialState);
-  const [amount, setAmount] = useState(loan.monthlyPrincipalPayment);
+  const [amount, setAmount] = useState(loan.monthlyPrincipalPayment ?? 0);
   const { toast } = useToast();
 
   useEffect(() => {
