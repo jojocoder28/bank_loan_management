@@ -88,12 +88,12 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('============== LOAN APPLICATION FAILED ==============');
-    console.error('An unexpected error occurred while submitting the application.');
     console.error('Error Object:', error);
     console.error('=====================================================');
-    return { error: 'An unexpected error occurred while submitting your application. Please check the server console for details.' };
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { error: `An unexpected error occurred: ${errorMessage}` };
   }
 
   revalidatePath('/dashboard');
