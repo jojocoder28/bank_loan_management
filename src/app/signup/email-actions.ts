@@ -21,7 +21,7 @@ export async function sendVerificationEmail(email: string, name: string, token: 
   try {
     await resend.emails.send({
       from: fromEmail,
-      to: 'sarikhor94@gmail.com',
+      to: email,
       subject: 'Verify your email address for S&KGPPS Co-op',
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
