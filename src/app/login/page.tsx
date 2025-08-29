@@ -16,44 +16,19 @@ import { useState, useTransition } from "react";
 import { LogIn, AlertTriangle, Phone } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { login } from "./actions";
-import { resendVerificationOtp } from "./reverify-actions";
-import { useToast } from "@/hooks/use-toast";
 
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [showReverify, setShowReverify] = useState(false);
-  const [reverifyPhone, setReverifyPhone] = useState("");
 
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
-
-  const handleReverify = async () => {
-      startTransition(async () => {
-          const result = await resendVerificationOtp(reverifyPhone);
-          if (result.error) {
-              toast({
-                  variant: 'destructive',
-                  title: 'Failed to Resend',
-                  description: result.error,
-              })
-          } else {
-               toast({
-                  title: 'OTP Sent!',
-                  description: 'A new verification code has been generated. Check the console.',
-              })
-              router.push(`/verify-phone?phone=${reverifyPhone}`);
-          }
-      })
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setShowReverify(false);
     
     startTransition(async () => {
       const formData = new FormData();
@@ -64,10 +39,6 @@ export default function LoginPage() {
 
       if (result.error) {
         setError(result.error);
-        if (result.isUnverified && result.unverifiedPhone) {
-            setShowReverify(true);
-            setReverifyPhone(result.unverifiedPhone);
-        }
       } else if (result.role) {
         // Handle redirection on the client side
         if (result.role === 'admin') {
@@ -100,17 +71,6 @@ export default function LoginPage() {
                 <AlertDescription>
                     {error}
                 </AlertDescription>
-                {showReverify && (
-                    <Button 
-                        variant="link" 
-                        className="p-0 h-auto text-destructive-foreground font-bold mt-2"
-                        onClick={handleReverify}
-                        disabled={isPending}
-                        >
-                        <Phone className="mr-2" />
-                        {isPending ? 'Sending...' : 'Resend Verification OTP'}
-                    </Button>
-                )}
             </Alert>
           )}
           <form onSubmit={handleSubmit} className="grid gap-4">

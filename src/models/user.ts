@@ -15,10 +15,6 @@ export interface IUser extends Document {
   createdAt: Date;
   membershipApplied?: boolean;
   isVerified?: boolean;
-  // verificationToken?: string;
-  // verificationTokenExpires?: Date;
-  phoneOtp?: string;
-  phoneOtpExpires?: Date;
 
 
   // New Fields
@@ -58,11 +54,7 @@ const UserSchema = new Schema<IUser>({
     default: 'user',
   },
   membershipApplied: { type: Boolean, default: false },
-  isVerified: { type: Boolean, default: false },
-  // verificationToken: { type: String },
-  // verificationTokenExpires: { type: Date },
-  phoneOtp: { type: String },
-  phoneOtpExpires: { type: Date },
+  isVerified: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   
   // New Fields

@@ -16,15 +16,15 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { signUp } from "./actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
-  const [phone, setPhone] = useState('');
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,7 +34,6 @@ export default function SignupPage() {
     const formData = new FormData(e.currentTarget);
     const password = formData.get('password');
     const confirmPassword = formData.get('confirmPassword');
-    const phoneValue = formData.get('phone') as string;
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -48,9 +47,11 @@ export default function SignupPage() {
     if (result.error) {
       setError(result.error);
     } else {
-      setIsSubmitted(true);
-      setPhone(phoneValue);
-      router.push(`/verify-phone?phone=${phoneValue}`);
+      toast({
+        title: "Account Created!",
+        description: "You can now log in with your credentials.",
+      });
+      router.push('/login');
     }
   };
 

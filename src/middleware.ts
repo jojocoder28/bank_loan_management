@@ -4,7 +4,7 @@ import { decrypt, encrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/types';
 
-const publicRoutes = ['/login', '/signup', '/verify-phone'];
+const publicRoutes = ['/login', '/signup'];
 const adminRoutes = ['/admin/dashboard', '/admin/approvals', '/admin/users', '/admin/audit', '/admin/ledger', '/admin/settings', '/admin/profit-loss'];
 const userRoutes = ['/dashboard', '/apply-loan', '/my-finances', '/become-member'];
 

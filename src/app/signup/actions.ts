@@ -4,7 +4,6 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/user";
 import { z } from "zod";
 import { redirect } from 'next/navigation';
-import twilio from 'twilio';
 
 
 const signupSchema = z.object({
@@ -19,7 +18,7 @@ const signupSchema = z.object({
 });
 
 // Returns an error message string on failure, or null on success.
-export async function signUp(formData: FormData): Promise<{ error: string | null; phone?: string | null }> {
+export async function signUp(formData: FormData): Promise<{ error: string | null; success?: boolean }> {
   const values = Object.fromEntries(formData.entries());
   const validatedFields = signupSchema.safeParse(values);
 
@@ -41,52 +40,16 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
       return { error: "An account with this phone number already exists." };
     }
 
-    const phoneOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    const phoneOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
-
     // 3. Create the new user
-    const newUser = await User.create({
+    await User.create({
       name,
       email: email?.toLowerCase(),
       phone,
       password,
-      isVerified: false,
-      phoneOtp,
-      phoneOtpExpires,
+      isVerified: true, // User is verified immediately
     });
     
-    // 4. Send OTP via Twilio
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
-
-    if (!accountSid || !authToken || !twilioPhoneNumber) {
-        console.error("Twilio credentials are not configured in .env file.");
-        // In development, we can log the OTP to the console.
-        // In production, this should return an error.
-        if (process.env.NODE_ENV === 'production') {
-             return { error: "The SMS service is not configured correctly. Please contact an administrator." };
-        } else {
-             console.log(`====== OTP for ${newUser.name} (${newUser.phone}) [DEV ONLY] ======`);
-             console.log(phoneOtp);
-             console.log('================================================================');
-        }
-    } else {
-         const client = twilio(accountSid, authToken);
-         try {
-            await client.messages.create({
-                body: `Your verification code for S&KGPPS Co-op is: ${phoneOtp}`,
-                from: twilioPhoneNumber,
-                to: `+91${newUser.phone}` // Assuming Indian numbers, add country code
-            });
-         } catch (smsError) {
-             console.error("Twilio SMS Sending Error:", smsError);
-             return { error: "Failed to send verification code. Please check the phone number and try again." };
-         }
-    }
-
-
-    return { error: null, phone: newUser.phone }; // Success
+    return { error: null, success: true }; // Success
 
   } catch (error: any) {
     console.error("Signup Error:", error);

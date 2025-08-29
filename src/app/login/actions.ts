@@ -15,8 +15,6 @@ const loginSchema = z.object({
 type LoginResult = { 
     error: string | null; 
     role?: 'admin' | 'user' | 'member' | 'board_member' | null;
-    isUnverified?: boolean;
-    unverifiedPhone?: string;
 }
 
 // Return type updated to send role or error
@@ -44,10 +42,6 @@ export async function login(formData: FormData): Promise<LoginResult> {
       return { error: 'Invalid phone number or password.' };
     }
     
-    if (!foundUser.isVerified) {
-        return { error: 'Please verify your phone number before logging in.', isUnverified: true, unverifiedPhone: foundUser.phone };
-    }
-
     user = foundUser;
 
   } catch (error) {
