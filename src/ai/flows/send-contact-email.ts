@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { Resend } from 'resend';
 
 // Initialize Resend with the API key from environment variables
