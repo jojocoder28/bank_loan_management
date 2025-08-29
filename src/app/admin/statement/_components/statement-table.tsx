@@ -35,11 +35,11 @@ export function StatementTable({ data }: { data: StatementRow[] }) {
                 "Membership No",
                 "Name",
                 "Bank Account Number",
-                "Loan Principal (₹)",
-                "Loan Interest (₹)",
-                "Share Fund (SF) (₹)",
-                "Thrift Fund (TF) (₹)",
-                "Total Deduction (₹)",
+                "Loan Principal",
+                "Loan Interest",
+                "Share Fund (SF)",
+                "Thrift Fund (TF)",
+                "Total Deduction",
             ];
 
             const csvRows = data.map(row => 
