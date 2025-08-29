@@ -1,7 +1,8 @@
+
 'use server';
 
 /**
- * @fileOverview A Genkit flow for sending a contact form email.
+ * @fileOverview A Genkit flow for sending a contact form email using Resend.
  *
  * - sendContactEmail - A function that handles sending the email.
  * - SendContactEmailInput - The input type for the sendContactEmail function.
@@ -9,6 +10,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { Resend } from 'resend';
+
+// Initialize Resend with the API key from environment variables
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Define the schema for the email sending flow input
 const SendContactEmailInputSchema = z.object({
@@ -23,17 +28,12 @@ export async function sendContactEmail(input: SendContactEmailInput): Promise<vo
   await sendContactEmailFlow(input);
 }
 
-// Define the Genkit prompt for sending the email
+// Define the Genkit prompt for creating the text body of the email
 const emailPrompt = ai.definePrompt({
   name: 'sendContactEmailPrompt',
   input: { schema: SendContactEmailInputSchema },
-  // Simple prompt that formats the email content.
-  // In a real scenario, you might add more instructions for formatting or tone.
+  // This prompt formats the text content for the email body.
   prompt: `
-From: {{fromName}} <{{fromEmail}}>
-To: sarikhor94@gmail.com
-Subject: New Contact Form Submission from Website
-
 You have received a new message from the website contact form:
 
 Name: {{fromName}}
@@ -42,7 +42,6 @@ Email: {{fromEmail}}
 Message:
 {{message}}
   `,
-  // There is no explicit output schema as we are using this for side-effects (sending email).
 });
 
 // Define the Genkit flow
@@ -53,19 +52,25 @@ const sendContactEmailFlow = ai.defineFlow(
     outputSchema: z.void(), // The flow does not return a value
   },
   async (input) => {
-    // This is a simplified implementation. A real email sending integration
-    // (like Nodemailer with an SMTP service or a third-party API like SendGrid)
-    // would be called here. For this context, we will log the email content
-    // as if it were being sent. The prompt is evaluated to generate the content.
-    const { output } = await emailPrompt(input);
-    console.log("Email that would be sent:");
-    console.log(output);
+    const { output: emailBody } = await emailPrompt(input);
 
-    // In a real integration, you would have something like:
-    // await emailService.send({
-    //   to: 'sarikhor94@gmail.com',
-    //   subject: `New Contact Form Submission from ${input.fromName}`,
-    //   body: output,
-    // });
+    if (!process.env.RESEND_API_KEY) {
+        console.error("Resend API key is not configured. Email will be logged to console instead of sent.");
+        console.log("Email that would be sent:");
+        console.log(emailBody);
+        // We throw an error to let the user know something is wrong with the configuration.
+        throw new Error("Email service is not configured on the server.");
+    }
+    
+    // Send the email using the Resend SDK
+    await resend.emails.send({
+      // IMPORTANT: Resend requires the 'from' address to be a domain you have verified.
+      // For development, 'onboarding@resend.dev' is a safe default.
+      from: 'S&KGPPS Co-op <onboarding@resend.dev>',
+      to: ['sarikhor94@gmail.com'],
+      subject: `New Contact from ${input.fromName}`,
+      text: emailBody!, // The plain text version of the email
+      reply_to: input.fromEmail, // So replies go directly to the user
+    });
   }
 );
