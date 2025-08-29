@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,9 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { runAudit } from "./actions";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, FileUp, X, File as FileIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
+
 
 const initialState = {
   analysisResult: "",
@@ -27,13 +29,13 @@ const initialState = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className="w-full">
       {pending ? (
         <Loader2 className="mr-2 animate-spin" />
       ) : (
         <Sparkles className="mr-2" />
       )}
-      Run Audit
+      Run Analysis
     </Button>
   );
 }
@@ -41,16 +43,36 @@ function SubmitButton() {
 export default function AiAuditPage() {
   const [state, formAction] = useActionState(runAudit, initialState);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [filePreview, setFilePreview] = useState<{name: string, type: string, url: string} | null>(null);
 
   useEffect(() => {
     if (state.error) {
+       const errorMsg = typeof state.error === 'object' 
+        ? Object.values(state.error).flat().join(', ')
+        : state.error;
       toast({
         variant: "destructive",
-        title: "Audit Failed",
-        description: state.error as string,
+        title: "Analysis Failed",
+        description: errorMsg,
       });
     }
   }, [state.error, toast]);
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setFilePreview({ name: file.name, type: file.type, url });
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setFilePreview(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  }
 
   const { pending } = useFormStatus();
 
@@ -58,50 +80,56 @@ export default function AiAuditPage() {
     <div className="grid gap-8 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>AI Financial Auditor</CardTitle>
+          <CardTitle>AI Data Analyst</CardTitle>
           <CardDescription>
-            Compare monthly balance sheets with historical data to find anomalies.
+            Upload a file (image, document, csv) and ask a question to get AI-powered insights.
           </CardDescription>
         </CardHeader>
         <form action={formAction}>
-          <CardContent className="grid gap-4">
+          <CardContent className="grid gap-6">
             <div className="grid gap-2">
-              <Label htmlFor="currentBalanceSheetData">
-                Current Month's Balance Sheet (JSON)
-              </Label>
-              <Textarea
-                id="currentBalanceSheetData"
-                name="currentBalanceSheetData"
-                placeholder='{ "assets": 105000, "liabilities": 50000, "equity": 55000 }'
-                rows={5}
-                required
-              />
+                <Label htmlFor="context">
+                    Context or Question
+                </Label>
+                <Textarea
+                    id="context"
+                    name="context"
+                    placeholder="e.g., What are the key takeaways from this document? or Is there anything unusual in this balance sheet image?"
+                    rows={5}
+                    required
+                />
             </div>
+            
             <div className="grid gap-2">
-              <Label htmlFor="historicalBalanceSheetData">
-                Historical Averages (JSON)
-              </Label>
-              <Textarea
-                id="historicalBalanceSheetData"
-                name="historicalBalanceSheetData"
-                placeholder='{ "assets": 100000, "liabilities": 48000, "equity": 52000 }'
-                rows={5}
-                required
-              />
+                <Label htmlFor="file-upload">Upload File (Optional)</Label>
+                <Input id="file-upload" name="file" type="file" ref={fileInputRef} onChange={handleFileChange} />
+                <p className="text-xs text-muted-foreground">Supports: Images, PDF, DOCX, CSV. Max 4MB.</p>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="discrepancyThreshold">
-                Discrepancy Threshold (%)
-              </Label>
-              <Input
-                id="discrepancyThreshold"
-                name="discrepancyThreshold"
-                type="number"
-                defaultValue="5"
-                required
-                className="w-48"
-              />
-            </div>
+
+            {filePreview && (
+                <div className="relative rounded-lg border p-4">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute -top-3 -right-3 size-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/80"
+                        onClick={handleRemoveFile}
+                    >
+                       <X className="size-4" />
+                       <span className="sr-only">Remove file</span>
+                    </Button>
+                    {filePreview.type.startsWith("image/") ? (
+                        <Image src={filePreview.url} alt="File preview" width={100} height={100} className="rounded-md object-cover h-24 w-24" />
+                    ) : (
+                       <div className="flex flex-col items-center justify-center text-center p-4 bg-secondary rounded-md">
+                            <FileIcon className="size-8 text-muted-foreground" />
+                            <p className="text-sm font-medium truncate max-w-full">{filePreview.name}</p>
+                            <p className="text-xs text-muted-foreground">{filePreview.type}</p>
+                       </div>
+                    )}
+                </div>
+            )}
+
             <SubmitButton />
           </CardContent>
         </form>
@@ -110,7 +138,7 @@ export default function AiAuditPage() {
         <CardHeader>
           <CardTitle>Analysis Result</CardTitle>
           <CardDescription>
-            AI-powered insights into your financial data.
+            AI-powered insights into your provided data.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -129,7 +157,7 @@ export default function AiAuditPage() {
             <div className="text-center text-muted-foreground py-8">
               <Sparkles className="mx-auto h-12 w-12 " />
               <p className="mt-4">
-                Your audit results will appear here.
+                Your analysis results will appear here.
               </p>
             </div>
           )}

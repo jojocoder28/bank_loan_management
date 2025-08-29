@@ -4,18 +4,14 @@ import { z } from "zod";
 import { auditDataAnalysis } from "@/ai/flows/audit-data-analysis";
 
 const schema = z.object({
-  currentBalanceSheetData: z.string().min(1, "Current data is required."),
-  historicalBalanceSheetData: z.string().min(1, "Historical data is required."),
-  discrepancyThreshold: z.coerce
-    .number()
-    .min(0, "Threshold must be non-negative."),
+  context: z.string().min(1, "Please provide some context or a question."),
+  file: z.any().optional(),
 });
 
 export async function runAudit(prevState: any, formData: FormData) {
   const validatedFields = schema.safeParse({
-    currentBalanceSheetData: formData.get("currentBalanceSheetData"),
-    historicalBalanceSheetData: formData.get("historicalBalanceSheetData"),
-    discrepancyThreshold: formData.get("discrepancyThreshold"),
+    context: formData.get("context"),
+    file: formData.get("file"),
   });
 
   if (!validatedFields.success) {
@@ -24,20 +20,31 @@ export async function runAudit(prevState: any, formData: FormData) {
       error: validatedFields.error.flatten().fieldErrors,
     };
   }
+  
+  const { context, file } = validatedFields.data;
+  let dataUri: string | undefined = undefined;
 
-  // Validate JSON format
-  try {
-    JSON.parse(validatedFields.data.currentBalanceSheetData);
-    JSON.parse(validatedFields.data.historicalBalanceSheetData);
-  } catch (e) {
-    return {
-      analysisResult: "",
-      error: "Invalid JSON format provided.",
-    };
+  if (file && file.size > 0) {
+      if (file.size > 4 * 1024 * 1024) { // 4MB limit for Gemini
+           return {
+                analysisResult: "",
+                error: "File size cannot exceed 4MB.",
+            };
+      }
+      try {
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        dataUri = `data:${file.type};base64,${fileBuffer.toString('base64')}`;
+      } catch (e) {
+          return {
+            analysisResult: "",
+            error: "Could not process the uploaded file.",
+        };
+      }
   }
 
+
   try {
-    const result = await auditDataAnalysis(validatedFields.data);
+    const result = await auditDataAnalysis({ context, dataUri });
     return {
       analysisResult: result.analysisResult,
       error: null,
