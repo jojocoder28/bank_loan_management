@@ -90,11 +90,25 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
       }
     }
 
-    Object.assign(user, profileData);
-    user.photoUrl = photoUrl;
-    if (!user.email && profileData.email) {
-        user.email = profileData.email.toLowerCase();
+    // Build an update object with only the submitted fields
+    const updateData: Partial<IUser> = {};
+    for (const [key, value] of Object.entries(profileData)) {
+        if (value !== '' && value !== undefined && value !== null) {
+            (updateData as any)[key] = value;
+        }
     }
+
+    if (photoUrl) {
+        updateData.photoUrl = photoUrl;
+    }
+    
+    // Handle email specifically
+    if (profileData.email) {
+        updateData.email = profileData.email.toLowerCase();
+    }
+
+
+    Object.assign(user, updateData);
     
     await user.save();
     
