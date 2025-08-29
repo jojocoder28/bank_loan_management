@@ -3,18 +3,20 @@
 
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const fromEmail = 'S&KGPPS Co-op <onboarding@resend.dev>';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
 export async function sendVerificationEmail(email: string, name: string, token: string): Promise<void> {
-  if (!process.env.RESEND_API_KEY) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+
+  if (!resendApiKey) {
     console.error("Resend API key is not configured. Email cannot be sent.");
     // In production, you might want to throw an error or handle this differently
     throw new Error('The email service is not configured. Please contact an administrator.');
   }
 
   const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
+  const resend = new Resend(resendApiKey);
 
   try {
     await resend.emails.send({
