@@ -19,6 +19,7 @@ import { Loader2, Sparkles, FileUp, X, File as FileIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { marked } from "marked";
 
 
 const initialState = {
@@ -150,9 +151,10 @@ export default function AiAuditPage() {
               <Skeleton className="h-4 w-1/2" />
             </div>
           ) : state.analysisResult ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap font-sans">
-              {state.analysisResult}
-            </div>
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: marked.parse(state.analysisResult) }}
+            />
           ) : (
             <div className="text-center text-muted-foreground py-8">
               <Sparkles className="mx-auto h-12 w-12 " />
