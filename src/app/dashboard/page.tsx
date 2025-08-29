@@ -31,11 +31,133 @@ import {
   ArrowRight,
   UserCheck,
   Wallet,
+  Handshake,
+  HeartHandshake,
+  StepForward,
+  Target
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
 import { getDashboardData } from './actions';
 import { redirect } from 'next/navigation';
+import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
+
+const benefits = [
+    { title: "Annual Durga Puja Dividend", description: "10-12% on Share Fund", icon: <TrendingUp className="size-6 text-primary"/> },
+    { title: "One-Day Picnic", description: "Fully Self-Sponsored", icon: <UserCheck className="size-6 text-primary"/> },
+    { title: "Annual Tour Support", description: "Contribution from Profits", icon: <Landmark className="size-6 text-primary"/> },
+    { title: "Yearly Gift", description: "Yearly Gift", icon: <Award className="size-6 text-primary"/> },
+]
+
+const offerings = [
+    { title: "Secure & Fair Loans", description: "Access loans at competitive interest rates with transparent terms.", icon: <Handshake className="size-8 text-primary"/> },
+    { title: "Savings & Growth", description: "Grow your savings with Share, Guaranteed, and Thrift funds.", icon: <PiggyBank className="size-8 text-primary"/> },
+    { title: "Community & Support", description: "Be part of a supportive community of fellow teachers.", icon: <HeartHandshake className="size-8 text-primary"/> },
+]
+
+const steps = [
+    { title: "Fill Out the Form", description: "Complete the simple online membership application with your details.", icon: <StepForward className="size-8 text-primary"/> },
+    { title: "Admin Review", description: "Our team will review your application for approval.", icon: <UserCheck className="size-8 text-primary"/> },
+    { title: "Become a Member", description: "Once approved, you'll have full access to all member benefits and services.", icon: <Target className="size-8 text-primary"/> },
+]
+
+
+const UserLandingPage = () => {
+    return (
+        <div className="flex flex-col gap-12">
+            {/* Hero Section */}
+            <section className="text-center bg-card p-8 rounded-lg shadow-md">
+                <div className="max-w-3xl mx-auto">
+                    <h1 className="text-4xl font-bold font-headline tracking-tight text-primary">Unlock Your Financial Potential with Us</h1>
+                    <p className="mt-4 text-lg text-muted-foreground">
+                        Welcome to the Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD. Join our community to access exclusive financial products and benefits designed just for you.
+                    </p>
+                    <Button asChild size="lg" className="mt-8">
+                        <Link href="/become-member">Become a Member Today <ArrowRight className="ml-2"/></Link>
+                    </Button>
+                </div>
+            </section>
+            
+             {/* Offerings Section */}
+            <section>
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold">Our Core Offerings</h2>
+                    <p className="text-muted-foreground">Services built for the financial well-being of our members.</p>
+                </div>
+                <div className="grid md:grid-cols-3 gap-8">
+                    {offerings.map(item => (
+                        <Card key={item.title}>
+                            <CardHeader className="items-center">
+                                {item.icon}
+                                <CardTitle>{item.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-center">
+                                <p className="text-muted-foreground">{item.description}</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </section>
+
+
+            {/* Benefits Section */}
+            <section>
+                <div className="grid md:grid-cols-2 gap-8 items-center bg-card p-8 rounded-lg shadow-sm">
+                    <div className="space-y-4">
+                        <h2 className="text-3xl font-bold">Exclusive Membership Benefits</h2>
+                        <p className="text-muted-foreground">As a member, you're not just a customer; you're an owner. Enjoy a range of perks designed to reward you and build our community.</p>
+                        <div className="space-y-4 pt-4">
+                            {benefits.map(benefit => (
+                                <div key={benefit.title} className="flex items-center gap-4">
+                                    {benefit.icon}
+                                    <div>
+                                        <h4 className="font-semibold">{benefit.title}</h4>
+                                        <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <Image 
+                            src="https://picsum.photos/600/400" 
+                            alt="Community of teachers"
+                            data-ai-hint="community teachers"
+                            width={600}
+                            height={400}
+                            className="rounded-lg object-cover"
+                        />
+                    </div>
+                </div>
+            </section>
+
+             {/* How to Join Section */}
+            <section>
+                 <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold">Ready to Join?</h2>
+                    <p className="text-muted-foreground">Becoming a member is simple. Here's how it works.</p>
+                </div>
+                <div className="grid md:grid-cols-3 gap-8 text-center">
+                    {steps.map((step, index) => (
+                        <div key={step.title} className="flex flex-col items-center">
+                            <div className="flex items-center justify-center size-16 rounded-full bg-primary/10 mb-4">
+                               {step.icon}
+                            </div>
+                            <h3 className="text-xl font-semibold">{index + 1}. {step.title}</h3>
+                            <p className="text-muted-foreground">{step.description}</p>
+                        </div>
+                    ))}
+                </div>
+                <div className="text-center mt-10">
+                    <Button asChild size="lg">
+                        <Link href="/become-member">Start Your Application <ArrowRight className="ml-2"/></Link>
+                    </Button>
+                </div>
+            </section>
+        </div>
+    )
+}
 
 
 export default async function DashboardPage() {
@@ -46,6 +168,12 @@ export default async function DashboardPage() {
   }
 
   const { user, activeLoans, loanHistory } = data;
+  
+  // If the user is not a member, show the landing page.
+  if (user.role === 'user') {
+      return <UserLandingPage />;
+  }
+
 
   const totalLoanAmount = activeLoans.reduce((sum, loan) => sum + loan.loanAmount, 0);
   const totalPrincipalLeft = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
@@ -174,22 +302,12 @@ export default async function DashboardPage() {
             </div>
             </CardHeader>
             <CardContent className="grid gap-4 text-sm md:grid-cols-2">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                    <p className="font-medium">Annual Durga Puja Dividend</p>
-                    <Badge variant="outline">10-12% on Share Fund</Badge>
-                </div>
-                 <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                    <p className="font-medium">One-Day Picnic</p>
-                    <Badge variant="outline">Fully Self-Sponsored</Badge>
-                </div>
-                 <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                    <p className="font-medium">Annual Tour Support</p>
-                    <Badge variant="outline">Contribution from Profits</Badge>
-                </div>
-                 <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                    <p className="font-medium">Yearly Gift</p>
-                    <Badge variant="outline">Yearly Gift</Badge>
-                </div>
+                {benefits.map(benefit => (
+                    <div key={benefit.title} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                        <p className="font-medium">{benefit.title}</p>
+                        <Badge variant="outline">{benefit.description}</Badge>
+                    </div>
+                ))}
             </CardContent>
         </Card>
       </div>
@@ -243,5 +361,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-
-    
