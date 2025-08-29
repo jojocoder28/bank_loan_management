@@ -8,11 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Send, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { Mail, Send, Loader2, CheckCircle, Building, ClipboardList, Phone } from "lucide-react";
 import { submitContactForm } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import Image from "next/image";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 
 
 function SubmitButton() {
@@ -68,16 +67,45 @@ export default function ContactUsPage() {
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
         <div className="grid md:grid-cols-2 items-center">
-            {/* Left side: Illustration */}
-            <div className="p-8 md:p-12 flex flex-col items-center justify-center bg-secondary/30 h-full rounded-l-lg">
-                <Image 
-                    src="https://picsum.photos/600/500"
-                    alt="Contact illustration"
-                    width={600}
-                    height={500}
-                    className="max-w-xs md:max-w-sm"
-                    data-ai-hint="illustration envelope"
-                />
+            {/* Left side: About Us */}
+            <div className="p-8 md:p-12 flex flex-col justify-center bg-secondary/30 h-full rounded-l-lg">
+                <div className="space-y-6">
+                    <div className="flex items-start gap-4">
+                         <div className="bg-primary/10 p-3 rounded-full mt-1">
+                            <Building className="size-6 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold">About Our Society</h3>
+                            <p className="text-muted-foreground">
+                                Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD
+                            </p>
+                        </div>
+                    </div>
+                    <Separator />
+                     <div className="flex items-start gap-4">
+                         <div className="bg-primary/10 p-3 rounded-full mt-1">
+                            <ClipboardList className="size-6 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold">Registration Details</h3>
+                            <p className="text-muted-foreground">
+                                Regd No 11/1994/South 24 Parganas, Date 30/08/1994
+                            </p>
+                        </div>
+                    </div>
+                     <Separator />
+                     <div className="flex items-start gap-4">
+                         <div className="bg-primary/10 p-3 rounded-full mt-1">
+                            <Phone className="size-6 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold">Contact Number</h3>
+                            <p className="text-muted-foreground">
+                                Mob No. 9233092709
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
             {/* Right side: Form */}
             <div className="p-8 md:p-12">
