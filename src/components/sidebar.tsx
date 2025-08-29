@@ -50,7 +50,19 @@ const adminNavLinks = [
 
 export function SidebarNav({ user, isMobile = false, isCollapsed = false }: { user: User, isMobile?: boolean, isCollapsed?: boolean }) {
     const pathname = usePathname();
-    const navLinks = user.role === 'admin' ? adminNavLinks : userNavLinks;
+    
+    let navLinks;
+
+    if (user.role === 'admin') {
+        navLinks = adminNavLinks;
+    } else if (user.role === 'member' || user.role === 'board_member') {
+        navLinks = userNavLinks;
+    } else { // 'user' role (non-member)
+        navLinks = userNavLinks.filter(link => 
+            link.href === '/dashboard' || link.href === '/contact-us'
+        );
+    }
+
 
     const navItems = (
       <TooltipProvider>
