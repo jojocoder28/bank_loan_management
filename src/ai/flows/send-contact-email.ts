@@ -66,8 +66,8 @@ const sendContactEmailFlow = ai.defineFlow(
     await resend.emails.send({
       // IMPORTANT: Resend requires the 'from' address to be a domain you have verified.
       // For development, 'onboarding@resend.dev' is a safe default.
-      from: 'S&KGPPS Co-op <onboarding@resend.dev>',
-      to: ['sarikhor94@gmail.com'],
+      from: 'onboarding@resend.dev',
+      to: 'sarikhor94@gmail.com',
       subject: `New Contact from ${input.fromName}`,
       text: emailBody!, // The plain text version of the email
       reply_to: input.fromEmail, // So replies go directly to the user
