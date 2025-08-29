@@ -12,8 +12,14 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+type LoginResult = { 
+    error: string | null; 
+    role?: 'admin' | 'user' | 'member' | 'board_member' | null;
+    isUnverified?: boolean;
+}
+
 // Return type updated to send role or error
-export async function login(formData: FormData): Promise<{ error: string; role?: never; } | { error: null; role: 'admin' | 'user' | 'member' | 'board_member' }> {
+export async function login(formData: FormData): Promise<LoginResult> {
   const values = Object.fromEntries(formData.entries());
   const validatedFields = loginSchema.safeParse(values);
 
@@ -27,7 +33,7 @@ export async function login(formData: FormData): Promise<{ error: string; role?:
   try {
     await dbConnect();
 
-    const foundUser = await User.findOne({ email }).select('+password +photoUrl +membershipApplied +name +email +role +isVerified');
+    const foundUser = await User.findOne({ email: email.toLowerCase() }).select('+password +photoUrl +membershipApplied +name +email +role +isVerified');
     if (!foundUser) {
       return { error: 'Invalid email or password.' };
     }
@@ -38,7 +44,7 @@ export async function login(formData: FormData): Promise<{ error: string; role?:
     }
     
     if (!foundUser.isVerified) {
-        return { error: 'Please verify your email address before logging in.' };
+        return { error: 'Please verify your email address before logging in.', isUnverified: true };
     }
 
     user = foundUser;

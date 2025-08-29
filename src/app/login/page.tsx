@@ -13,21 +13,47 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { LogIn, AlertTriangle } from "lucide-react";
+import { LogIn, AlertTriangle, MailCheck } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { login } from "./actions";
+import { resendVerificationEmail } from "./reverify-actions";
+import { useToast } from "@/hooks/use-toast";
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showReverify, setShowReverify] = useState(false);
+  const [reverifyEmail, setReverifyEmail] = useState("");
+
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
 
+  const handleReverify = async () => {
+      startTransition(async () => {
+          const result = await resendVerificationEmail(reverifyEmail);
+          if (result.error) {
+              toast({
+                  variant: 'destructive',
+                  title: 'Failed to Resend',
+                  description: result.error,
+              })
+          } else {
+               toast({
+                  title: 'Email Sent!',
+                  description: 'A new verification link has been sent to your email address.',
+              })
+              setShowReverify(false);
+          }
+      })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setShowReverify(false);
     
     startTransition(async () => {
       const formData = new FormData();
@@ -38,7 +64,11 @@ export default function LoginPage() {
 
       if (result.error) {
         setError(result.error);
-      } else {
+        if (result.isUnverified) {
+            setShowReverify(true);
+            setReverifyEmail(email);
+        }
+      } else if (result.role) {
         // Handle redirection on the client side
         const dashboardPath = result.role === 'admin' ? '/admin/dashboard' : '/dashboard';
         router.push(dashboardPath);
@@ -67,6 +97,17 @@ export default function LoginPage() {
                 <AlertDescription>
                     {error}
                 </AlertDescription>
+                {showReverify && (
+                    <Button 
+                        variant="link" 
+                        className="p-0 h-auto text-destructive-foreground font-bold mt-2"
+                        onClick={handleReverify}
+                        disabled={isPending}
+                        >
+                        <MailCheck className="mr-2" />
+                        {isPending ? 'Sending...' : 'Resend Verification Email'}
+                    </Button>
+                )}
             </Alert>
           )}
           <form onSubmit={handleSubmit} className="grid gap-4">
