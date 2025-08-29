@@ -43,7 +43,8 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
     // 3. Create the new user
     await User.create({
       name,
-      email: email?.toLowerCase(),
+      // If email is an empty string, set it to null to avoid unique index conflicts.
+      email: email ? email.toLowerCase() : null,
       phone,
       password,
       isVerified: true, // User is verified immediately
