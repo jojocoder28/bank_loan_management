@@ -119,15 +119,25 @@ const UserLandingPage = () => {
                             ))}
                         </div>
                     </div>
-                    <div>
-                        <Image 
-                            src="https://picsum.photos/600/400" 
-                            alt="Community of teachers"
-                            data-ai-hint="community teachers"
-                            width={600}
-                            height={400}
-                            className="rounded-lg object-cover"
-                        />
+                    <div className="h-[300px] w-full bg-secondary/30 rounded-lg flex items-end justify-center p-4 overflow-hidden relative">
+                       {/* People illustration */}
+                       <div className="flex items-end gap-2 relative">
+                            {/* Person 1 */}
+                            <div className="relative flex flex-col items-center">
+                                <div className="h-12 w-12 rounded-full bg-primary/20"></div>
+                                <div className="h-24 w-20 rounded-t-full bg-primary/20"></div>
+                            </div>
+                             {/* Person 2 */}
+                             <div className="relative flex flex-col items-center bottom-4">
+                                <div className="h-16 w-16 rounded-full bg-primary/40"></div>
+                                <div className="h-32 w-24 rounded-t-full bg-primary/40"></div>
+                            </div>
+                             {/* Person 3 */}
+                             <div className="relative flex flex-col items-center">
+                                <div className="h-12 w-12 rounded-full bg-primary/20"></div>
+                                <div className="h-24 w-20 rounded-t-full bg-primary/20"></div>
+                            </div>
+                       </div>
                     </div>
                 </div>
             </section>
