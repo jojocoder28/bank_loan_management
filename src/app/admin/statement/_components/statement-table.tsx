@@ -16,7 +16,7 @@ import { StatementRow } from "../actions";
 import { useState } from "react";
 import Link from "next/link";
 
-export function StatementTable({ data }: { data: StatementRow[] }) {
+export function StatementTable({ data, month, year }: { data: StatementRow[], month: string, year: number }) {
     const [isDownloading, setIsDownloading] = useState(false);
 
     const totals = data.reduce((acc, row) => {
@@ -31,6 +31,13 @@ export function StatementTable({ data }: { data: StatementRow[] }) {
     const downloadCSV = () => {
         setIsDownloading(true);
         try {
+            const heading = [
+              "Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD",
+              "Regd No 11/1994/South 24 Parganas, Date 30/08/1994 Mob No. 9233092709",
+              `Deduction List for the month of ${month}, ${year}`
+            ].map(line => `"${line}"`).join('\n');
+
+
             const headers = [
                 "Membership No",
                 "Name",
@@ -56,13 +63,14 @@ export function StatementTable({ data }: { data: StatementRow[] }) {
             );
             
             const csvContent = "data:text/csv;charset=utf-8," 
+                + heading + "\n\n"
                 + headers.join(',') + "\n"
                 + csvRows.join('\n');
             
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `monthly_statement_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("download", `monthly_statement_${month}_${year}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
