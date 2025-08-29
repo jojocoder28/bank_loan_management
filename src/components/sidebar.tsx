@@ -28,6 +28,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { logout } from "@/app/logout/actions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { ThemeToggle } from "./theme-toggle";
 
 
 const userNavLinks = [
@@ -205,6 +206,9 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                              <Link href="/settings" className="flex items-center gap-2 cursor-pointer"><Settings /> Settings</Link>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <ThemeToggle />
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                          <DropdownMenuItem asChild>
