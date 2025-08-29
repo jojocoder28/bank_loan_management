@@ -54,7 +54,7 @@ export default async function AdminDashboardPage() {
             <CardHeader>
                 <CardTitle>Admin Control Panel</CardTitle>
                 <CardDescription>
-                    Welcome, Admin. Access and manage the core features of the Co-op Loan Manager.
+                    Welcome, Admin. Access and manage the core features of the Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD.
                 </CardDescription>
             </CardHeader>
         </Card>

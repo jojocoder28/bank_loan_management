@@ -38,7 +38,7 @@ export function Header({ user }: { user: User }) {
                 className="flex items-center gap-2 font-semibold text-lg"
             >
                 <Landmark className="h-6 w-6 text-primary" />
-                <span className="sr-only">Co-op Bank</span>
+                <span className="">S&KGPPS Co-op</span>
             </Link>
         </div>
     </header>

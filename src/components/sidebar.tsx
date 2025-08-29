@@ -97,7 +97,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false }: { us
                     className="flex items-center gap-2 text-lg font-semibold mb-4"
                     >
                     <Landmark className="h-6 w-6" />
-                    <span>Co-op Bank</span>
+                    <span>S&KGPPS Co-op</span>
                 </Link>
                 {navItems}
             </nav>
@@ -133,7 +133,7 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
                     )}
                 >
                     <Landmark className="h-6 w-6" />
-                    <span className={cn(isCollapsed && "hidden")}>Co-op Bank</span>
+                    <span className={cn(isCollapsed && "hidden")}>S&KGPPS Co-op</span>
                 </Link>
                  <Button 
                     variant="ghost" 

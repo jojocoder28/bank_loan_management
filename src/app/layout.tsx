@@ -6,9 +6,9 @@ import { AppProvider } from '@/components/app-provider';
 import { getSession } from '@/lib/session';
 
 export const metadata: Metadata = {
-  title: 'Co-op Bank Manager',
+  title: 'S&KGPPS Co-op',
   description:
-    'A user-friendly dashboard for managing cooperative loans and funds.',
+    'Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD',
 };
 
 export default async function RootLayout({
