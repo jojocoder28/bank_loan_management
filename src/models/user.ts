@@ -13,6 +13,10 @@ export interface IUser extends Document {
   role: UserRole;
   createdAt: Date;
   membershipApplied?: boolean;
+  isVerified?: boolean;
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
+
 
   // New Fields
   photoUrl?: string;
@@ -50,6 +54,9 @@ const UserSchema = new Schema<IUser>({
     default: 'user',
   },
   membershipApplied: { type: Boolean, default: false },
+  isVerified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+  verificationTokenExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
   
   // New Fields

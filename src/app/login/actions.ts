@@ -27,7 +27,7 @@ export async function login(formData: FormData): Promise<{ error: string; role?:
   try {
     await dbConnect();
 
-    const foundUser = await User.findOne({ email }).select('+password +photoUrl +membershipApplied +name +email +role');
+    const foundUser = await User.findOne({ email }).select('+password +photoUrl +membershipApplied +name +email +role +isVerified');
     if (!foundUser) {
       return { error: 'Invalid email or password.' };
     }
@@ -37,6 +37,10 @@ export async function login(formData: FormData): Promise<{ error: string; role?:
       return { error: 'Invalid email or password.' };
     }
     
+    if (!foundUser.isVerified) {
+        return { error: 'Please verify your email address before logging in.' };
+    }
+
     user = foundUser;
 
   } catch (error) {

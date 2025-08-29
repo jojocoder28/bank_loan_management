@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, AlertTriangle } from "lucide-react";
+import { UserPlus, AlertTriangle, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,6 +24,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -43,13 +44,31 @@ export default function SignupPage() {
     if (result.error) {
       setError(result.error);
     } else {
-      toast({
-        title: "Signup Successful",
-        description: "Please log in with your new account.",
-      });
-      router.push("/login");
+      setIsSubmitted(true);
     }
   };
+
+  if (isSubmitted) {
+    return (
+       <div className="flex min-h-screen items-center justify-center bg-background">
+        <Card className="mx-auto max-w-sm w-full">
+            <CardHeader className="text-center">
+                 <CheckCircle className="mx-auto size-12 text-green-500" />
+                 <CardTitle className="text-2xl mt-4">Registration Successful!</CardTitle>
+                 <CardDescription>
+                    We've sent a verification link to your email address. Please check your inbox to complete the registration.
+                 </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button className="w-full" asChild>
+                    <Link href="/login">Back to Login</Link>
+                </Button>
+            </CardContent>
+        </Card>
+       </div>
+    );
+  }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

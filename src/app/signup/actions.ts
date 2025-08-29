@@ -3,6 +3,8 @@
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/user";
 import { z } from "zod";
+import crypto from "crypto";
+import { sendVerificationEmail } from "./email-actions";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -31,6 +33,10 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
       return { error: "An account with this email already exists." };
     }
 
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenExpires = new Date(Date.now() + 3600 * 1000); // 1 hour from now
+
+
     // 3. Create the new user
     // The pre-save hook in the User model will hash the password automatically.
     // The default role 'user' will also be assigned by the model.
@@ -38,7 +44,14 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
       name,
       email: email.toLowerCase(),
       password,
+      isVerified: false,
+      verificationToken,
+      verificationTokenExpires,
     });
+
+    // 4. Send verification email
+    await sendVerificationEmail(email, name, verificationToken);
+
 
     return { error: null }; // Success
 
