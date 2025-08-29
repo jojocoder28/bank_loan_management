@@ -10,7 +10,8 @@ import { redirect } from "next/navigation";
 // Redefined schema with only the necessary fields for adding an admin.
 const addUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Invalid email address."),
+  email: z.string().email("Invalid email address.").optional().or(z.literal('')),
+  phone: z.string().min(10, "Phone number must be at least 10 digits."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   confirmPassword: z.string().min(6, "Password must be at least 6 characters."),
 }).refine(data => data.password === data.confirmPassword, {
@@ -27,21 +28,22 @@ export async function addUser(prevState: any, formData: FormData) {
         return { error: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { name, email, password } = validatedFields.data;
+    const { name, email, phone, password } = validatedFields.data;
 
     try {
         await dbConnect();
 
-        // 2. Check for duplicate email
-        const existingUserByEmail = await User.findOne({ email: email.toLowerCase() });
-        if (existingUserByEmail) {
-            return { error: { email: ["An account with this email already exists."] } };
+        // 2. Check for duplicate phone
+        const existingUserByPhone = await User.findOne({ phone });
+        if (existingUserByPhone) {
+            return { error: { phone: ["An account with this phone number already exists."] } };
         }
         
         // 3. Build the user data object for creation
         const userData: any = {
             name,
-            email: email.toLowerCase(),
+            email: email?.toLowerCase(),
+            phone,
             password, // The pre-save hook will hash this
             role: 'admin', // Hardcode the role to admin
             isVerified: true, // Admins created by admins are verified by default
@@ -54,8 +56,10 @@ export async function addUser(prevState: any, formData: FormData) {
         console.error("Add User Error:", error);
         // Specific check for MongoDB duplicate key errors
         if (error.code === 11000) {
-            const field = Object.keys(error.keyValue)[0];
-            if (field === 'email') {
+             if (error.keyPattern?.phone) {
+                return { error: { phone: ["An account with this phone number already exists."] } };
+            }
+             if (error.keyPattern?.email && email) {
                 return { error: { email: ["An account with this email already exists."] } };
             }
         }

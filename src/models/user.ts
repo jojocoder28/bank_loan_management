@@ -8,14 +8,17 @@ export type Gender = 'male' | 'female' | 'other' | '';
 // Interface for the User document
 export interface IUser extends Document {
   name: string;
-  email: string;
+  email?: string | null;
+  phone: string;
   password?: string;
   role: UserRole;
   createdAt: Date;
   membershipApplied?: boolean;
   isVerified?: boolean;
-  verificationToken?: string;
-  verificationTokenExpires?: Date;
+  // verificationToken?: string;
+  // verificationTokenExpires?: Date;
+  phoneOtp?: string;
+  phoneOtpExpires?: Date;
 
 
   // New Fields
@@ -25,7 +28,7 @@ export interface IUser extends Document {
   workplaceAddress?: string;
   personalAddress?: string;
   membershipNumber?: string;
-  phone?: string;
+  // phone?: string;
   bankAccountNumber?: string;
   age?: number;
   gender?: Gender;
@@ -46,7 +49,8 @@ export interface IUser extends Document {
 // Mongoose Schema
 const UserSchema = new Schema<IUser>({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true, lowercase: true },
+  email: { type: String, required: false, unique: true, sparse: true, lowercase: true },
+  phone: { type: String, required: true, unique: true, index: true },
   password: { type: String, required: true, select: false }, // Hide password by default
   role: {
     type: String,
@@ -55,8 +59,10 @@ const UserSchema = new Schema<IUser>({
   },
   membershipApplied: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false },
-  verificationToken: { type: String },
-  verificationTokenExpires: { type: Date },
+  // verificationToken: { type: String },
+  // verificationTokenExpires: { type: Date },
+  phoneOtp: { type: String },
+  phoneOtpExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
   
   // New Fields
@@ -66,7 +72,7 @@ const UserSchema = new Schema<IUser>({
   workplaceAddress: { type: String },
   personalAddress: { type: String },
   membershipNumber: { type: String, unique: true, sparse: true }, // unique but can be null
-  phone: { type: String },
+  // phone: { type: String },
   bankAccountNumber: { type: String },
   age: { type: Number },
   gender: { type: String, enum: ['male', 'female', 'other', ''] },

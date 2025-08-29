@@ -38,6 +38,7 @@ export default async function UsersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Membership #</TableHead>
@@ -53,7 +54,8 @@ export default async function UsersPage() {
                       {user.name}
                     </Link>
                 </TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.phone || 'N/A'}</TableCell>
+                <TableCell>{user.email || 'N/A'}</TableCell>
                 <TableCell>
                   <Badge variant={roleVariant[user.role] || "outline"} className="capitalize">
                     {user.role.replace("_", " ")}

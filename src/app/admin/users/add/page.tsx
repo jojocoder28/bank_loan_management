@@ -71,8 +71,13 @@ export default function AddUserPage() {
               {state?.error?.name && <p className="text-sm text-destructive">{state.error.name[0]}</p>}
           </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input id="email" name="email" type="email" placeholder="admin@example.com" required />
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input id="phone" name="phone" type="tel" placeholder="e.g. 9876543210" required />
+              {state?.error?.phone && <p className="text-sm text-destructive">{state.error.phone[0]}</p>}
+          </div>
+           <div className="grid gap-2">
+              <Label htmlFor="email">Email Address (Optional)</Label>
+              <Input id="email" name="email" type="email" placeholder="admin@example.com" />
               {state?.error?.email && <p className="text-sm text-destructive">{state.error.email[0]}</p>}
           </div>
           <div className="grid gap-2">

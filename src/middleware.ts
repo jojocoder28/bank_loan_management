@@ -4,13 +4,14 @@ import { decrypt, encrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/types';
 
-const publicRoutes = ['/login', '/signup'];
+const publicRoutes = ['/login', '/signup', '/verify-phone'];
 const adminRoutes = ['/admin/dashboard', '/admin/approvals', '/admin/users', '/admin/audit', '/admin/ledger', '/admin/settings', '/admin/profit-loss'];
 const userRoutes = ['/dashboard', '/apply-loan', '/my-finances', '/become-member'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const isPublicRoute = publicRoutes.includes(path);
+  // const isPublicRoute = publicRoutes.includes(path);
+  const isPublicRoute = publicRoutes.some(route => path.startsWith(route));
   
   // Normalize path for dynamic routes like /admin/users/[id]
   const normalizedPath = path.split('/').slice(0, 3).join('/');
@@ -66,5 +67,5 @@ export default async function middleware(req: NextRequest) {
 
 // Match all routes except for static files and specific API routes.
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|verify-email).*)'],
 };

@@ -66,7 +66,8 @@ export async function createSession(user: User) {
         email: user.email,
         role: user.role,
         photoUrl: user.photoUrl,
-        membershipApplied: user.membershipApplied
+        membershipApplied: user.membershipApplied,
+        phone: user.phone,
     }
 
     const session = await encrypt({ user: sessionUser, exp: expires.getTime() / 1000 });

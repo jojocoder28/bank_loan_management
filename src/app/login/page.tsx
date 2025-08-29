@@ -13,19 +13,19 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { LogIn, AlertTriangle, MailCheck } from "lucide-react";
+import { LogIn, AlertTriangle, Phone } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { login } from "./actions";
-import { resendVerificationEmail } from "./reverify-actions";
+import { resendVerificationOtp } from "./reverify-actions";
 import { useToast } from "@/hooks/use-toast";
 
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showReverify, setShowReverify] = useState(false);
-  const [reverifyEmail, setReverifyEmail] = useState("");
+  const [reverifyPhone, setReverifyPhone] = useState("");
 
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -33,7 +33,7 @@ export default function LoginPage() {
 
   const handleReverify = async () => {
       startTransition(async () => {
-          const result = await resendVerificationEmail(reverifyEmail);
+          const result = await resendVerificationOtp(reverifyPhone);
           if (result.error) {
               toast({
                   variant: 'destructive',
@@ -42,10 +42,10 @@ export default function LoginPage() {
               })
           } else {
                toast({
-                  title: 'Email Sent!',
-                  description: 'A new verification link has been sent to your email address.',
+                  title: 'OTP Sent!',
+                  description: 'A new verification code has been generated. Check the console.',
               })
-              setShowReverify(false);
+              router.push(`/verify-phone?phone=${reverifyPhone}`);
           }
       })
   }
@@ -57,21 +57,24 @@ export default function LoginPage() {
     
     startTransition(async () => {
       const formData = new FormData();
-      formData.append('email', email);
+      formData.append('phone', phone);
       formData.append('password', password);
       
       const result = await login(formData);
 
       if (result.error) {
         setError(result.error);
-        if (result.isUnverified) {
+        if (result.isUnverified && result.unverifiedPhone) {
             setShowReverify(true);
-            setReverifyEmail(email);
+            setReverifyPhone(result.unverifiedPhone);
         }
       } else if (result.role) {
         // Handle redirection on the client side
-        const dashboardPath = result.role === 'admin' ? '/admin/dashboard' : '/dashboard';
-        router.push(dashboardPath);
+        if (result.role === 'admin') {
+            router.push('/admin/dashboard');
+        } else {
+            router.push('/dashboard');
+        }
         // We call router.refresh() to ensure the new session is picked up by the layout
         router.refresh();
       }
@@ -86,7 +89,7 @@ export default function LoginPage() {
             <LogIn/> Login
           </CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your phone number below to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,22 +107,22 @@ export default function LoginPage() {
                         onClick={handleReverify}
                         disabled={isPending}
                         >
-                        <MailCheck className="mr-2" />
-                        {isPending ? 'Sending...' : 'Resend Verification Email'}
+                        <Phone className="mr-2" />
+                        {isPending ? 'Sending...' : 'Resend Verification OTP'}
                     </Button>
                 )}
             </Alert>
           )}
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
+                id="phone"
+                type="tel"
+                placeholder="e.g. 9876543210"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 disabled={isPending}
               />
             </div>

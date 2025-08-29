@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { UserPlus, AlertTriangle, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { UserPlus, AlertTriangle, CheckCircle, Eye, EyeOff, Phone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -24,6 +23,8 @@ export default function SignupPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const router = useRouter();
+  const [phone, setPhone] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,6 +34,7 @@ export default function SignupPage() {
     const formData = new FormData(e.currentTarget);
     const password = formData.get('password');
     const confirmPassword = formData.get('confirmPassword');
+    const phoneValue = formData.get('phone') as string;
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -47,30 +49,10 @@ export default function SignupPage() {
       setError(result.error);
     } else {
       setIsSubmitted(true);
+      setPhone(phoneValue);
+      router.push(`/verify-phone?phone=${phoneValue}`);
     }
   };
-
-  if (isSubmitted) {
-    return (
-       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Card className="mx-auto max-w-sm w-full">
-            <CardHeader className="text-center">
-                 <CheckCircle className="mx-auto size-12 text-green-500" />
-                 <CardTitle className="text-2xl mt-4">Registration Successful!</CardTitle>
-                 <CardDescription>
-                    We've sent a verification link to your email address. Please check your inbox to complete the registration.
-                 </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button className="w-full" asChild>
-                    <Link href="/login">Back to Login</Link>
-                </Button>
-            </CardContent>
-        </Card>
-       </div>
-    );
-  }
-
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -105,13 +87,23 @@ export default function SignupPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="e.g. 9876543210"
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email (Optional)</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
                 placeholder="m@example.com"
-                required
                 disabled={isLoading}
               />
             </div>

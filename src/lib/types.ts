@@ -4,7 +4,8 @@ import type { UserRole } from "@/models/user";
 export interface User {
     id: string;
     name: string;
-    email: string;
+    email?: string | null;
+    phone: string;
     role: UserRole;
     photoUrl?: string;
     membershipApplied?: boolean;
