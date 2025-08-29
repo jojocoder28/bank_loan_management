@@ -20,8 +20,8 @@ cloudinary.config({
 
 
 const applicationSchema = z.object({
+  email: z.string().email("Invalid email address.").optional().or(z.literal('')),
   personalAddress: z.string().min(1, 'Personal address is required.'),
-  phone: z.string().min(1, 'Phone number is required.'),
   age: z.coerce.number().min(18, 'You must be at least 18 years old.'),
   gender: z.enum(['male', 'female', 'other']),
   workplace: z.string().min(1, 'Workplace is required.'),
@@ -107,6 +107,12 @@ export async function applyForMembership(prevState: any, formData: FormData) {
     Object.assign(user, applicationData);
     user.photoUrl = photoUrl;
 
+    // Handle email update if it wasn't present before
+    if (!user.email && applicationData.email) {
+        user.email = applicationData.email.toLowerCase();
+    }
+
+
     // This is a simplified process. In a real-world scenario, this would
     // likely redirect to a payment gateway to handle the initial deposit.
     // For now, we'll assume the user has made the payment offline and we
@@ -122,3 +128,5 @@ export async function applyForMembership(prevState: any, formData: FormData) {
 
     return { success: true, error: null }
 }
+
+    

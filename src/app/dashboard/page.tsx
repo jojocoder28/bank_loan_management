@@ -180,7 +180,7 @@ export default async function DashboardPage() {
                 </div>
                  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                     <p className="font-medium">One-Day Picnic</p>
-                    <Badge variant="outline">Fully Bank-Sponsored</Badge>
+                    <Badge variant="outline">Fully Self-Sponsored</Badge>
                 </div>
                  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                     <p className="font-medium">Annual Tour Support</p>
@@ -188,7 +188,7 @@ export default async function DashboardPage() {
                 </div>
                  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                     <p className="font-medium">Yearly Gift</p>
-                    <Badge variant="outline">From Bank Profits</Badge>
+                    <Badge variant="outline">Yearly Gift</Badge>
                 </div>
             </CardContent>
         </Card>
@@ -243,3 +243,5 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
+    

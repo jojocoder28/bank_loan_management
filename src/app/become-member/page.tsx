@@ -16,7 +16,7 @@ import { useFormStatus } from "react-dom";
 import { applyForMembership } from "./actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { getMembershipStatus } from "./data-actions";
+import { getMembershipStatus, UserData } from "./data-actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -47,7 +47,7 @@ function SubmitButton() {
 export default function BecomeMemberPage() {
     const [state, formAction] = useActionState(applyForMembership, initialState as any);
     const { toast } = useToast();
-    const [hasApplied, setHasApplied] = useState(false);
+    const [userData, setUserData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,8 +55,8 @@ export default function BecomeMemberPage() {
     useEffect(() => {
       async function fetchStatus() {
         setIsLoading(true);
-        const status = await getMembershipStatus();
-        setHasApplied(status.membershipApplied);
+        const data = await getMembershipStatus();
+        setUserData(data);
         setIsLoading(false);
       }
       fetchStatus();
@@ -106,7 +106,7 @@ export default function BecomeMemberPage() {
         )
     }
 
-    if (hasApplied) {
+    if (userData?.membershipApplied) {
         return (
             <div className="flex justify-center items-start pt-8">
                  <Card className="w-full max-w-2xl">
@@ -179,7 +179,7 @@ export default function BecomeMemberPage() {
                                 </div>
                                 <div className="flex items-center justify-between p-2 rounded-lg bg-background/50">
                                     <p className="font-medium">One-Day Picnic</p>
-                                    <Badge variant="outline">Fully Bank-Sponsored</Badge>
+                                    <Badge variant="outline">Fully Self-Sponsored</Badge>
                                 </div>
                                 <div className="flex items-center justify-between p-2 rounded-lg bg-background/50">
                                     <p className="font-medium">Annual Tour Support</p>
@@ -187,7 +187,7 @@ export default function BecomeMemberPage() {
                                 </div>
                                 <div className="flex items-center justify-between p-2 rounded-lg bg-background/50">
                                     <p className="font-medium">Yearly Gift</p>
-                                    <Badge variant="outline">From Bank Profits</Badge>
+                                    <Badge variant="outline">Yearly Gift</Badge>
                                 </div>
                             </CardContent>
                         </Card>
@@ -214,10 +214,14 @@ export default function BecomeMemberPage() {
                                     <p className="text-xs text-muted-foreground">Recommended size: 200x200px. Max 2MB.</p>
                                 </div>
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="phone">Phone Number</Label>
-                                <Input id="phone" name="phone" placeholder="e.g. 9876543210" required />
-                            </div>
+
+                            { !userData?.email && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="email">Email Address</Label>
+                                    <Input id="email" name="email" type="email" placeholder="e.g. you@example.com" required />
+                                </div>
+                            )}
+
                             <div className="grid gap-2">
                                 <Label htmlFor="personalAddress">Personal Address</Label>
                                 <Input id="personalAddress" name="personalAddress" placeholder="e.g. 123 Main St, Anytown" required />
@@ -263,12 +267,17 @@ export default function BecomeMemberPage() {
                         </CardContent>
                     </Card>
                     
-                    {/* Bank Details */}
+                    {/* Salary Account Details */}
                      <Card>
                         <CardHeader>
-                             <CardTitle className="text-lg flex items-center gap-2"><Banknote className="size-5 text-primary"/>Bank Details</CardTitle>
+                             <CardTitle className="text-lg flex items-center gap-2"><Banknote className="size-5 text-primary"/>Salary Account Details</CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-4">
+                             <div className="p-3 rounded-md bg-secondary/50 border">
+                                <p className="font-semibold">Bank Name: <span className="font-normal">The West Bengal State Co-Operative Bank Limited</span></p>
+                                <p className="font-semibold">IFSC: <span className="font-normal">WBSC0000016</span></p>
+                                <p className="text-xs text-muted-foreground mt-1">Note: Only accounts from this bank are supported for salary deposits.</p>
+                             </div>
                              <div className="grid gap-2">
                                 <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
                                 <Input id="bankAccountNumber" name="bankAccountNumber" placeholder="e.g. 123456789012" required />
@@ -313,3 +322,5 @@ export default function BecomeMemberPage() {
         </div>
       );
 }
+
+    
