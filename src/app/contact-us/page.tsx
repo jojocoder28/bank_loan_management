@@ -2,7 +2,8 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const contactInfo = [
     {
@@ -21,7 +22,7 @@ const contactInfo = [
     {
         icon: <Mail className="size-6 text-primary" />,
         title: "Email Address",
-        details: ["info@coopbank.com"],
+        details: ["sarikhor94@gmail.com"],
         isLink: true
     },
 ];
@@ -39,7 +40,7 @@ export default function ContactUsPage() {
             <CardContent className="space-y-6">
                 {contactInfo.map((info, index) => (
                     <React.Fragment key={info.title}>
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-4 p-4">
                             <div className="flex-shrink-0 pt-1">
                                 {info.icon}
                             </div>
@@ -65,6 +66,16 @@ export default function ContactUsPage() {
                         {index < contactInfo.length - 1 && <Separator />}
                     </React.Fragment>
                 ))}
+                <Separator />
+                <div className="flex flex-col items-center gap-4 p-4 text-center">
+                    <h3 className="text-lg font-semibold">Send a Query</h3>
+                    <p className="text-muted-foreground">Have a specific question? Click the button below to send us an email directly.</p>
+                    <Button asChild>
+                        <a href="mailto:sarikhor94@gmail.com?subject=Query from Website">
+                            <Send className="mr-2"/> Send Email
+                        </a>
+                    </Button>
+                </div>
             </CardContent>
         </Card>
     </div>
