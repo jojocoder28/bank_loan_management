@@ -276,7 +276,7 @@ export default function BecomeMemberPage() {
                              <div className="p-3 rounded-md bg-secondary/50 border">
                                 <p className="font-semibold">Bank Name: <span className="font-normal">The West Bengal State Co-Operative Bank Limited</span></p>
                                 <p className="font-semibold">IFSC: <span className="font-normal">WBSC0000016</span></p>
-                                <p className="text-xs text-muted-foreground mt-1">Note: Only accounts from this bank are supported for salary deposits.</p>
+                                <p className="text-xs text-muted-foreground mt-1">Note: Only accounts from this bank are supported for Co-Operative deposits.</p>
                              </div>
                              <div className="grid gap-2">
                                 <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
