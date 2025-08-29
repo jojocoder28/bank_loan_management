@@ -13,7 +13,7 @@ import { calculateLoanTenure } from '@/lib/calculations';
 import { getBankSettings } from '../admin/settings/actions';
 
 const applyLoanSchema = z.object({
-  loanAmount: z.coerce.number().min(10000, 'Minimum loan amount is Rs. 10,000.'),
+  loanAmount: z.coerce.number().min(10000, 'Minimum loan amount is ₹10,000.'),
   monthlyPrincipal: z.coerce.number().min(1, 'Minimum principal payment must be positive.'),
 });
 

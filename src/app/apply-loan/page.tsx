@@ -217,7 +217,7 @@ export default function ApplyLoanPage() {
           <div className="grid md:grid-cols-2 gap-8">
               <div className="grid gap-8">
                 <div className="grid gap-2">
-                    <Label htmlFor="loan-amount">Loan Amount (Rs.) - Max Available: {maxLoanForUser.toLocaleString()}</Label>
+                    <Label htmlFor="loan-amount">Loan Amount (₹) - Max Available: {maxLoanForUser.toLocaleString()}</Label>
                      <Input
                         id="loan-amount"
                         type="number"
@@ -243,7 +243,7 @@ export default function ApplyLoanPage() {
                     />
                 </div>
                  <div className="grid gap-2">
-                    <Label htmlFor="monthly-principal">Your Chosen Monthly Principal Payment (Rs.)</Label>
+                    <Label htmlFor="monthly-principal">Your Chosen Monthly Principal Payment (₹)</Label>
                     <Input
                         type="number"
                         id="monthly-principal"
@@ -275,19 +275,19 @@ export default function ApplyLoanPage() {
                         <p className="text-xs text-muted-foreground">You must have 5% of the loan amount in your Share Fund and another 5% in your Guaranteed Fund.</p>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Required Share Fund</span>
-                            <span className="font-medium">Rs. {requiredShare.toLocaleString()}</span>
+                            <span className="font-medium">₹{requiredShare.toLocaleString()}</span>
                         </div>
                          <div className="flex justify-between">
                             <span className="text-muted-foreground">Required Guaranteed Fund</span>
-                            <span className="font-medium">Rs. {requiredGuaranteed.toLocaleString()}</span>
+                            <span className="font-medium">₹{requiredGuaranteed.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between font-bold border-t pt-2 mt-1">
                             <span>Your Share Fund</span>
-                            <span>Rs. {userData.shareFund.toLocaleString()}</span>
+                            <span>₹{userData.shareFund.toLocaleString()}</span>
                         </div>
                          <div className="flex justify-between font-bold">
                             <span>Your Guaranteed Fund</span>
-                            <span>Rs. {userData.guaranteedFund.toLocaleString()}</span>
+                            <span>₹{userData.guaranteedFund.toLocaleString()}</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -301,8 +301,8 @@ export default function ApplyLoanPage() {
                     <Info className="h-4 w-4 text-amber-600" />
                     <AlertTitle>Automatic Fund Top-Up</AlertTitle>
                     <AlertDescription>
-                        You have a total fund shortfall of <strong>Rs. {totalShortfall.toLocaleString()}</strong>.
-                        This amount will be added to your total loan, and your Share and Guaranteed funds will be topped up automatically upon approval. Your final loan amount will be <strong>Rs. {(loanAmount + totalShortfall).toLocaleString()}</strong>.
+                        You have a total fund shortfall of <strong>₹{totalShortfall.toLocaleString()}</strong>.
+                        This amount will be added to your total loan, and your Share and Guaranteed funds will be topped up automatically upon approval. Your final loan amount will be <strong>₹{(loanAmount + totalShortfall).toLocaleString()}</strong>.
                     </AlertDescription>
                 </Alert>
             ) : (
