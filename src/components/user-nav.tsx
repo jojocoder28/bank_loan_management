@@ -28,7 +28,7 @@ export function UserNav({ user, isCollapsed = false }: { user: User; isCollapsed
             </Avatar>
             <div
               className={cn(
-                "flex flex-col items-start max-w-28",
+                "flex flex-col items-start max-w-28 sm:hidden",
                 isCollapsed && "hidden"
               )}
             >
