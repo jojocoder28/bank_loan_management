@@ -14,8 +14,6 @@ import {
     Settings,
     BarChart3,
     Landmark,
-    LogOut,
-    User as UserIcon,
     PanelLeftClose,
     PanelRightClose,
     FileText,
@@ -24,11 +22,8 @@ import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { logout } from "@/app/logout/actions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { ThemeToggle } from "./theme-toggle";
+import { UserNav } from "./user-nav";
 
 
 const userNavLinks = [
@@ -158,8 +153,11 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
                     <span className="sr-only">Collapse Sidebar</span>
                 </Button>
             </div>
-            <div className="flex-1 overflow-y-auto py-4">
-                <SidebarNav user={user} isCollapsed={isCollapsed} />
+            <div className="flex flex-col gap-4 py-4">
+              <UserNav user={user} isCollapsed={isCollapsed} />
+              <div className="flex-1 overflow-y-auto">
+                  <SidebarNav user={user} isCollapsed={isCollapsed} />
+              </div>
             </div>
 
             <Button 
@@ -174,53 +172,6 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
                 <PanelRightClose className="size-5" />
                 <span className="sr-only">Expand Sidebar</span>
             </Button>
-
-
-            <div className="mt-auto border-t p-2">
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                       <Button variant="ghost" className={cn(
-                           "w-full justify-start text-left",
-                           isCollapsed && "justify-center size-12"
-                       )}>
-                         <div className="flex items-center gap-3">
-                            <Avatar className="size-8">
-                                <AvatarImage src={user.photoUrl ?? undefined} alt={user.name ?? 'User'} />
-                                <AvatarFallback>{user.name?.[0] ?? 'U'}</AvatarFallback>
-                            </Avatar>
-                            <div className={cn(
-                                "flex flex-col items-start max-w-28",
-                                isCollapsed && "hidden"
-                            )}>
-                                <p className="text-sm font-medium leading-none truncate">{user.name}</p>
-                                <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
-                            </div>
-                         </div>
-                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" side="right" className="mb-2 w-56">
-                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href="/profile" className="flex items-center gap-2 cursor-pointer"><UserIcon /> Profile</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                             <Link href="/settings" className="flex items-center gap-2 cursor-pointer"><Settings /> Settings</Link>
-                        </DropdownMenuItem>
-                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            <ThemeToggle />
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                         <DropdownMenuItem asChild>
-                            <form action={logout} className="w-full">
-                                <button type="submit" className="w-full text-left flex items-center gap-2 cursor-pointer">
-                                <LogOut /> Log out
-                                </button>
-                            </form>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
         </div>
     );
 }

@@ -7,12 +7,13 @@ import { Menu, Landmark } from "lucide-react";
 import { SidebarNav } from "./sidebar";
 import { User } from "@/lib/types";
 import Link from "next/link";
+import { UserNav } from "./user-nav";
 
 
 export function Header({ user }: { user: User }) {
   
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 sticky top-0 z-40 md:hidden">
+    <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sticky top-0 z-40 md:hidden">
         <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -32,7 +33,7 @@ export function Header({ user }: { user: User }) {
                <SidebarNav user={user} isMobile={true} />
             </SheetContent>
           </Sheet>
-        <div className="flex w-full items-center justify-center">
+        <div className="flex items-center">
              <Link
                 href={user.role === 'admin' ? "/admin/dashboard" : "/dashboard"}
                 className="flex items-center gap-2 font-semibold text-lg"
@@ -41,6 +42,7 @@ export function Header({ user }: { user: User }) {
                 <span className="">S&KGPPS Co-op</span>
             </Link>
         </div>
+        <UserNav user={user} />
     </header>
   );
 }
