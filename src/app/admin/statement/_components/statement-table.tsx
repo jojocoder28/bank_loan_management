@@ -21,36 +21,37 @@ export function StatementTable({ data }: { data: StatementRow[] }) {
 
     const totals = data.reduce((acc, row) => {
         acc.thrift += row.thriftFundContribution;
+        acc.share += row.shareFundContribution;
         acc.principal += row.loanPrincipalPayment;
         acc.interest += row.loanInterestPayment;
         acc.total += row.totalDeduction;
         return acc;
-    }, { thrift: 0, principal: 0, interest: 0, total: 0 });
+    }, { thrift: 0, share: 0, principal: 0, interest: 0, total: 0 });
 
     const downloadCSV = () => {
         setIsDownloading(true);
         try {
             const headers = [
-                "Member Name",
                 "Membership No",
-                "Thrift Fund (₹)",
+                "Name",
+                "Bank Account Number",
                 "Loan Principal (₹)",
                 "Loan Interest (₹)",
+                "Share Fund (SF) (₹)",
+                "Thrift Fund (TF) (₹)",
                 "Total Deduction (₹)",
-                "Loan ID",
-                "Outstanding Principal (₹)"
             ];
 
             const csvRows = data.map(row => 
                 [
-                    `"${row.name.replace(/"/g, '""')}"`,
                     row.membershipNumber,
-                    row.thriftFundContribution,
+                    `"${row.name.replace(/"/g, '""')}"`,
+                    row.bankAccountNumber,
                     row.loanPrincipalPayment,
                     row.loanInterestPayment,
+                    row.shareFundContribution,
+                    row.thriftFundContribution,
                     row.totalDeduction,
-                    row.loanDetails?.id || "N/A",
-                    row.loanDetails?.outstandingPrincipal || 0
                 ].join(',')
             );
             
@@ -85,36 +86,41 @@ export function StatementTable({ data }: { data: StatementRow[] }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Member Name</TableHead>
             <TableHead>Membership #</TableHead>
-            <TableHead className="text-right">Thrift Fund</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Bank Acc #</TableHead>
             <TableHead className="text-right">Loan Principal</TableHead>
             <TableHead className="text-right">Loan Interest</TableHead>
-            <TableHead className="text-right font-bold">Total Deduction</TableHead>
+            <TableHead className="text-right">Share Fund (SF)</TableHead>
+            <TableHead className="text-right">Thrift Fund (TF)</TableHead>
+            <TableHead className="text-right font-bold">Total</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((row) => (
             <TableRow key={row.userId}>
+               <TableCell>{row.membershipNumber}</TableCell>
               <TableCell className="font-medium">
                 <Link href={`/admin/users/${row.userId}`} className="text-primary hover:underline">
                     {row.name}
                 </Link>
               </TableCell>
-              <TableCell>{row.membershipNumber}</TableCell>
-              <TableCell className="text-right">₹{row.thriftFundContribution.toLocaleString()}</TableCell>
+              <TableCell>{row.bankAccountNumber}</TableCell>
               <TableCell className="text-right">₹{row.loanPrincipalPayment.toLocaleString()}</TableCell>
               <TableCell className="text-right">₹{row.loanInterestPayment.toLocaleString()}</TableCell>
+              <TableCell className="text-right">₹{row.shareFundContribution.toLocaleString()}</TableCell>
+              <TableCell className="text-right">₹{row.thriftFundContribution.toLocaleString()}</TableCell>
               <TableCell className="text-right font-bold">₹{row.totalDeduction.toLocaleString()}</TableCell>
             </TableRow>
           ))}
         </TableBody>
         <TableFooter>
             <TableRow className="font-bold text-base bg-secondary">
-                <TableCell colSpan={2}>Totals</TableCell>
-                <TableCell className="text-right">₹{totals.thrift.toLocaleString()}</TableCell>
+                <TableCell colSpan={3}>Totals</TableCell>
                 <TableCell className="text-right">₹{totals.principal.toLocaleString()}</TableCell>
                 <TableCell className="text-right">₹{totals.interest.toLocaleString()}</TableCell>
+                <TableCell className="text-right">₹{totals.share.toLocaleString()}</TableCell>
+                <TableCell className="text-right">₹{totals.thrift.toLocaleString()}</TableCell>
                 <TableCell className="text-right">₹{totals.total.toLocaleString()}</TableCell>
             </TableRow>
         </TableFooter>

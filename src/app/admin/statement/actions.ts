@@ -11,6 +11,8 @@ export interface StatementRow {
     userId: string;
     name: string;
     membershipNumber: string;
+    bankAccountNumber: string;
+    shareFundContribution: number; // This is typically part of a loan, not a recurring monthly deduction. Will assume 0 for now unless specified.
     thriftFundContribution: number;
     loanPrincipalPayment: number;
     loanInterestPayment: number;
@@ -48,6 +50,10 @@ export async function getMonthlyStatementData(): Promise<StatementRow[]> {
         let loanPrincipalPayment = 0;
         let loanInterestPayment = 0;
         let loanDetails: StatementRow['loanDetails'] = null;
+        
+        // SF is typically a one-time or loan-based contribution, not a recurring monthly one.
+        // We'll set it to 0 for a standard monthly statement unless a loan specifies a shortfall top-up.
+        const shareFundContribution = 0;
 
         if (loan) {
             loanPrincipalPayment = loan.monthlyPrincipalPayment;
@@ -58,12 +64,14 @@ export async function getMonthlyStatementData(): Promise<StatementRow[]> {
             };
         }
 
-        const totalDeduction = thriftFundContribution + loanPrincipalPayment + loanInterestPayment;
+        const totalDeduction = thriftFundContribution + loanPrincipalPayment + loanInterestPayment + shareFundContribution;
 
         return {
             userId: member._id.toString(),
             name: member.name,
             membershipNumber: member.membershipNumber || 'N/A',
+            bankAccountNumber: member.bankAccountNumber || 'N/A',
+            shareFundContribution,
             thriftFundContribution,
             loanPrincipalPayment,
             loanInterestPayment,

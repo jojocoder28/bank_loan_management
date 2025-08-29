@@ -22,7 +22,7 @@ export default async function StatementPage() {
                 Monthly Member Statement
             </CardTitle>
             <CardDescription>
-                A summary of all expected member deductions for the current month.
+                A detailed summary of all expected member deductions for the current month.
             </CardDescription>
         </CardHeader>
         <CardContent>
