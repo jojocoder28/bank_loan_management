@@ -53,8 +53,20 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
         return { error: 'You must be logged in to update your profile.' }
     }
     
-    const values = Object.fromEntries(formData.entries());
-    const validatedFields = profileSchema.safeParse(values);
+    // Filter out empty values from formData before parsing
+    const filteredFormData = new FormData();
+    for (const [key, value] of formData.entries()) {
+        if (value !== '' && value !== null && value !== undefined) {
+             // For file inputs, check size
+            if (value instanceof File && value.size === 0) {
+                continue;
+            }
+            filteredFormData.append(key, value);
+        }
+    }
+
+    const values = Object.fromEntries(filteredFormData.entries());
+    const validatedFields = profileSchema.partial().safeParse(values); // Use .partial() to allow missing fields
     
     if (!validatedFields.success) {
         return { error: validatedFields.error.flatten().fieldErrors };
@@ -64,7 +76,7 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
     const user = await User.findById(session.id);
 
     if (!user) {
-         return { error: 'Could not find your user profile.' }
+         return { error: { form: 'Could not find your user profile.'} }
     }
 
     const { photo, ...profileData } = validatedFields.data;
@@ -90,19 +102,13 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
       }
     }
 
-    // Build an update object with only the submitted fields
-    const updateData: Partial<IUser> = {};
-    for (const [key, value] of Object.entries(profileData)) {
-        if (value !== '' && value !== undefined && value !== null) {
-            (updateData as any)[key] = value;
-        }
-    }
+    // Build an update object with only the validated fields
+    const updateData: Partial<IUser> = { ...profileData };
 
     if (photoUrl) {
         updateData.photoUrl = photoUrl;
     }
     
-    // Handle email specifically
     if (profileData.email) {
         updateData.email = profileData.email.toLowerCase();
     }
