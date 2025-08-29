@@ -65,13 +65,14 @@ const steps = [
 
 const UserLandingPage = () => {
     return (
-        <div className="flex flex-col gap-12">
+        <div className="flex flex-col gap-12 md:gap-20">
             {/* Hero Section */}
-            <section className="text-center bg-card p-8 rounded-lg shadow-md">
-                <div className="max-w-3xl mx-auto">
-                    <h1 className="text-4xl font-bold font-headline tracking-tight text-primary">Unlock Your Financial Potential with Us</h1>
-                    <p className="mt-4 text-lg text-muted-foreground">
-                        Welcome to the Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD. Join our community to access exclusive financial products and benefits designed just for you.
+            <section className="text-center">
+                <div className="max-w-3xl mx-auto py-12 md:py-20">
+                     <Badge variant="outline" className="mb-4">For Teachers, By Teachers</Badge>
+                    <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-primary">A Financial Cooperative You Can Trust</h1>
+                    <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+                        Join the Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD. We provide exclusive financial products and community benefits, built on trust and mutual growth.
                     </p>
                     <Button asChild size="lg" className="mt-8">
                         <Link href="/become-member">Become a Member Today <ArrowRight className="ml-2"/></Link>
@@ -81,18 +82,20 @@ const UserLandingPage = () => {
             
              {/* Offerings Section */}
             <section>
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold">Our Core Offerings</h2>
-                    <p className="text-muted-foreground">Services built for the financial well-being of our members.</p>
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold">Our Core Offerings</h2>
+                    <p className="text-muted-foreground mt-2">Services built for the financial well-being of our members.</p>
                 </div>
                 <div className="grid md:grid-cols-3 gap-8">
                     {offerings.map(item => (
-                        <Card key={item.title}>
+                        <Card key={item.title} className="text-center hover:shadow-lg transition-shadow duration-300">
                             <CardHeader className="items-center">
-                                {item.icon}
+                                <div className="bg-primary/10 p-4 rounded-full mb-4">
+                                  {item.icon}
+                                </div>
                                 <CardTitle>{item.title}</CardTitle>
                             </CardHeader>
-                            <CardContent className="text-center">
+                            <CardContent>
                                 <p className="text-muted-foreground">{item.description}</p>
                             </CardContent>
                         </Card>
@@ -103,39 +106,43 @@ const UserLandingPage = () => {
 
             {/* Benefits Section */}
             <section>
-                <div className="grid md:grid-cols-2 gap-8 items-center bg-card p-8 rounded-lg shadow-sm">
-                    <div className="space-y-4">
-                        <h2 className="text-3xl font-bold">Exclusive Membership Benefits</h2>
-                        <p className="text-muted-foreground">As a member, you're not just a customer; you're an owner. Enjoy a range of perks designed to reward you and build our community.</p>
+                <div className="grid md:grid-cols-2 gap-8 items-center bg-card p-8 rounded-lg shadow-sm border">
+                    <div className="space-y-6">
+                        <h2 className="text-3xl md:text-4xl font-bold">Exclusive Membership Benefits</h2>
+                        <p className="text-muted-foreground text-lg">As a member, you're not just a customer; you're an owner. Enjoy a range of perks designed to reward you and build our community.</p>
                         <div className="space-y-4 pt-4">
                             {benefits.map(benefit => (
-                                <div key={benefit.title} className="flex items-center gap-4">
-                                    {benefit.icon}
+                                <div key={benefit.title} className="flex items-start gap-4">
+                                     <div className="bg-primary/10 p-3 rounded-full mt-1">
+                                         {benefit.icon}
+                                     </div>
                                     <div>
-                                        <h4 className="font-semibold">{benefit.title}</h4>
+                                        <h4 className="font-semibold text-lg">{benefit.title}</h4>
                                         <p className="text-sm text-muted-foreground">{benefit.description}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
-                    <div className="h-[300px] w-full bg-secondary/30 rounded-lg flex items-end justify-center p-4 overflow-hidden relative">
-                       {/* People illustration */}
-                       <div className="flex items-end gap-2 relative">
+                    <div className="h-[400px] w-full bg-secondary/30 rounded-lg flex items-center justify-center p-4 overflow-hidden relative" data-ai-hint="community people">
+                       {/* Abstract CSS art for community */}
+                       <div className="absolute w-40 h-80 rounded-full bg-primary/20 -bottom-10 -left-10"></div>
+                       <div className="absolute w-56 h-96 rounded-full bg-accent/80 -top-20 -right-20"></div>
+                       <div className="relative flex items-end gap-2 isolate">
                             {/* Person 1 */}
                             <div className="relative flex flex-col items-center">
-                                <div className="h-12 w-12 rounded-full bg-primary/20"></div>
-                                <div className="h-24 w-20 rounded-t-full bg-primary/20"></div>
+                                <div className="h-16 w-16 rounded-full bg-primary/30 backdrop-blur-sm border border-white/10"></div>
+                                <div className="h-28 w-24 rounded-t-full bg-primary/30 backdrop-blur-sm border border-white/10 -mt-2"></div>
                             </div>
-                             {/* Person 2 */}
-                             <div className="relative flex flex-col items-center bottom-4">
-                                <div className="h-16 w-16 rounded-full bg-primary/40"></div>
-                                <div className="h-32 w-24 rounded-t-full bg-primary/40"></div>
+                             {/* Person 2 (Center) */}
+                             <div className="relative flex flex-col items-center bottom-6 z-10">
+                                <div className="h-20 w-20 rounded-full bg-primary/50 backdrop-blur-sm border border-white/10"></div>
+                                <div className="h-40 w-28 rounded-t-full bg-primary/50 backdrop-blur-sm border border-white/10 -mt-2"></div>
                             </div>
                              {/* Person 3 */}
                              <div className="relative flex flex-col items-center">
-                                <div className="h-12 w-12 rounded-full bg-primary/20"></div>
-                                <div className="h-24 w-20 rounded-t-full bg-primary/20"></div>
+                                <div className="h-16 w-16 rounded-full bg-primary/30 backdrop-blur-sm border border-white/10"></div>
+                                <div className="h-28 w-24 rounded-t-full bg-primary/30 backdrop-blur-sm border border-white/10 -mt-2"></div>
                             </div>
                        </div>
                     </div>
@@ -143,23 +150,28 @@ const UserLandingPage = () => {
             </section>
 
              {/* How to Join Section */}
-            <section>
-                 <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold">Ready to Join?</h2>
-                    <p className="text-muted-foreground">Becoming a member is simple. Here's how it works.</p>
+            <section className="py-12 md:py-20">
+                 <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold">Ready to Join?</h2>
+                    <p className="text-muted-foreground mt-2">Becoming a member is simple. Here's how it works.</p>
                 </div>
-                <div className="grid md:grid-cols-3 gap-8 text-center">
-                    {steps.map((step, index) => (
-                        <div key={step.title} className="flex flex-col items-center">
-                            <div className="flex items-center justify-center size-16 rounded-full bg-primary/10 mb-4">
-                               {step.icon}
+                <div className="relative">
+                    {/* The connecting line */}
+                    <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -translate-y-1/2 hidden md:block"></div>
+                    
+                    <div className="grid md:grid-cols-3 gap-12 md:gap-8 text-center relative">
+                        {steps.map((step, index) => (
+                            <div key={step.title} className="flex flex-col items-center bg-background px-4">
+                                <div className="flex items-center justify-center size-16 rounded-full bg-primary/10 border-2 border-primary mb-4">
+                                   {step.icon}
+                                </div>
+                                <h3 className="text-xl font-semibold mb-2">{index + 1}. {step.title}</h3>
+                                <p className="text-muted-foreground">{step.description}</p>
                             </div>
-                            <h3 className="text-xl font-semibold">{index + 1}. {step.title}</h3>
-                            <p className="text-muted-foreground">{step.description}</p>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-                <div className="text-center mt-10">
+                <div className="text-center mt-12">
                     <Button asChild size="lg">
                         <Link href="/become-member">Start Your Application <ArrowRight className="ml-2"/></Link>
                     </Button>
