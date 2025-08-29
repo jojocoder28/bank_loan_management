@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -14,7 +15,8 @@ import {z} from 'genkit';
 const AuditDataAnalysisInputSchema = z.object({
   context: z
     .string()
-    .describe('The user-provided text, question, or context for the analysis.'),
+    .optional()
+    .describe('Optional: Specific questions or a focus area for the analysis.'),
   dataUri: z
     .string()
     .optional()
@@ -41,23 +43,36 @@ const auditDataAnalysisPrompt = ai.definePrompt({
   name: 'auditDataAnalysisPrompt',
   input: {schema: AuditDataAnalysisInputSchema},
   output: {schema: AuditDataAnalysisOutputSchema},
-  prompt: `You are an expert AI assistant specialized in data analysis for a cooperative bank.
+  prompt: `You are an expert financial auditor AI for a cooperative bank. Your primary task is to conduct a detailed audit of the provided document or data.
 
-Your task is to analyze the provided information, which can be text, a document, or an image, and generate a detailed analysis report.
-The user will provide a text input which could be a question, a description of the data, or a specific instruction.
-They may also provide a file (image, csv, pdf, docx).
+**Your Mandate:**
+1.  **Identify Document Type:** First, identify the type of document provided (e.g., Balance Sheet, Monthly Statement, Receipt, CSV data, etc.).
+2.  **Conduct Comprehensive Analysis:** Perform a thorough financial audit. Check for correctness, completeness, and consistency.
+    *   Verify all calculations (sums, differences, percentages).
+    *   Look for anomalies, outliers, or figures that deviate from typical patterns.
+    *   Cross-reference data points for consistency.
+    *   Ensure the data aligns with standard accounting principles.
+3.  **Address User's Focus (if provided):** If the user has provided a specific question or context, address it directly within your analysis. If not, proceed with a general, unsolicited audit.
+4.  **Structure Your Report:** Present your findings in a clear, professional, and structured markdown format.
+    *   Start with a title and a summary of the document.
+    *   Use headings, bullet points, and bold text to organize your analysis.
+    *   Clearly list any identified issues, errors, or anomalies under a "Key Findings & Potential Issues" section.
+    *   Conclude with a summary of the overall health or status of the document.
 
-Analyze the data thoroughly, answer any questions posed by the user, and provide concise, actionable insights.
-
-User's Input/Question:
-{{{context}}}
-
+**Data for Analysis:**
 {{#if dataUri}}
 Attached File Data:
 {{media url=dataUri}}
+{{else}}
+User provided text data.
 {{/if}}
 
-Please provide your full analysis below.
+{{#if context}}
+**User's Specific Focus:**
+{{{context}}}
+{{/if}}
+
+Begin your full, structured analysis below.
 `,
 });
 
@@ -68,6 +83,10 @@ const auditDataAnalysisFlow = ai.defineFlow(
     outputSchema: AuditDataAnalysisOutputSchema,
   },
   async input => {
+    // If no file and no context is provided, it's an invalid request.
+    if (!input.dataUri && !input.context) {
+        throw new Error("You must provide a file or some text to analyze.");
+    }
     const {output} = await auditDataAnalysisPrompt(input);
     return output!;
   }

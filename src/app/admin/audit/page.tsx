@@ -82,26 +82,14 @@ export default function AiAuditPage() {
         <CardHeader>
           <CardTitle>AI Data Analyst</CardTitle>
           <CardDescription>
-            Upload a file (image, document, csv) and ask a question to get AI-powered insights.
+            Upload a file (e.g., balance sheet, statement, receipt) and the AI will automatically perform a financial audit.
           </CardDescription>
         </CardHeader>
         <form action={formAction}>
           <CardContent className="grid gap-6">
+
             <div className="grid gap-2">
-                <Label htmlFor="context">
-                    Context or Question
-                </Label>
-                <Textarea
-                    id="context"
-                    name="context"
-                    placeholder="e.g., What are the key takeaways from this document? or Is there anything unusual in this balance sheet image?"
-                    rows={5}
-                    required
-                />
-            </div>
-            
-            <div className="grid gap-2">
-                <Label htmlFor="file-upload">Upload File (Optional)</Label>
+                <Label htmlFor="file-upload">Upload File</Label>
                 <Input id="file-upload" name="file" type="file" ref={fileInputRef} onChange={handleFileChange} />
                 <p className="text-xs text-muted-foreground">Supports: Images, PDF, DOCX, CSV. Max 4MB.</p>
             </div>
@@ -129,6 +117,18 @@ export default function AiAuditPage() {
                     )}
                 </div>
             )}
+            
+             <div className="grid gap-2">
+                <Label htmlFor="context">
+                    Specific questions or focus areas (Optional)
+                </Label>
+                <Textarea
+                    id="context"
+                    name="context"
+                    placeholder="e.g., 'Focus on the expense column and check for inconsistencies' or 'Are the totals calculated correctly?'"
+                    rows={4}
+                />
+            </div>
 
             <SubmitButton />
           </CardContent>
@@ -138,7 +138,7 @@ export default function AiAuditPage() {
         <CardHeader>
           <CardTitle>Analysis Result</CardTitle>
           <CardDescription>
-            AI-powered insights into your provided data.
+            AI-powered audit and insights into your provided data.
           </CardDescription>
         </CardHeader>
         <CardContent>

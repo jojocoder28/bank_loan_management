@@ -1,10 +1,11 @@
+
 "use server";
 
 import { z } from "zod";
 import { auditDataAnalysis } from "@/ai/flows/audit-data-analysis";
 
 const schema = z.object({
-  context: z.string().min(1, "Please provide some context or a question."),
+  context: z.string().optional(),
   file: z.any().optional(),
 });
 
@@ -23,6 +24,15 @@ export async function runAudit(prevState: any, formData: FormData) {
   
   const { context, file } = validatedFields.data;
   let dataUri: string | undefined = undefined;
+
+  if (!file || file.size === 0) {
+      if (!context) {
+          return {
+              analysisResult: "",
+              error: "Please provide either a file or a question to begin the analysis."
+          }
+      }
+  }
 
   if (file && file.size > 0) {
       if (file.size > 4 * 1024 * 1024) { // 4MB limit for Gemini
@@ -51,9 +61,10 @@ export async function runAudit(prevState: any, formData: FormData) {
     };
   } catch (error) {
     console.error("AI Audit Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during the audit.";
     return {
       analysisResult: "",
-      error: "An unexpected error occurred during the audit.",
+      error: errorMessage,
     };
   }
 }
