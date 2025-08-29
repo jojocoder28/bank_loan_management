@@ -12,7 +12,10 @@ const addUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Invalid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
-  // Role is now hardcoded to 'admin' and removed from schema.
+  confirmPassword: z.string().min(6, "Password must be at least 6 characters."),
+}).refine(data => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"], // path of error
 });
 
 export async function addUser(prevState: any, formData: FormData) {
@@ -41,6 +44,7 @@ export async function addUser(prevState: any, formData: FormData) {
             email: email.toLowerCase(),
             password, // The pre-save hook will hash this
             role: 'admin', // Hardcode the role to admin
+            isVerified: true, // Admins created by admins are verified by default
         };
 
         // 4. Create the user in the database

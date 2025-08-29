@@ -10,6 +10,10 @@ const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Invalid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
+  confirmPassword: z.string().min(6, "Password must be at least 6 characters."),
+}).refine(data => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
 });
 
 // Returns an error message string on failure, or null on success.
@@ -19,7 +23,9 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
 
   // 1. Validate input
   if (!validatedFields.success) {
-    return { error: validatedFields.error.errors[0]?.message ?? "Invalid data provided." };
+    const fieldErrors = validatedFields.error.flatten().fieldErrors;
+    const firstError = Object.values(fieldErrors)[0]?.[0];
+    return { error: firstError ?? "Invalid data provided." };
   }
 
   const { name, email, password } = validatedFields.data;

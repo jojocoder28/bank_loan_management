@@ -29,7 +29,7 @@ export default async function UsersPage() {
         <Button asChild>
           <Link href="/admin/users/add">
             <UserPlus className="mr-2" />
-            Add New User
+            Add New Admin
           </Link>
         </Button>
       </CardHeader>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addUser } from "./actions";
-import { AlertTriangle, Loader2, UserPlus } from "lucide-react";
+import { AlertTriangle, Loader2, UserPlus, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 
@@ -41,6 +41,8 @@ function SubmitButton() {
 
 export default function AddUserPage() {
   const [state, formAction] = useActionState(addUser, initialState as any);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
     <form action={formAction}>
@@ -75,8 +77,37 @@ export default function AddUserPage() {
           </div>
           <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required minLength={6} />
+              <div className="relative">
+                <Input id="password" name="password" type={showPassword ? "text" : "password"} required minLength={6} />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => setShowPassword(!showPassword)}
+                    >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                </Button>
+              </div>
               {state?.error?.password && <p className="text-sm text-destructive">{state.error.password[0]}</p>}
+          </div>
+          <div className="grid gap-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+               <div className="relative">
+                <Input id="confirmPassword" name="confirmPassword" type={showConfirmPassword ? "text" : "password"} required minLength={6} />
+                 <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                    {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    <span className="sr-only">{showConfirmPassword ? "Hide password" : "Show password"}</span>
+                </Button>
+              </div>
+              {state?.error?.confirmPassword && <p className="text-sm text-destructive">{state.error.confirmPassword[0]}</p>}
           </div>
 
         </CardContent>

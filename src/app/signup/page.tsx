@@ -11,32 +11,34 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, AlertTriangle, CheckCircle } from "lucide-react";
+import { UserPlus, AlertTriangle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signUp } from "./actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function SignupPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('email', email);
-    formData.append('password', password);
+    const formData = new FormData(e.currentTarget);
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirmPassword');
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setIsLoading(false);
+      return;
+    }
 
     const result = await signUp(formData);
 
@@ -96,10 +98,9 @@ export default function SignupPage() {
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
+                name="name"
                 placeholder="Max Robinson"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
                 disabled={isLoading}
               />
             </div>
@@ -107,25 +108,58 @@ export default function SignupPage() {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="m@example.com"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    disabled={isLoading}
+                />
+                 <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => setShowPassword(!showPassword)}
+                    >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                </Button>
+              </div>
+            </div>
+             <div className="grid gap-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                    <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        required
+                        minLength={6}
+                        disabled={isLoading}
+                    />
+                     <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                        {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                        <span className="sr-only">{showConfirmPassword ? "Hide password" : "Show password"}</span>
+                    </Button>
+                </div>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create an account"}
