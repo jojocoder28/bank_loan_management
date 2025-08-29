@@ -13,13 +13,13 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { LogIn, AlertTriangle, Phone } from "lucide-react";
+import { LogIn, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { login } from "./actions";
 
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +32,7 @@ export default function LoginPage() {
     
     startTransition(async () => {
       const formData = new FormData();
-      formData.append('phone', phone);
+      formData.append('identifier', identifier);
       formData.append('password', password);
       
       const result = await login(formData);
@@ -60,7 +60,7 @@ export default function LoginPage() {
             <LogIn/> Login
           </CardTitle>
           <CardDescription>
-            Enter your phone number below to login to your account
+            Enter your email or phone number below to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,14 +75,14 @@ export default function LoginPage() {
           )}
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="identifier">Email or Phone Number</Label>
               <Input
-                id="phone"
-                type="tel"
-                placeholder="e.g. 9876543210"
+                id="identifier"
+                type="text"
+                placeholder="email@example.com or 9876543210"
                 required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 disabled={isPending}
               />
             </div>

@@ -8,7 +8,7 @@ import { createSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 
 const loginSchema = z.object({
-  phone: z.string().min(1, 'Phone number is required'),
+  identifier: z.string().min(1, 'Email or phone number is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -23,23 +23,26 @@ export async function login(formData: FormData): Promise<LoginResult> {
   const validatedFields = loginSchema.safeParse(values);
 
   if (!validatedFields.success) {
-    return { error: 'Invalid phone number or password.' };
+    return { error: 'Invalid email/phone or password.' };
   }
 
-  const { phone, password } = validatedFields.data;
+  const { identifier, password } = validatedFields.data;
 
   let user;
   try {
     await dbConnect();
 
-    const foundUser = await User.findOne({ phone: phone }).select('+password +photoUrl +membershipApplied +name +email +role +isVerified +phone');
+    const isEmail = identifier.includes('@');
+    const query = isEmail ? { email: identifier.toLowerCase() } : { phone: identifier };
+
+    const foundUser = await User.findOne(query).select('+password +photoUrl +membershipApplied +name +email +role +isVerified +phone');
     if (!foundUser) {
-      return { error: 'Invalid phone number or password.' };
+      return { error: 'Invalid email/phone or password.' };
     }
     
     const isPasswordCorrect = await foundUser.comparePassword(password);
     if (!isPasswordCorrect) {
-      return { error: 'Invalid phone number or password.' };
+      return { error: 'Invalid email/phone or password.' };
     }
     
     user = foundUser;
