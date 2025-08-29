@@ -64,7 +64,7 @@ export default async function MyFinancesPage() {
             </div>
              <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
               <div className="flex items-center gap-3">
-                 <div className="p-2 bg-accent/10 rounded-full"><ShieldCheck className="size-5 text-accent" /></div>
+                 <div className="p-2 bg-green-500/10 rounded-full"><ShieldCheck className="size-5 text-green-500" /></div>
                 <p className="font-medium">Guaranteed Fund</p>
               </div>
               <p className="font-bold text-lg">₹{user.guaranteedFund.toLocaleString()}</p>
