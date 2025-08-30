@@ -17,6 +17,7 @@ import {
     PanelLeftClose,
     PanelRightClose,
     FileText,
+    User as UserIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
@@ -55,7 +56,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false }: { us
         navLinks = userNavLinks;
     } else { // 'user' role (non-member)
         navLinks = userNavLinks.filter(link => 
-            link.href === '/dashboard' || link.href === '/contact-us'
+            link.href === '/dashboard' || link.href === '/my-finances' || link.href === '/contact-us'
         );
     }
 
@@ -153,11 +154,15 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
                     <span className="sr-only">Collapse Sidebar</span>
                 </Button>
             </div>
-            <div className="flex flex-col gap-4 py-4">
-              <UserNav user={user} isCollapsed={isCollapsed} />
-              <div className="flex-1 overflow-y-auto">
-                  <SidebarNav user={user} isCollapsed={isCollapsed} />
-              </div>
+            <div className="flex-1 overflow-auto py-4">
+                <div className="flex flex-col gap-2">
+                    <div className="px-2 pb-2">
+                      <UserNav user={user} isCollapsed={isCollapsed} />
+                    </div>
+                    <div className="flex-1">
+                        <SidebarNav user={user} isCollapsed={isCollapsed} />
+                    </div>
+                </div>
             </div>
 
             <Button 
