@@ -72,6 +72,24 @@ export async function getPendingModifications(): Promise<PopulatedModificationLo
     return JSON.parse(JSON.stringify(loansWithPending));
 }
 
+export async function getPendingApprovalCount(): Promise<number> {
+    await dbConnect();
+    
+    const [pendingLoansCount, pendingMembershipsCount, pendingModifications] = await Promise.all([
+        Loan.countDocuments({ status: 'pending' }),
+        User.countDocuments({ role: 'user', membershipApplied: true }),
+        // This is less efficient but reflects the logic in getPendingModifications
+        Loan.find({ 'modificationRequests.status': 'pending' }).lean() 
+    ]);
+
+    const pendingModificationsCount = pendingModifications.reduce((count, loan) => {
+        return count + loan.modificationRequests.filter(req => req.status === 'pending').length;
+    }, 0);
+
+
+    return pendingLoansCount + pendingMembershipsCount + pendingModificationsCount;
+}
+
 
 async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejected'): Promise<{error?: string; success?: boolean}> {
     const loanId = formData.get('loanId') as string;

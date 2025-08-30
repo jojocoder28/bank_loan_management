@@ -8,9 +8,20 @@ import { SidebarNav } from "./sidebar";
 import { User } from "@/lib/types";
 import Link from "next/link";
 import { UserNav } from "./user-nav";
+import React from "react";
+import { getPendingApprovalCount } from "@/app/admin/approvals/actions";
 
 
 export function Header({ user }: { user: User }) {
+  const [approvalCount, setApprovalCount] = React.useState(0);
+    
+    React.useEffect(() => {
+        if (user.role === 'admin') {
+            getPendingApprovalCount().then(count => {
+                setApprovalCount(count);
+            });
+        }
+    }, [user.role]);
   
   return (
     <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sticky top-0 z-40 md:hidden">
@@ -30,7 +41,7 @@ export function Header({ user }: { user: User }) {
                   <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                   <SheetDescription className="sr-only">Main menu for navigating the application.</SheetDescription>
                 </SheetHeader>
-               <SidebarNav user={user} isMobile={true} />
+               <SidebarNav user={user} isMobile={true} approvalCount={approvalCount}/>
             </SheetContent>
           </Sheet>
         <div className="flex items-center">

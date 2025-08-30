@@ -25,6 +25,9 @@ import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { UserNav } from "./user-nav";
+import { getPendingApprovalCount } from "@/app/admin/approvals/actions";
+import React from "react";
+import { Badge } from "./ui/badge";
 
 
 const userNavLinks = [
@@ -45,7 +48,7 @@ const adminNavLinks = [
     { href: "/admin/settings", label: "Settings", icon: <Settings className="size-5" /> },
 ]
 
-export function SidebarNav({ user, isMobile = false, isCollapsed = false }: { user: User, isMobile?: boolean, isCollapsed?: boolean }) {
+export function SidebarNav({ user, isMobile = false, isCollapsed = false, approvalCount = 0 }: { user: User, isMobile?: boolean, isCollapsed?: boolean, approvalCount?: number }) {
     const pathname = usePathname();
     
     let navLinks;
@@ -63,18 +66,24 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false }: { us
 
     const navItems = (
       <TooltipProvider>
-        {navLinks.map((link) => (
-          isCollapsed ? (
+        {navLinks.map((link) => {
+            const showBadge = link.href === '/admin/approvals' && approvalCount > 0;
+            return isCollapsed ? (
             <Tooltip key={link.href} delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   href={link.href}
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                    "relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
                     pathname === link.href && "bg-accent text-accent-foreground"
                   )}
                 >
                   {link.icon}
+                  {showBadge && (
+                     <Badge className="absolute -top-2 -right-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full p-0">
+                        {approvalCount}
+                    </Badge>
+                  )}
                   <span className="sr-only">{link.label}</span>
                 </Link>
               </TooltipTrigger>
@@ -91,10 +100,12 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false }: { us
               )}
             >
               {link.icon}
-              {link.label}
+              <span className="flex-1">{link.label}</span>
+              {showBadge && <Badge className="shrink-0">{approvalCount}</Badge>}
             </Link>
           )
-        ))}
+        }
+        )}
       </TooltipProvider>
     );
 
@@ -124,6 +135,16 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false }: { us
 }
 
 export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isCollapsed: boolean, setIsCollapsed: (isCollapsed: boolean) => void }) {
+    const [approvalCount, setApprovalCount] = React.useState(0);
+    
+    React.useEffect(() => {
+        if (user.role === 'admin') {
+            getPendingApprovalCount().then(count => {
+                setApprovalCount(count);
+            });
+        }
+    }, [user.role]);
+
     if (!user) return null;
 
     return (
@@ -160,7 +181,7 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
                       <UserNav user={user} isCollapsed={isCollapsed} />
                     </div>
                     <div className="flex-1">
-                        <SidebarNav user={user} isCollapsed={isCollapsed} />
+                        <SidebarNav user={user} isCollapsed={isCollapsed} approvalCount={approvalCount} />
                     </div>
                 </div>
             </div>
