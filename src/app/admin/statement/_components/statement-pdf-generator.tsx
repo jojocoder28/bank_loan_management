@@ -120,8 +120,8 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                     margin: { horizontal: 'auto' },
                     columnStyles: {
                         0: { halign: 'center', cellWidth: 10 },
-                        1: { cellWidth: 35 },
-                        2: { halign: 'center', cellWidth: 20 },
+                        1: { cellWidth: 30 },
+                        2: { halign: 'center', cellWidth: 25 },
                         3: { halign: 'right', cellWidth: 15 },
                         4: { halign: 'right', cellWidth: 15 },
                         5: { halign: 'right', cellWidth: 15 },
