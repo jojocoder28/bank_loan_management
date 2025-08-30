@@ -37,7 +37,7 @@ export async function getMonthlyStatementData(): Promise<StatementRow[]> {
     await dbConnect();
 
     const [members, bankSettings] = await Promise.all([
-        User.find({ role: 'member', status: 'active' }).sort({ name: 1 }).lean(),
+        User.find({ role: 'member' }).sort({ name: 1 }).lean(),
         getBankSettings(),
     ]);
 
