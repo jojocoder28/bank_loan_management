@@ -57,6 +57,7 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                 theme: 'grid',
                 headStyles: { fillColor: [22, 163, 74], fontStyle: 'bold' },
                 footStyles: { fillColor: [240, 240, 240], textColor: [0,0,0], fontStyle: 'bold' },
+                margin: { horizontal: 'auto' },
             });
             
             const summaryFinalY = (doc as any).lastAutoTable.finalY;
@@ -116,6 +117,7 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                     headStyles: { fontStyle: 'bold', halign: 'center', fontSize: 8 },
                     footStyles: { fontStyle: 'bold', fontSize: 8 },
                     styles: { fontSize: 8 },
+                    margin: { horizontal: 'auto' },
                     columnStyles: {
                         0: { halign: 'center', cellWidth: 10 },
                         1: { cellWidth: 35 },
