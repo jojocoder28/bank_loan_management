@@ -40,6 +40,7 @@ export function UserTableFilters() {
             <SelectItem value="all">All Users</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="retired">Retired</SelectItem>
         </SelectContent>
         </Select>
     </div>

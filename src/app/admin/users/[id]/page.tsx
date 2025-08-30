@@ -60,9 +60,10 @@ export default async function UserDetailsPage({
       rejected: 'destructive'
   }
   
-  const userStatusVariant: { [key in UserStatus]: "default" | "destructive" } = {
+  const userStatusVariant: { [key in UserStatus]: "default" | "destructive" | "secondary" } = {
       active: 'default',
-      inactive: 'destructive'
+      inactive: 'destructive',
+      retired: 'secondary'
   }
 
   const InfoField = ({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string | number | null }) => (

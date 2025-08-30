@@ -47,3 +47,23 @@ export async function deactivateUser(formData: FormData) {
         return { error: 'Failed to deactivate user.' };
     }
 }
+
+export async function retireUser(formData: FormData) {
+    const userId = formData.get('userId') as string;
+
+    if (!userId) {
+        throw new Error('User ID not provided');
+    }
+
+    try {
+        await dbConnect();
+
+        await User.findByIdAndUpdate(userId, { status: 'retired' });
+        
+        revalidatePath("/admin/users");
+        
+    } catch (error) {
+        console.error("Error retiring user:", error);
+        return { error: 'Failed to retire user.' };
+    }
+}

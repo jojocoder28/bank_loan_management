@@ -9,6 +9,7 @@ import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { DeactivateUserButton } from "./_components/deactivate-user-button";
 import { UserTableFilters } from "./_components/user-table-filters";
+import { RetireUserButton } from "./_components/retire-user-button";
 
 export default async function UsersPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
   const status = searchParams?.status as UserStatus | undefined;
@@ -21,9 +22,10 @@ export default async function UsersPage({ searchParams }: { searchParams?: { [ke
     user: "outline",
   };
   
-  const statusVariant: { [key in UserStatus]: "default" | "destructive" } = {
+  const statusVariant: { [key in UserStatus]: "default" | "destructive" | "secondary" } = {
       active: 'default',
-      inactive: 'destructive'
+      inactive: 'destructive',
+      retired: 'secondary'
   }
 
   return (
@@ -79,7 +81,10 @@ export default async function UsersPage({ searchParams }: { searchParams?: { [ke
                 </TableCell>
                 <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right flex justify-end gap-1">
+                    {user.status === 'active' && user.role === 'member' && (
+                        <RetireUserButton userId={user._id.toString()} userName={user.name} />
+                    )}
                     {user.status === 'active' && user.role !== 'admin' && (
                         <DeactivateUserButton userId={user._id.toString()} userName={user.name} />
                     )}
