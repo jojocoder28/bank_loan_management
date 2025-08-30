@@ -57,6 +57,7 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                 theme: 'grid',
                 headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
                 footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
+                bodyStyles: { fontStyle: 'bold', textColor: [0, 0, 0], fillColor: [255, 255, 255] },
                 margin: { horizontal: 'auto' },
             });
             
@@ -116,11 +117,11 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                     theme: 'grid',
                     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8 },
                     footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
-                    styles: { fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1 },
+                    styles: { fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], fillColor: [255, 255, 255] },
                     margin: { horizontal: 'auto' },
                     columnStyles: {
                         0: { halign: 'center', cellWidth: 10 },
-                        1: { cellWidth: 30 },
+                        1: { cellWidth: 35 },
                         2: { halign: 'center', cellWidth: 25 },
                         3: { halign: 'right', cellWidth: 15 },
                         4: { halign: 'right', cellWidth: 15 },
