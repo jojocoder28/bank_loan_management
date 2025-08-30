@@ -3,14 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getUsers } from "./actions";
-import { UserRole, IUser } from "@/models/user";
+import { UserRole, IUser, UserStatus } from "@/models/user";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
-import { DeleteUserButton } from "./_components/delete-user-button";
+import { DeactivateUserButton } from "./_components/deactivate-user-button";
+import { UserTableFilters } from "./_components/user-table-filters";
 
-export default async function UsersPage() {
-  const users = await getUsers();
+export default async function UsersPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
+  const status = searchParams?.status as UserStatus | undefined;
+  const users = await getUsers(status);
 
   const roleVariant: { [key in UserRole]: "default" | "secondary" | "outline" } = {
     admin: "default",
@@ -18,6 +20,11 @@ export default async function UsersPage() {
     member: "secondary",
     user: "outline",
   };
+  
+  const statusVariant: { [key in UserStatus]: "default" | "destructive" } = {
+      active: 'default',
+      inactive: 'destructive'
+  }
 
   return (
     <Card>
@@ -26,12 +33,15 @@ export default async function UsersPage() {
           <CardTitle>User Management</CardTitle>
           <CardDescription>View and manage all registered users and members.</CardDescription>
         </div>
-        <Button asChild>
-          <Link href="/admin/users/add">
-            <UserPlus className="mr-2" />
-            Add New Admin
-          </Link>
-        </Button>
+        <div className="flex items-center gap-4">
+            <UserTableFilters />
+            <Button asChild>
+                <Link href="/admin/users/add">
+                    <UserPlus className="mr-2" />
+                    Add New Admin
+                </Link>
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
@@ -41,6 +51,7 @@ export default async function UsersPage() {
               <TableHead>Phone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Membership #</TableHead>
               <TableHead>Registered On</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -61,10 +72,17 @@ export default async function UsersPage() {
                     {user.role.replace("_", " ")}
                   </Badge>
                 </TableCell>
+                 <TableCell>
+                    <Badge variant={statusVariant[user.status]} className="capitalize">
+                        {user.status}
+                    </Badge>
+                </TableCell>
                 <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell className="text-right">
-                    <DeleteUserButton userId={user._id.toString()} userName={user.name} />
+                    {user.status === 'active' && user.role !== 'admin' && (
+                        <DeactivateUserButton userId={user._id.toString()} userName={user.name} />
+                    )}
                 </TableCell>
               </TableRow>
             ))}

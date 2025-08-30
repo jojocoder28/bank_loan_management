@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 
 export type UserRole = 'admin' | 'board_member' | 'member' | 'user';
 export type Gender = 'male' | 'female' | 'other' | '';
+export type UserStatus = 'active' | 'inactive';
 
 // Interface for the User document
 export interface IUser extends Document {
@@ -12,6 +13,7 @@ export interface IUser extends Document {
   phone: string;
   password?: string;
   role: UserRole;
+  status: UserStatus;
   createdAt: Date;
   membershipApplied?: boolean;
   isVerified?: boolean;
@@ -52,6 +54,12 @@ const UserSchema = new Schema<IUser>({
     type: String,
     enum: ['admin', 'board_member', 'member', 'user'],
     default: 'user',
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active',
+    required: true,
   },
   membershipApplied: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: true },

@@ -3,12 +3,18 @@
 
 import dbConnect from "@/lib/mongodb";
 import Loan from "@/models/loan";
-import User, { IUser } from "@/models/user";
+import User, { IUser, UserStatus } from "@/models/user";
 import { revalidatePath } from "next/cache";
 
-export async function getUsers(): Promise<IUser[]> {
+export async function getUsers(status?: UserStatus): Promise<IUser[]> {
     await dbConnect();
-    const users = await User.find({}).sort({ createdAt: -1 }).lean();
+    
+    const query: Partial<{ status: UserStatus }> = {};
+    if (status) {
+        query.status = status;
+    }
+
+    const users = await User.find(query).sort({ createdAt: -1 }).lean();
 
     return JSON.parse(JSON.stringify(users.map(user => ({
       ...user,
@@ -17,7 +23,7 @@ export async function getUsers(): Promise<IUser[]> {
 }
 
 
-export async function deleteUser(formData: FormData) {
+export async function deactivateUser(formData: FormData) {
     const userId = formData.get('userId') as string;
 
     if (!userId) {
@@ -27,18 +33,17 @@ export async function deleteUser(formData: FormData) {
     try {
         await dbConnect();
 
-        // Also delete all loans associated with this user
-        await Loan.deleteMany({ user: userId });
-
-        // Delete the user
-        await User.findByIdAndDelete(userId);
+        // Instead of deleting, update the user's status to 'inactive'.
+        await User.findByIdAndUpdate(userId, { status: 'inactive' });
+        
+        // Note: We are NOT deleting their loans to preserve historical data.
 
         revalidatePath("/admin/users");
         
     } catch (error) {
-        console.error("Error deleting user:", error);
+        console.error("Error deactivating user:", error);
         // In a real app, you'd want to return an error object
         // to the client to display a toast or message.
-        return { error: 'Failed to delete user.' };
+        return { error: 'Failed to deactivate user.' };
     }
 }

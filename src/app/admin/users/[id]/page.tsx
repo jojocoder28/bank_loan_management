@@ -21,13 +21,15 @@ import {
   Calendar,
   Building,
   ClipboardList,
-  History
+  History,
+  Activity
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ILoan } from "@/models/loan";
 import { RoleManagement } from "./_components/role-management";
 import { getSession } from "@/lib/session";
+import { UserStatus } from "@/models/user";
 
 export default async function UserDetailsPage({
   params,
@@ -57,6 +59,11 @@ export default async function UserDetailsPage({
       pending: 'outline',
       rejected: 'destructive'
   }
+  
+  const userStatusVariant: { [key in UserStatus]: "default" | "destructive" } = {
+      active: 'default',
+      inactive: 'destructive'
+  }
 
   const InfoField = ({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string | number | null }) => (
       <div className="flex items-start gap-3">
@@ -83,9 +90,14 @@ export default async function UserDetailsPage({
             <div>
               <CardTitle>{user.name}</CardTitle>
               <CardDescription>{user.email}</CardDescription>
-              <Badge variant={roleVariant[user.role] || "outline"} className="mt-2 capitalize">
-                {user.role.replace("_", " ")}
-              </Badge>
+              <div className="flex gap-2 items-center mt-2">
+                <Badge variant={roleVariant[user.role] || "outline"} className="capitalize">
+                    {user.role.replace("_", " ")}
+                </Badge>
+                 <Badge variant={userStatusVariant[user.status] || "outline"} className="capitalize">
+                    {user.status}
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="grid gap-4">
