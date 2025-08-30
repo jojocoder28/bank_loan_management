@@ -32,7 +32,7 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
             const depositText = `Please deposit the amount Rs. ${summary.grandTotal.toLocaleString()} (Rupees ${totalInWords} only) to the SBCS Number 129342134828 of the society and oblige.`;
 
             // --- 1. Summary Sheet ---
-            doc.setFontSize(14);
+            doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
             doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
 
@@ -73,7 +73,7 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                 const pageData = data.slice(start, end);
 
                 doc.addPage();
-                doc.setFontSize(14);
+                doc.setFontSize(12);
                 doc.setFont("helvetica", "bold");
                 doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
                 doc.setFontSize(10);
@@ -113,19 +113,20 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                     body: body,
                     foot: footer,
                     theme: 'grid',
-                    headStyles: { fontStyle: 'bold', halign: 'center' },
-                    footStyles: { fontStyle: 'bold' },
+                    headStyles: { fontStyle: 'bold', halign: 'center', fontSize: 8 },
+                    footStyles: { fontStyle: 'bold', fontSize: 8 },
+                    styles: { fontSize: 8 },
                     columnStyles: {
-                        0: { halign: 'center', cellWidth: 15 },
-                        1: { cellWidth: 40 },
-                        2: { halign: 'center' },
-                        3: { halign: 'right' },
-                        4: { halign: 'right' },
-                        5: { halign: 'right' },
-                        6: { halign: 'right' },
-                        7: { halign: 'right' },
-                        8: { halign: 'right' },
-                        9: { halign: 'right', fontStyle: 'bold' },
+                        0: { halign: 'center', cellWidth: 10 },
+                        1: { cellWidth: 35 },
+                        2: { halign: 'center', cellWidth: 20 },
+                        3: { halign: 'right', cellWidth: 15 },
+                        4: { halign: 'right', cellWidth: 15 },
+                        5: { halign: 'right', cellWidth: 15 },
+                        6: { halign: 'right', cellWidth: 15 },
+                        7: { halign: 'right', cellWidth: 10 },
+                        8: { halign: 'right', cellWidth: 10 },
+                        9: { halign: 'right', fontStyle: 'bold', cellWidth: 20 },
                     }
                 });
             }
