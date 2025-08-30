@@ -32,7 +32,7 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
             const depositText = `Please deposit the amount Rs. ${summary.grandTotal.toLocaleString()} (Rupees ${totalInWords} only) to the SBCS Number 129342134828 of the society and oblige.`;
 
             // --- 1. Summary Sheet ---
-            doc.setFontSize(12);
+            doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
             doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
 
@@ -55,8 +55,8 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                 ],
                 foot: [['Total Deduction', summary.grandTotal.toLocaleString()]],
                 theme: 'grid',
-                headStyles: { fillColor: [22, 163, 74], fontStyle: 'bold' },
-                footStyles: { fillColor: [240, 240, 240], textColor: [0,0,0], fontStyle: 'bold' },
+                headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
+                footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
                 margin: { horizontal: 'auto' },
             });
             
@@ -74,7 +74,7 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                 const pageData = data.slice(start, end);
 
                 doc.addPage();
-                doc.setFontSize(12);
+                doc.setFontSize(10);
                 doc.setFont("helvetica", "bold");
                 doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
                 doc.setFontSize(10);
@@ -114,13 +114,13 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                     body: body,
                     foot: footer,
                     theme: 'grid',
-                    headStyles: { fontStyle: 'bold', halign: 'center', fontSize: 8 },
-                    footStyles: { fontStyle: 'bold', fontSize: 8 },
+                    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8 },
+                    footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
                     styles: { fontSize: 8 },
                     margin: { horizontal: 'auto' },
                     columnStyles: {
                         0: { halign: 'center', cellWidth: 10 },
-                        1: { cellWidth: 30 },
+                        1: { cellWidth: 20 },
                         2: { halign: 'center', cellWidth: 25 },
                         3: { halign: 'right', cellWidth: 15 },
                         4: { halign: 'right', cellWidth: 15 },
