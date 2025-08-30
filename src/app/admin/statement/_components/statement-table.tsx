@@ -15,6 +15,8 @@ import { Download, Loader2 } from "lucide-react";
 import { StatementRow } from "../actions";
 import { useState } from "react";
 import Link from "next/link";
+import * as XLSX from "xlsx";
+
 
 export function StatementTable({ data, month, year }: { data: StatementRow[], month: string, year: number }) {
     const [isDownloading, setIsDownloading] = useState(false);
@@ -28,37 +30,59 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
         return acc;
     }, { thrift: 0, share: 0, principal: 0, interest: 0, total: 0 });
 
-    const downloadCSV = () => {
+    const downloadExcel = () => {
         setIsDownloading(true);
         try {
+            const wb = XLSX.utils.book_new();
+
+            // --- 1. Summary Sheet ---
+            const summaryData = [
+                [`Summary for the month of ${month}, ${year}`],
+                [],
+                ["Thrift Fund(TF)", totals.thrift],
+                ["Share Fund(SF)", totals.share],
+                ["Own Loan Principal", totals.principal],
+                ["Own Loan Interest", totals.interest],
+                ["Total Deduction", totals.total],
+            ];
+            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+            summaryWs['!cols'] = [{ wch: 20 }, { wch: 15 }];
+            XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
+
+
+            // --- 2. Deduction List Sheets ---
             const recordsPerPage = 42;
             const numPages = Math.ceil(data.length / recordsPerPage);
-            let csvContent = "";
-
-            const mainHeader = [
-                `"SARISHA & KHORDA G P PRIMARY SCHOOL TEACHERS CO OPERATIVE CREDIT SOCIETY LTD"`,
-                `"Regd No 11/1994/South 24 Parganas, Date 30/09/1994 Mob No. 9233092709"`,
-                `"Deduction List for the month of ${month}, ${year}"`
-            ].join('\n');
             
-            const tableHeaders = [
-                `"Sl. No"`, `"Name"`, `"S.B. A/C No"`, `"Bank Loan Prin"`, `"Bank Loan Int."`, `"OWN LOAN Prin."`, `"OWN LOAN Int."`, `"S F"`, `"T.F"`, `"Total"`
+            const mainHeader = [
+                `SARISHA & KHORDA G P PRIMARY SCHOOL TEACHERS CO OPERATIVE CREDIT SOCIETY LTD`,
+                `Regd No 11/1994/South 24 Parganas, Date 30/09/1994 Mob No. 9233092709`,
+                `Deduction List for the month of ${month}, ${year}`
             ];
             
+            const tableHeaders = [
+                `Sl. No`, `Name`, `S.B. A/C No`, `Bank Loan Prin`, `Bank Loan Int.`, `OWN LOAN Prin.`, `OWN LOAN Int.`, `S F`, `T.F`, `Total`
+            ];
+
             for (let i = 0; i < numPages; i++) {
                 const start = i * recordsPerPage;
                 const end = start + recordsPerPage;
                 const pageData = data.slice(start, end);
-                
                 let pageTotal = { principal: 0, interest: 0, share: 0, thrift: 0, total: 0 };
                 
-                csvContent += mainHeader + '\n\n';
-                csvContent += tableHeaders.join(',') + '\n';
-                
+                const pageRows = [];
+                // Add headers
+                pageRows.push([mainHeader[0]]);
+                pageRows.push([mainHeader[1]]);
+                pageRows.push([mainHeader[2]]);
+                pageRows.push([]); // Empty row
+                pageRows.push(tableHeaders);
+
+                // Add data rows
                 pageData.forEach(row => {
-                    csvContent += [
+                    pageRows.push([
                         row.slNo,
-                        `"${row.name.replace(/"/g, '""')}"`,
+                        row.name,
                         `'${row.bankAccountNumber}`, // Prepend with ' to ensure it's treated as text
                         '', // Bank Loan Prin
                         '', // Bank Loan Int
@@ -67,7 +91,7 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
                         row.shareFundContribution,
                         row.thriftFundContribution,
                         row.totalDeduction,
-                    ].join(',') + '\n';
+                    ]);
                     
                     pageTotal.principal += row.loanPrincipalPayment;
                     pageTotal.interest += row.loanInterestPayment;
@@ -75,32 +99,28 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
                     pageTotal.thrift += row.thriftFundContribution;
                     pageTotal.total += row.totalDeduction;
                 });
-                
-                csvContent += [
-                    '', '', `"Page ${i + 1} Total"`, '', '',
+
+                // Add page total row
+                pageRows.push([]); // Empty row
+                pageRows.push([
+                    '', '', `Page ${i + 1} Total`, '', '',
                     pageTotal.principal,
                     pageTotal.interest,
                     pageTotal.share,
                     pageTotal.thrift,
                     pageTotal.total
-                ].join(',') + '\n\n\n'; // Add extra newlines for spacing between pages
+                ]);
+                
+                const pageWs = XLSX.utils.aoa_to_sheet(pageRows);
+                // Set column widths
+                pageWs['!cols'] = [
+                    { wch: 8 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, 
+                    { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 15 }
+                ];
+                XLSX.utils.book_append_sheet(wb, pageWs, `Page ${i + 1}`);
             }
 
-            // Summary Page
-            csvContent += `"Summary for the month of ${month}, ${year}"\n\n`;
-            csvContent += `"Thrift Fund(TF)","${totals.thrift.toLocaleString()}"\n`;
-            csvContent += `"Share Fund(SF)","${totals.share.toLocaleString()}"\n`;
-            csvContent += `"Own Loan Principal","${totals.principal.toLocaleString()}"\n`;
-            csvContent += `"Own Loan Interest","${totals.interest.toLocaleString()}"\n`;
-            csvContent += `"Total Deduction","${totals.total.toLocaleString()}"\n`;
-            
-            const encodedUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `monthly_statement_${month}_${year}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            XLSX.writeFile(wb, `monthly_statement_${month}_${year}.xlsx`);
 
         } finally {
              setIsDownloading(false);
@@ -110,13 +130,13 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
   return (
     <div>
         <div className="flex justify-end mb-4">
-             <Button onClick={downloadCSV} disabled={isDownloading}>
+             <Button onClick={downloadExcel} disabled={isDownloading}>
                 {isDownloading ? (
                     <Loader2 className="mr-2 animate-spin" />
                 ) : (
                     <Download className="mr-2" />
                 )}
-                Download CSV
+                Download Excel
             </Button>
         </div>
       <Table>
