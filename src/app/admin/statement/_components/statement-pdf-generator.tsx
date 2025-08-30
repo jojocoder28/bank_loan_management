@@ -116,11 +116,11 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                     theme: 'grid',
                     headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8 },
                     footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
-                    styles: { fontSize: 8 },
+                    styles: { fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1 },
                     margin: { horizontal: 'auto' },
                     columnStyles: {
                         0: { halign: 'center', cellWidth: 10 },
-                        1: { cellWidth: 20 },
+                        1: { cellWidth: 30 },
                         2: { halign: 'center', cellWidth: 25 },
                         3: { halign: 'right', cellWidth: 15 },
                         4: { halign: 'right', cellWidth: 15 },
