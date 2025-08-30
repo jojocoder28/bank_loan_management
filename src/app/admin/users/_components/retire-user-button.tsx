@@ -18,15 +18,31 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { UserCheck } from "lucide-react";
 import { retireUser } from "../actions";
+import { useToast } from "@/hooks/use-toast";
 
 export function RetireUserButton({ userId, userName }: { userId: string, userName: string }) {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+   const { toast } = useToast();
 
   const handleRetire = async () => {
       const formData = new FormData();
       formData.append('userId', userId);
-      await retireUser(formData);
+      const result = await retireUser(formData);
+      
+      if (result?.error) {
+        toast({
+            variant: "destructive",
+            title: "Action Failed",
+            description: result.error,
+        });
+      } else {
+         toast({
+            title: "Success",
+            description: `User ${userName} has been marked as retired.`,
+        });
+      }
+
       setIsOpen(false);
       setIsConfirmed(false);
   }

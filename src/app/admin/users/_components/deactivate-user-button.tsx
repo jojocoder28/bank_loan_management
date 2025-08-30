@@ -18,15 +18,31 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { UserX } from "lucide-react";
 import { deactivateUser } from "../actions";
+import { useToast } from "@/hooks/use-toast";
 
 export function DeactivateUserButton({ userId, userName }: { userId: string, userName: string }) {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleDeactivate = async () => {
       const formData = new FormData();
       formData.append('userId', userId);
-      await deactivateUser(formData);
+      const result = await deactivateUser(formData);
+      
+      if (result?.error) {
+        toast({
+            variant: "destructive",
+            title: "Action Failed",
+            description: result.error,
+        });
+      } else {
+         toast({
+            title: "Success",
+            description: `User ${userName} has been deactivated.`,
+        });
+      }
+
       setIsOpen(false);
       setIsConfirmed(false);
   }

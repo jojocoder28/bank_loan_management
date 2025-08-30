@@ -27,23 +27,25 @@ export async function deactivateUser(formData: FormData) {
     const userId = formData.get('userId') as string;
 
     if (!userId) {
-        throw new Error('User ID not provided');
+        return { error: 'User ID not provided' };
     }
 
     try {
         await dbConnect();
 
-        // Instead of deleting, update the user's status to 'inactive'.
+        // Check for active loans
+        const activeLoan = await Loan.findOne({ user: userId, status: 'active' });
+        if (activeLoan) {
+            return { error: 'Cannot deactivate a user with an active loan. The loan must be paid or settled first.' };
+        }
+
         await User.findByIdAndUpdate(userId, { status: 'inactive' });
         
-        // Note: We are NOT deleting their loans to preserve historical data.
-
         revalidatePath("/admin/users");
+        return { success: true };
         
     } catch (error) {
         console.error("Error deactivating user:", error);
-        // In a real app, you'd want to return an error object
-        // to the client to display a toast or message.
         return { error: 'Failed to deactivate user.' };
     }
 }
@@ -52,15 +54,22 @@ export async function retireUser(formData: FormData) {
     const userId = formData.get('userId') as string;
 
     if (!userId) {
-        throw new Error('User ID not provided');
+        return { error: 'User ID not provided' };
     }
 
     try {
         await dbConnect();
+        
+        // Check for active loans
+        const activeLoan = await Loan.findOne({ user: userId, status: 'active' });
+        if (activeLoan) {
+            return { error: 'Cannot retire a user with an active loan. The loan must be paid or settled first.' };
+        }
 
         await User.findByIdAndUpdate(userId, { status: 'retired' });
         
         revalidatePath("/admin/users");
+        return { success: true };
         
     } catch (error) {
         console.error("Error retiring user:", error);
