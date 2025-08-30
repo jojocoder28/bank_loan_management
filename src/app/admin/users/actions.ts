@@ -10,7 +10,7 @@ export async function getUsers(status?: UserStatus): Promise<IUser[]> {
     await dbConnect();
     
     const query: Partial<{ status: UserStatus }> = {};
-    if (status) {
+    if (status && ['active', 'inactive', 'retired'].includes(status)) {
         query.status = status;
     }
 
@@ -18,7 +18,7 @@ export async function getUsers(status?: UserStatus): Promise<IUser[]> {
 
     return JSON.parse(JSON.stringify(users.map(user => ({
       ...user,
-      _id: user._id!.toString(),
+      _id: user._id.toString(),
     }))));
 }
 
@@ -94,5 +94,33 @@ export async function activateUser(formData: FormData) {
     } catch (error) {
         console.error("Error activating user:", error);
         return { error: 'Failed to activate user.' };
+    }
+}
+
+export async function deleteUser(formData: FormData) {
+    const userId = formData.get('userId') as string;
+
+    if (!userId) {
+        throw new Error('User ID not provided');
+    }
+
+    try {
+        await dbConnect();
+
+        // Optional: Check if user can be deleted (e.g., no active loans)
+        const activeLoan = await Loan.findOne({ user: userId, status: 'active' });
+        if (activeLoan) {
+            // In a real app, you'd return an error object to the client
+            throw new Error('Cannot delete a user with an active loan.');
+        }
+
+        await User.findByIdAndDelete(userId);
+        
+        revalidatePath("/admin/users");
+        
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        // In a real app, you'd handle this more gracefully
+        throw new Error('Failed to delete user.');
     }
 }
