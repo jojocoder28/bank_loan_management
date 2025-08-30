@@ -31,49 +31,77 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
     const downloadCSV = () => {
         setIsDownloading(true);
         try {
-            const heading = [
-              "Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD",
-              "Regd No 11/1994/South 24 Parganas, Date 30/08/1994 Mob No. 9233092709",
-              `Deduction List for the month of ${month}, ${year}`
-            ].map(line => `"${line}"`).join('\n');
+            const recordsPerPage = 42;
+            const numPages = Math.ceil(data.length / recordsPerPage);
+            let csvContent = "";
 
-
-            const headers = [
-                "Membership No",
-                "Name",
-                "Bank Account Number",
-                "Loan Principal",
-                "Loan Interest",
-                "Share Fund (SF)",
-                "Thrift Fund (TF)",
-                "Total Deduction",
+            const mainHeader = [
+                `"SARISHA & KHORDA G P PRIMARY SCHOOL TEACHERS CO OPERATIVE CREDIT SOCIETY LTD"`,
+                `"Regd No 11/1994/South 24 Parganas, Date 30/09/1994 Mob No. 9233092709"`,
+                `"Deduction List for the month of ${month}, ${year}"`
+            ].join('\n');
+            
+            const tableHeaders = [
+                `"Sl. No"`, `"Name"`, `"S.B. A/C No"`, `"Bank Loan Prin"`, `"Bank Loan Int."`, `"OWN LOAN Prin."`, `"OWN LOAN Int."`, `"S F"`, `"T.F"`, `"Total"`
             ];
+            
+            for (let i = 0; i < numPages; i++) {
+                const start = i * recordsPerPage;
+                const end = start + recordsPerPage;
+                const pageData = data.slice(start, end);
+                
+                let pageTotal = { principal: 0, interest: 0, share: 0, thrift: 0, total: 0 };
+                
+                csvContent += mainHeader + '\n\n';
+                csvContent += tableHeaders.join(',') + '\n';
+                
+                pageData.forEach(row => {
+                    csvContent += [
+                        row.slNo,
+                        `"${row.name.replace(/"/g, '""')}"`,
+                        `'${row.bankAccountNumber}`, // Prepend with ' to ensure it's treated as text
+                        '', // Bank Loan Prin
+                        '', // Bank Loan Int
+                        row.loanPrincipalPayment,
+                        row.loanInterestPayment,
+                        row.shareFundContribution,
+                        row.thriftFundContribution,
+                        row.totalDeduction,
+                    ].join(',') + '\n';
+                    
+                    pageTotal.principal += row.loanPrincipalPayment;
+                    pageTotal.interest += row.loanInterestPayment;
+                    pageTotal.share += row.shareFundContribution;
+                    pageTotal.thrift += row.thriftFundContribution;
+                    pageTotal.total += row.totalDeduction;
+                });
+                
+                csvContent += [
+                    '', '', `"Page ${i + 1} Total"`, '', '',
+                    pageTotal.principal,
+                    pageTotal.interest,
+                    pageTotal.share,
+                    pageTotal.thrift,
+                    pageTotal.total
+                ].join(',') + '\n\n\n'; // Add extra newlines for spacing between pages
+            }
 
-            const csvRows = data.map(row => 
-                [
-                    row.membershipNumber,
-                    `"${row.name.replace(/"/g, '""')}"`,
-                    row.bankAccountNumber,
-                    row.loanPrincipalPayment,
-                    row.loanInterestPayment,
-                    row.shareFundContribution,
-                    row.thriftFundContribution,
-                    row.totalDeduction,
-                ].join(',')
-            );
+            // Summary Page
+            csvContent += `"Summary for the month of ${month}, ${year}"\n\n`;
+            csvContent += `"Thrift Fund(TF)","${totals.thrift.toLocaleString()}"\n`;
+            csvContent += `"Share Fund(SF)","${totals.share.toLocaleString()}"\n`;
+            csvContent += `"Own Loan Principal","${totals.principal.toLocaleString()}"\n`;
+            csvContent += `"Own Loan Interest","${totals.interest.toLocaleString()}"\n`;
+            csvContent += `"Total Deduction","${totals.total.toLocaleString()}"\n`;
             
-            const csvContent = "data:text/csv;charset=utf-8," 
-                + heading + "\n\n"
-                + headers.join(',') + "\n"
-                + csvRows.join('\n');
-            
-            const encodedUri = encodeURI(csvContent);
+            const encodedUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
             link.setAttribute("download", `monthly_statement_${month}_${year}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+
         } finally {
              setIsDownloading(false);
         }
@@ -94,6 +122,7 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Sl. No</TableHead>
             <TableHead>Membership #</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Bank Acc #</TableHead>
@@ -107,6 +136,7 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
         <TableBody>
           {data.map((row) => (
             <TableRow key={row.userId}>
+               <TableCell>{row.slNo}</TableCell>
                <TableCell>{row.membershipNumber}</TableCell>
               <TableCell className="font-medium">
                 <Link href={`/admin/users/${row.userId}`} className="text-primary hover:underline">
@@ -124,7 +154,7 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
         </TableBody>
         <TableFooter>
             <TableRow className="font-bold text-base bg-secondary">
-                <TableCell colSpan={3}>Totals</TableCell>
+                <TableCell colSpan={4}>Totals</TableCell>
                 <TableCell className="text-right">₹{totals.principal.toLocaleString()}</TableCell>
                 <TableCell className="text-right">₹{totals.interest.toLocaleString()}</TableCell>
                 <TableCell className="text-right">₹{totals.share.toLocaleString()}</TableCell>

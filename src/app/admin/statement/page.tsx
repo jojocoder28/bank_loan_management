@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/card";
 import { getMonthlyStatementData } from "./actions";
 import { StatementTable } from "./_components/statement-table";
-import { FileText } from "lucide-react";
+import { FileText, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 
 export default async function StatementPage() {
@@ -25,6 +27,13 @@ export default async function StatementPage() {
                 <h2 className="text-xl font-bold">Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD</h2>
                 <p className="text-sm">Regd No 11/1994/South 24 Parganas, Date 30/08/1994 Mob No. 9233092709</p>
                 <p className="font-semibold mt-2">Deduction List for the month of {month}, {year}</p>
+             </div>
+             <div className="pt-4 flex justify-end">
+                <Button asChild>
+                    <Link href="/admin/statement/summary">
+                        View Statement Summary <ArrowRight className="ml-2" />
+                    </Link>
+                </Button>
              </div>
         </CardHeader>
         <CardContent>
