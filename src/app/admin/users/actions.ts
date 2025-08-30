@@ -67,3 +67,23 @@ export async function retireUser(formData: FormData) {
         return { error: 'Failed to retire user.' };
     }
 }
+
+export async function activateUser(formData: FormData) {
+    const userId = formData.get('userId') as string;
+
+    if (!userId) {
+        throw new Error('User ID not provided');
+    }
+
+    try {
+        await dbConnect();
+
+        await User.findByIdAndUpdate(userId, { status: 'active' });
+        
+        revalidatePath("/admin/users");
+        
+    } catch (error) {
+        console.error("Error activating user:", error);
+        return { error: 'Failed to activate user.' };
+    }
+}

@@ -10,6 +10,7 @@ import { UserPlus } from "lucide-react";
 import { DeactivateUserButton } from "./_components/deactivate-user-button";
 import { UserTableFilters } from "./_components/user-table-filters";
 import { RetireUserButton } from "./_components/retire-user-button";
+import { ActivateUserButton } from "./_components/activate-user-button";
 
 export default async function UsersPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
   const status = searchParams?.status as UserStatus | undefined;
@@ -87,6 +88,9 @@ export default async function UsersPage({ searchParams }: { searchParams?: { [ke
                     )}
                     {user.status === 'active' && user.role !== 'admin' && (
                         <DeactivateUserButton userId={user._id.toString()} userName={user.name} />
+                    )}
+                    {(user.status === 'inactive' || user.status === 'retired') && user.role !== 'admin' && (
+                        <ActivateUserButton userId={user._id.toString()} userName={user.name} />
                     )}
                 </TableCell>
               </TableRow>
