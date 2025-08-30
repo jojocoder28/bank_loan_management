@@ -12,8 +12,8 @@ import { UserTableFilters } from "./_components/user-table-filters";
 import { RetireUserButton } from "./_components/retire-user-button";
 import { ActivateUserButton } from "./_components/activate-user-button";
 
-export default async function UsersPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
-  const status = searchParams?.status as UserStatus | undefined;
+export default async function UsersPage({ searchParams }: { searchParams?: { status?: UserStatus } }) {
+  const status = searchParams?.status;
   const users = await getUsers(status);
 
   const roleVariant: { [key in UserRole]: "default" | "secondary" | "outline" } = {
@@ -31,7 +31,7 @@ export default async function UsersPage({ searchParams }: { searchParams?: { [ke
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between">
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>User Management</CardTitle>
           <CardDescription>View and manage all registered users and members.</CardDescription>
