@@ -60,7 +60,7 @@ export async function getUserDetails(id: string): Promise<{ user: UserDetails; l
 }
 
 
-export async function updateUserRole(formData: FormData): Promise<{error?: string}> {
+export async function updateUserRole(prevState: any, formData: FormData): Promise<{error?: string}> {
     const userId = formData.get('userId') as string;
     const role = formData.get('role') as UserRole;
     
