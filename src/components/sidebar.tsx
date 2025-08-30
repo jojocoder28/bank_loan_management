@@ -146,14 +146,20 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
     }, [user.role]);
 
     React.useEffect(() => {
+        // Initial fetch
         fetchApprovalCount();
         
+        // Listen for the custom event to force a refresh
         const handleCountChanged = () => fetchApprovalCount();
-
         window.addEventListener('approvalCountChanged', handleCountChanged);
 
+        // Set up polling to refresh every 30 seconds
+        const intervalId = setInterval(fetchApprovalCount, 30000); // 30000ms = 30 seconds
+
+        // Cleanup on component unmount
         return () => {
             window.removeEventListener('approvalCountChanged', handleCountChanged);
+            clearInterval(intervalId);
         }
     }, [fetchApprovalCount]);
 
