@@ -6,6 +6,7 @@ import Loan, { ILoan, IModificationRequest, ModificationRequestStatus } from "@/
 import User, { IUser } from "@/models/user";
 import { revalidatePath } from "next/cache";
 import { calculateRequiredFunds } from "@/lib/coop-calculations";
+import { getBankSettings } from "../settings/actions";
 
 interface PopulatedLoan extends Omit<ILoan, 'user'> {
     _id: string;
@@ -43,6 +44,7 @@ export async function getPendingLoans(): Promise<PopulatedLoan[]> {
 
 export async function getPendingMemberships(): Promise<IUser[]> {
     await dbConnect();
+    // Find users who have applied but are not yet members
     const users = await User.find({ role: 'user', membershipApplied: true }).sort({ createdAt: 'asc' }).lean();
     return JSON.parse(JSON.stringify(users));
 }
@@ -123,12 +125,7 @@ export async function rejectLoan(formData: FormData) {
     return await updateLoanStatus(formData, 'rejected');
 }
 
-type ApproveMembershipState = {
-    error?: string | null;
-    success?: boolean;
-}
-
-export async function approveMembership(prevState: ApproveMembershipState, formData: FormData): Promise<ApproveMembershipState> {
+export async function approveMembership(formData: FormData): Promise<{error?: string, success?: boolean}> {
     const userId = formData.get('userId') as string;
     const membershipNumber = formData.get('membershipNumber') as string;
 
@@ -157,8 +154,46 @@ export async function approveMembership(prevState: ApproveMembershipState, formD
     revalidatePath('/apply-loan');
     revalidatePath('/dashboard');
 
-    return { error: null, success: true };
+    return { success: true };
 }
+
+export async function rejectMembership(formData: FormData): Promise<{error?: string, success?: boolean}> {
+    const userId = formData.get('userId') as string;
+
+    if (!userId) {
+        return { error: 'User ID is required.' }
+    }
+
+    await dbConnect();
+
+    const [user, bankSettings] = await Promise.all([
+        User.findById(userId),
+        getBankSettings()
+    ]);
+
+    if (!user) {
+        return { error: 'User not found.' };
+    }
+
+    if (user.role !== 'user' || !user.membershipApplied) {
+        return { error: 'This user does not have a pending membership application.' };
+    }
+
+    // Revert the application status and refund the initial deposit
+    user.membershipApplied = false;
+    user.shareFund = (user.shareFund || 0) - bankSettings.initialShareFundDeposit;
+    if (user.shareFund < 0) user.shareFund = 0; // Prevent negative funds
+
+    await user.save();
+    
+    revalidatePath('/admin/approvals');
+    revalidatePath('/admin/users');
+    revalidatePath(`/admin/users/${userId}`);
+    revalidatePath('/become-member');
+
+    return { success: true };
+}
+
 
 async function updateModificationStatus(formData: FormData, newStatus: ModificationRequestStatus): Promise<{error?: string, success?: boolean}> {
     const loanId = formData.get('loanId') as string;

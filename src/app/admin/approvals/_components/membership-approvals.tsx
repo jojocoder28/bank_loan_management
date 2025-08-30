@@ -10,64 +10,61 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import Link from 'next/link';
 import { IUser } from "@/models/user";
-import { approveMembership } from "../actions";
-import { useActionState, useEffect, useState, useTransition } from "react";
-import { useFormStatus } from "react-dom";
+import { approveMembership, rejectMembership } from "../actions";
+import { useEffect, useState, useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 
-const initialState = {
-    error: null,
-    success: false,
-}
+const MembershipActionButton = ({ userId, action, children, variant, onAction }: { userId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (userId: string, success: boolean, error?: string) => void }) => {
+    const [isPending, startTransition] = useTransition();
 
-function SubmitButton({ userId, isInputFilled }: { userId: string, isInputFilled: boolean }) {
-    const { pending } = useFormStatus();
+    const handleAction = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await action(formData);
+            onAction(userId, !!result.success, result.error);
+        });
+    };
+
     return (
-        <Button size="sm" type="submit" form={`form-${userId}`} disabled={pending || !isInputFilled}>
-            {pending ? <><Loader2 className="mr-2 size-4 animate-spin"/> Approving...</> : <><Check className="mr-2 size-4" /> Approve</>}
-        </Button>
-    )
-}
+        <form action={handleAction}>
+            <input type="hidden" name="userId" value={userId} />
+             <Button size="sm" variant={variant} disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : children}
+            </Button>
+        </form>
+    );
+};
 
 export function MembershipApprovals({ pendingUsers: initialUsers }: { pendingUsers: IUser[] }) {
-    const [state, formAction] = useActionState(approveMembership, initialState);
     const { toast } = useToast();
     const [pendingUsers, setPendingUsers] = useState(initialUsers);
     const [membershipNumbers, setMembershipNumbers] = useState<{ [key: string]: string }>({});
-    const [lastApprovedId, setLastApprovedId] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (state?.error) {
+    
+    const handleAction = (userId: string, success: boolean, error?: string) => {
+        if(error) {
             toast({
                 variant: 'destructive',
-                title: 'Approval Failed',
-                description: state.error
+                title: 'Action Failed',
+                description: error
             })
-        }
-         if (state?.success && lastApprovedId) {
-            toast({
+        } else if (success) {
+            const isApproval = !error; // Simple check if it was an approval or rejection based on error presence. A better way would be passing the action type.
+             toast({
                 title: 'Success',
-                description: "Membership has been approved."
+                description: `Membership has been ${isApproval ? 'approved' : 'rejected'}.`
             });
-            // Optimistically remove user from the list
-            setPendingUsers(currentUsers => currentUsers.filter(u => u._id.toString() !== lastApprovedId));
-            setLastApprovedId(null);
+            setPendingUsers(currentUsers => currentUsers.filter(u => u._id.toString() !== userId));
         }
-    }, [state, toast, lastApprovedId])
+    }
+
 
     const handleNumberChange = (userId: string, value: string) => {
         setMembershipNumbers(prev => ({ ...prev, [userId]: value }));
     }
     
-    const handleFormAction = (formData: FormData) => {
-        const userId = formData.get('userId') as string;
-        setLastApprovedId(userId);
-        formAction(formData);
-    }
 
     if (pendingUsers.length === 0) {
         return (
@@ -99,19 +96,27 @@ export function MembershipApprovals({ pendingUsers: initialUsers }: { pendingUse
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell>
-                             <form action={handleFormAction} id={`form-${user._id.toString()}`}>
+                             <form action={async (formData) => {
+                                 const result = await approveMembership(formData);
+                                 handleAction(user._id.toString(), !!result.success, result.error);
+                             }} id={`form-${user._id.toString()}`}>
                                 <input type="hidden" name="userId" value={user._id.toString()} />
                                 <Input
                                     name="membershipNumber"
-                                    placeholder="e.g. MEM123"
+                                    placeholder="Required for approval"
                                     required
                                     value={membershipNumbers[user._id.toString()] || ''}
                                     onChange={(e) => handleNumberChange(user._id.toString(), e.target.value)}
                                 />
                             </form>
                         </TableCell>
-                         <TableCell className="text-right">
-                           <SubmitButton userId={user._id.toString()} isInputFilled={!!membershipNumbers[user._id.toString()]} />
+                         <TableCell className="text-right flex justify-end gap-2">
+                            <Button size="sm" type="submit" form={`form-${user._id.toString()}`} disabled={!membershipNumbers[user._id.toString()]}>
+                                 <Check className="mr-2 size-4" /> Approve
+                           </Button>
+                           <MembershipActionButton userId={user._id.toString()} action={rejectMembership} variant="destructive" onAction={handleAction}>
+                                <X className="mr-2 size-4" /> Reject
+                            </MembershipActionButton>
                         </TableCell>
                     </TableRow>
                 ))}
