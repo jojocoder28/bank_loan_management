@@ -3,6 +3,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -10,12 +11,16 @@ import { getStatementSummary } from "../actions";
 import { ArrowLeft, Wallet, PiggyBank, HandCoins, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { numberToWords } from "@/lib/number-to-words";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 export default async function StatementSummaryPage() {
   const summary = await getStatementSummary();
   const currentDate = new Date();
   const month = currentDate.toLocaleString('default', { month: 'long' });
   const year = currentDate.getFullYear();
+  const totalInWords = numberToWords(summary.grandTotal);
 
   const SummaryItem = ({ label, value, icon }: { label: string, value: number, icon: React.ReactNode }) => (
      <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 border">
@@ -28,7 +33,7 @@ export default async function StatementSummaryPage() {
   )
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
         <div className="mb-4">
             <Button asChild variant="outline">
                 <Link href="/admin/statement">
@@ -53,6 +58,14 @@ export default async function StatementSummaryPage() {
                     <p className="font-bold text-3xl">₹{summary.grandTotal.toLocaleString()}</p>
                 </div>
             </CardContent>
+            <CardFooter>
+                 <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                        Please deposit the amount Rs. <strong>{summary.grandTotal.toLocaleString()}</strong> (Rupees {totalInWords} only) to the SBCS Number <strong>129342134828</strong> of the society and oblige.
+                    </AlertDescription>
+                </Alert>
+            </CardFooter>
         </Card>
     </div>
   );
