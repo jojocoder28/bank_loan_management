@@ -20,7 +20,7 @@ export interface FinancesData {
 
 export async function getMyFinancesData(): Promise<FinancesData | null> {
     const session = await getSession();
-    if (!session || session.role !== 'member') {
+    if (!session) {
         return null;
     }
 
