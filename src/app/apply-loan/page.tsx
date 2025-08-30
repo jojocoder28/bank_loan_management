@@ -250,7 +250,7 @@ export default function ApplyLoanPage() {
                         value={monthlyPrincipal}
                         onChange={(e) => setMonthlyPrincipal(Number(e.target.value))}
                         className="text-lg font-bold"
-                        step={500}
+                        step={100}
                         min={minMonthlyPayment}
                     />
                      <div className="text-sm text-muted-foreground capitalize bg-secondary/30 p-2 rounded-md border text-center">
@@ -260,8 +260,8 @@ export default function ApplyLoanPage() {
                       value={[monthlyPrincipal]}
                       onValueChange={(value) => setMonthlyPrincipal(value[0])}
                       min={minMonthlyPayment}
-                      max={Math.max(minMonthlyPayment, 25000)}
-                      step={500}
+                      max={Math.max(minMonthlyPayment, loanAmount)}
+                      step={100}
                     />
                   </div>
               </div>
