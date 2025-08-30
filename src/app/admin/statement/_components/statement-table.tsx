@@ -16,6 +16,7 @@ import { StatementRow } from "../actions";
 import { useState } from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
+import { numberToWords } from "@/lib/number-to-words";
 
 
 export function StatementTable({ data, month, year }: { data: StatementRow[], month: string, year: number }) {
@@ -34,6 +35,7 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
         setIsDownloading(true);
         try {
             const wb = XLSX.utils.book_new();
+            const totalInWords = numberToWords(totals.total);
 
             // --- 1. Summary Sheet ---
             const summaryData = [
@@ -44,9 +46,17 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
                 ["Own Loan Principal", totals.principal],
                 ["Own Loan Interest", totals.interest],
                 ["Total Deduction", totals.total],
+                [],
+                [`Please deposit the amount Rs. ${totals.total.toLocaleString()} (Rupees ${totalInWords} only) to the SBCS Number 129342134828 of the society and oblige.`]
             ];
-            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
-            summaryWs['!cols'] = [{ wch: 20 }, { wch: 15 }];
+            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData, {
+                cellStyles: true,
+            });
+            summaryWs['!cols'] = [{ wch: 25 }, { wch: 15 }];
+            // Merge cells for the note
+            if (!summaryWs['!merges']) summaryWs['!merges'] = [];
+            summaryWs['!merges'].push({ s: { r: 8, c: 0 }, e: { r: 8, c: 1 } });
+            
             XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
 
 
@@ -80,10 +90,10 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
 
                 // Add data rows
                 pageData.forEach(row => {
-                    pageRows.push([
+                     const rowData = [
                         row.slNo,
                         row.name,
-                        `'${row.bankAccountNumber}`, // Prepend with ' to ensure it's treated as text
+                        { v: row.bankAccountNumber, t: 's' }, // Treat account number as string
                         '', // Bank Loan Prin
                         '', // Bank Loan Int
                         row.loanPrincipalPayment,
@@ -91,7 +101,8 @@ export function StatementTable({ data, month, year }: { data: StatementRow[], mo
                         row.shareFundContribution,
                         row.thriftFundContribution,
                         row.totalDeduction,
-                    ]);
+                    ];
+                    pageRows.push(rowData);
                     
                     pageTotal.principal += row.loanPrincipalPayment;
                     pageTotal.interest += row.loanInterestPayment;
