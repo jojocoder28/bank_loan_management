@@ -71,18 +71,20 @@ export async function getPendingModifications(): Promise<PopulatedModificationLo
 }
 
 
-async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejected'): Promise<void> {
+async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejected'): Promise<{error?: string; success?: boolean}> {
     const loanId = formData.get('loanId') as string;
     if (!loanId) {
-        throw new Error('Loan ID is missing');
+        return { error: 'Loan ID is missing' };
     }
     
     await dbConnect();
 
     const loan = await Loan.findById(loanId);
     if (!loan) {
-        throw new Error('Loan not found');
+        return { error: 'Loan not found' };
     }
+    
+    const userToUpdate = await User.findById(loan.user);
 
     if (newStatus === 'active') {
         loan.status = 'active';
@@ -90,11 +92,10 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
 
         // If there was a fund shortfall, update the user's funds now
         if (loan.fundShortfall && (loan.fundShortfall.share > 0 || loan.fundShortfall.guaranteed > 0)) {
-            const user = await User.findById(loan.user);
-            if (user) {
-                user.shareFund = (user.shareFund || 0) + (loan.fundShortfall.share || 0);
-                user.guaranteedFund = (user.guaranteedFund || 0) + (loan.fundShortfall.guaranteed || 0);
-                await user.save();
+            if (userToUpdate) {
+                userToUpdate.shareFund = (userToUpdate.shareFund || 0) + (loan.fundShortfall.share || 0);
+                userToUpdate.guaranteedFund = (userToUpdate.guaranteedFund || 0) + (loan.fundShortfall.guaranteed || 0);
+                await userToUpdate.save();
             }
         }
     } else { // 'rejected'
@@ -105,19 +106,26 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
 
     revalidatePath('/admin/approvals');
     revalidatePath('/dashboard'); 
-    revalidatePath('/admin/users'); 
+    revalidatePath('/admin/users');
+    if (userToUpdate) {
+        revalidatePath(`/admin/users/${userToUpdate._id.toString()}`);
+    }
+
+
+    return { success: true };
 }
 
 export async function approveLoan(formData: FormData) {
-    await updateLoanStatus(formData, 'active');
+    return await updateLoanStatus(formData, 'active');
 }
 
 export async function rejectLoan(formData: FormData) {
-    await updateLoanStatus(formData, 'rejected');
+    return await updateLoanStatus(formData, 'rejected');
 }
 
 type ApproveMembershipState = {
-    error: string | null;
+    error?: string | null;
+    success?: boolean;
 }
 
 export async function approveMembership(prevState: ApproveMembershipState, formData: FormData): Promise<ApproveMembershipState> {
@@ -144,46 +152,49 @@ export async function approveMembership(prevState: ApproveMembershipState, formD
 
     revalidatePath('/admin/approvals');
     revalidatePath('/admin/users');
+    revalidatePath(`/admin/users/${userId}`);
     revalidatePath('/become-member');
     revalidatePath('/apply-loan');
     revalidatePath('/dashboard');
 
-    return { error: null };
+    return { error: null, success: true };
 }
 
-async function updateModificationStatus(formData: FormData, newStatus: ModificationRequestStatus) {
+async function updateModificationStatus(formData: FormData, newStatus: ModificationRequestStatus): Promise<{error?: string, success?: boolean}> {
     const loanId = formData.get('loanId') as string;
     const requestId = formData.get('requestId') as string;
 
     if (!loanId || !requestId) {
-        throw new Error('Loan ID or Request ID is missing');
+        return { error: 'Loan ID or Request ID is missing' };
     }
 
     await dbConnect();
     const loan = await Loan.findById(loanId).populate('user');
     if (!loan) {
-        throw new Error('Loan not found');
+        return { error: 'Loan not found' };
     }
 
     const request = loan.modificationRequests.id(requestId);
     if (!request) {
-        throw new Error('Modification request not found');
+        return { error: 'Modification request not found' };
     }
 
     request.status = newStatus;
-    request.approvalDate = new Date();
+    
 
     if (newStatus === 'approved') {
+        request.approvalDate = new Date();
         if (request.type === 'increase_amount') {
             const increaseAmount = request.requestedValue;
             
             const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(increaseAmount);
             const totalRequiredFunds = requiredShare + requiredGuaranteed;
             
-            const totalIncrease = increaseAmount + totalRequiredFunds;
+            // The top-up amount is added to the loan principal
+            const totalIncreaseToPrincipal = increaseAmount + totalRequiredFunds;
 
-            loan.principal += totalIncrease;
-            loan.loanAmount += totalIncrease;
+            loan.principal += totalIncreaseToPrincipal;
+            loan.loanAmount += totalIncreaseToPrincipal;
             
             // Top up user's funds.
             const user = loan.user as IUser;
@@ -198,13 +209,15 @@ async function updateModificationStatus(formData: FormData, newStatus: Modificat
     await loan.save();
     revalidatePath('/admin/approvals');
     revalidatePath('/my-finances');
+    revalidatePath(`/admin/users/${loan.user._id.toString()}`);
+    return { success: true };
 }
 
 
 export async function approveModification(formData: FormData) {
-    await updateModificationStatus(formData, 'approved');
+    return await updateModificationStatus(formData, 'approved');
 }
 
 export async function rejectModification(formData: FormData) {
-    await updateModificationStatus(formData, 'rejected');
+    return await updateModificationStatus(formData, 'rejected');
 }

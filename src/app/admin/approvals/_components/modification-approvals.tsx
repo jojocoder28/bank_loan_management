@@ -11,20 +11,51 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { approveModification, rejectModification, PopulatedModificationLoan } from "../actions";
-import { Check, X, TrendingUp, HandCoins } from "lucide-react";
+import { Check, X, TrendingUp, HandCoins, Loader2 } from "lucide-react";
 import Link from 'next/link';
+import { useTransition } from "react";
+import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
-const ModificationActionForm = ({ loanId, requestId, action, children, variant }: { loanId: string, requestId: string, action: (formData: FormData) => void, children: React.ReactNode, variant: "default" | "destructive" }) => (
-    <form action={action}>
-        <input type="hidden" name="loanId" value={loanId} />
-        <input type="hidden" name="requestId" value={requestId} />
-        <Button size="sm" variant={variant}>
-            {children}
-        </Button>
-    </form>
-)
+const ModificationActionButton = ({ loanId, requestId, action, children, variant, onAction }: { loanId: string, requestId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (requestId: string) => void }) => {
+    const [isPending, startTransition] = useTransition();
+    const { toast } = useToast();
 
-export function ModificationApprovals({ pendingModifications }: { pendingModifications: PopulatedModificationLoan[] }) {
+    const handleAction = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await action(formData);
+            if (result.error) {
+                toast({ variant: 'destructive', title: 'Action Failed', description: result.error });
+            } else {
+                toast({ title: 'Success', description: `Modification request has been ${variant === 'default' ? 'approved' : 'rejected'}.` });
+                onAction(requestId);
+            }
+        });
+    };
+
+    return (
+        <form action={handleAction}>
+            <input type="hidden" name="loanId" value={loanId} />
+            <input type="hidden" name="requestId" value={requestId} />
+            <Button size="sm" variant={variant} disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : children}
+            </Button>
+        </form>
+    );
+};
+
+
+export function ModificationApprovals({ pendingModifications: initialModifications }: { pendingModifications: PopulatedModificationLoan[] }) {
+    const [pendingModifications, setPendingModifications] = React.useState(initialModifications);
+    
+    const handleModificationAction = (requestId: string) => {
+        setPendingModifications(currentModifications => 
+            currentModifications.map(loan => ({
+                ...loan,
+                modificationRequests: loan.modificationRequests.filter(req => req._id !== requestId)
+            })).filter(loan => loan.modificationRequests.length > 0)
+        );
+    };
 
     if (pendingModifications.length === 0) {
         return (
@@ -71,12 +102,12 @@ export function ModificationApprovals({ pendingModifications }: { pendingModific
                              <TableCell className="font-bold">₹{request.requestedValue.toLocaleString()}</TableCell>
                             <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
                             <TableCell className="flex justify-end gap-2">
-                                <ModificationActionForm loanId={loan._id} requestId={request._id} action={approveModification} variant="default">
+                                <ModificationActionButton loanId={loan._id} requestId={request._id} action={approveModification} variant="default" onAction={handleModificationAction}>
                                     <Check className="mr-2 size-4" /> Approve
-                                </ModificationActionForm>
-                                <ModificationActionForm loanId={loan._id} requestId={request._id} action={rejectModification} variant="destructive">
+                                </ModificationActionButton>
+                                <ModificationActionButton loanId={loan._id} requestId={request._id} action={rejectModification} variant="destructive" onAction={handleModificationAction}>
                                     <X className="mr-2 size-4" /> Reject
-                                </ModificationActionForm>
+                                </ModificationActionButton>
                             </TableCell>
                         </TableRow>
                     ))

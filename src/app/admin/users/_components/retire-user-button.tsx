@@ -20,7 +20,7 @@ import { UserCheck } from "lucide-react";
 import { retireUser } from "../actions";
 import { useToast } from "@/hooks/use-toast";
 
-export function RetireUserButton({ userId, userName }: { userId: string, userName: string }) {
+export function RetireUserButton({ userId, userName, onStatusChange }: { userId: string, userName: string, onStatusChange: () => void }) {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
    const { toast } = useToast();
@@ -41,6 +41,7 @@ export function RetireUserButton({ userId, userName }: { userId: string, userNam
             title: "Success",
             description: `User ${userName} has been marked as retired.`,
         });
+        onStatusChange();
       }
 
       setIsOpen(false);

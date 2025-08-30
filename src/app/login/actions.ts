@@ -39,6 +39,10 @@ export async function login(formData: FormData): Promise<LoginResult> {
     if (!foundUser) {
       return { error: 'Invalid email/phone or password.' };
     }
+
+    if (foundUser.status === 'inactive') {
+        return { error: 'This account has been deactivated. Please contact an administrator.' };
+    }
     
     const isPasswordCorrect = await foundUser.comparePassword(password);
     if (!isPasswordCorrect) {

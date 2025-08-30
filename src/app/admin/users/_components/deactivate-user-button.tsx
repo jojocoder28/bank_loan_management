@@ -20,7 +20,7 @@ import { UserX } from "lucide-react";
 import { deactivateUser } from "../actions";
 import { useToast } from "@/hooks/use-toast";
 
-export function DeactivateUserButton({ userId, userName }: { userId: string, userName: string }) {
+export function DeactivateUserButton({ userId, userName, onStatusChange }: { userId: string, userName: string, onStatusChange: () => void }) {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
@@ -41,6 +41,7 @@ export function DeactivateUserButton({ userId, userName }: { userId: string, use
             title: "Success",
             description: `User ${userName} has been deactivated.`,
         });
+        onStatusChange();
       }
 
       setIsOpen(false);

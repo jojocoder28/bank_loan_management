@@ -18,15 +18,25 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { UserCheck } from "lucide-react";
 import { activateUser } from "../actions";
+import { useToast } from "@/hooks/use-toast";
 
-export function ActivateUserButton({ userId, userName }: { userId: string, userName: string }) {
+export function ActivateUserButton({ userId, userName, onStatusChange }: { userId: string, userName: string, onStatusChange: () => void }) {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleActivate = async () => {
       const formData = new FormData();
       formData.append('userId', userId);
-      await activateUser(formData);
+      const result = await activateUser(formData);
+      
+      if (result.error) {
+          toast({ variant: 'destructive', title: 'Action Failed', description: result.error });
+      } else {
+          toast({ title: 'Success', description: `User ${userName} has been reactivated.` });
+          onStatusChange();
+      }
+
       setIsOpen(false);
       setIsConfirmed(false);
   }

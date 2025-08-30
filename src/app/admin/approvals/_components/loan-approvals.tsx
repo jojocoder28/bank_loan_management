@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { approveLoan, rejectLoan } from "../actions";
-import { Check, X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import Link from 'next/link';
 import { ILoan } from "@/models/loan";
-import { IUser } from "@/models/user";
+import { useToast } from "@/hooks/use-toast";
+import { useTransition } from "react";
 
 interface PopulatedLoan extends Omit<ILoan, 'user'> {
     _id: string;
@@ -27,16 +28,38 @@ interface PopulatedLoan extends Omit<ILoan, 'user'> {
     }
 }
 
-const ApprovalForm = ({ loanId, action, children, variant }: { loanId: string, action: (formData: FormData) => void, children: React.ReactNode, variant: "default" | "destructive" }) => (
-    <form action={action}>
-        <input type="hidden" name="loanId" value={loanId} />
-        <Button size="sm" variant={variant}>
-            {children}
-        </Button>
-    </form>
-)
+const ApprovalButton = ({ loanId, action, children, variant, onAction }: { loanId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (loanId: string) => void }) => {
+    const [isPending, startTransition] = useTransition();
+    const { toast } = useToast();
 
-export function LoanApprovals({ pendingLoans }: { pendingLoans: PopulatedLoan[] }) {
+    const handleAction = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await action(formData);
+            if (result.error) {
+                toast({ variant: 'destructive', title: 'Action Failed', description: result.error });
+            } else {
+                toast({ title: 'Success', description: `Loan has been ${variant === 'default' ? 'approved' : 'rejected'}.` });
+                onAction(loanId);
+            }
+        });
+    };
+
+    return (
+        <form action={handleAction}>
+            <input type="hidden" name="loanId" value={loanId} />
+            <Button size="sm" variant={variant} disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : children}
+            </Button>
+        </form>
+    )
+}
+
+export function LoanApprovals({ pendingLoans: initialLoans }: { pendingLoans: PopulatedLoan[] }) {
+    const [pendingLoans, setPendingLoans] = React.useState(initialLoans);
+    
+    const handleLoanAction = (loanId: string) => {
+        setPendingLoans(currentLoans => currentLoans.filter(loan => loan._id !== loanId));
+    };
 
     if (pendingLoans.length === 0) {
         return (
@@ -76,12 +99,12 @@ export function LoanApprovals({ pendingLoans }: { pendingLoans: PopulatedLoan[] 
                         <TableCell>₹{loan.user.guaranteedFund.toLocaleString()}</TableCell>
                         <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="flex justify-end gap-2">
-                            <ApprovalForm loanId={loan._id} action={approveLoan} variant="default">
+                            <ApprovalButton loanId={loan._id} action={approveLoan} variant="default" onAction={handleLoanAction}>
                                 <Check className="mr-2 size-4" /> Approve
-                            </ApprovalForm>
-                            <ApprovalForm loanId={loan._id} action={rejectLoan} variant="destructive">
+                            </ApprovalButton>
+                            <ApprovalButton loanId={loan._id} action={rejectLoan} variant="destructive" onAction={handleLoanAction}>
                                 <X className="mr-2 size-4" /> Reject
-                            </ApprovalForm>
+                            </ApprovalButton>
                         </TableCell>
                     </TableRow>
                 ))}

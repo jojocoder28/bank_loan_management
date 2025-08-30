@@ -23,7 +23,7 @@ export async function getUsers(status?: UserStatus): Promise<IUser[]> {
 }
 
 
-export async function deactivateUser(formData: FormData) {
+export async function deactivateUser(formData: FormData): Promise<{error?: string, success?: boolean}> {
     const userId = formData.get('userId') as string;
 
     if (!userId) {
@@ -42,6 +42,7 @@ export async function deactivateUser(formData: FormData) {
         await User.findByIdAndUpdate(userId, { status: 'inactive' });
         
         revalidatePath("/admin/users");
+        revalidatePath(`/admin/users/${userId}`);
         return { success: true };
         
     } catch (error) {
@@ -50,7 +51,7 @@ export async function deactivateUser(formData: FormData) {
     }
 }
 
-export async function retireUser(formData: FormData) {
+export async function retireUser(formData: FormData): Promise<{error?: string, success?: boolean}> {
     const userId = formData.get('userId') as string;
 
     if (!userId) {
@@ -69,6 +70,7 @@ export async function retireUser(formData: FormData) {
         await User.findByIdAndUpdate(userId, { status: 'retired' });
         
         revalidatePath("/admin/users");
+        revalidatePath(`/admin/users/${userId}`);
         return { success: true };
         
     } catch (error) {
@@ -77,11 +79,11 @@ export async function retireUser(formData: FormData) {
     }
 }
 
-export async function activateUser(formData: FormData) {
+export async function activateUser(formData: FormData): Promise<{error?: string, success?: boolean}> {
     const userId = formData.get('userId') as string;
 
     if (!userId) {
-        throw new Error('User ID not provided');
+        return { error: 'User ID not provided' };
     }
 
     try {
@@ -90,6 +92,8 @@ export async function activateUser(formData: FormData) {
         await User.findByIdAndUpdate(userId, { status: 'active' });
         
         revalidatePath("/admin/users");
+        revalidatePath(`/admin/users/${userId}`);
+        return { success: true };
         
     } catch (error) {
         console.error("Error activating user:", error);
