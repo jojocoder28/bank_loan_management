@@ -15,13 +15,25 @@ import { getPendingApprovalCount } from "@/app/admin/approvals/actions";
 export function Header({ user }: { user: User }) {
   const [approvalCount, setApprovalCount] = React.useState(0);
     
-    React.useEffect(() => {
+    const fetchApprovalCount = React.useCallback(() => {
         if (user.role === 'admin') {
             getPendingApprovalCount().then(count => {
                 setApprovalCount(count);
             });
         }
     }, [user.role]);
+
+    React.useEffect(() => {
+        fetchApprovalCount();
+        
+        const handleCountChanged = () => fetchApprovalCount();
+
+        window.addEventListener('approvalCountChanged', handleCountChanged);
+
+        return () => {
+            window.removeEventListener('approvalCountChanged', handleCountChanged);
+        }
+    }, [fetchApprovalCount]);
   
   return (
     <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sticky top-0 z-40 md:hidden">

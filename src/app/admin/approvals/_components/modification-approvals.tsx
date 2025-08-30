@@ -28,6 +28,7 @@ const ModificationActionButton = ({ loanId, requestId, action, children, variant
                 toast({ variant: 'destructive', title: 'Action Failed', description: result.error });
             } else {
                 toast({ title: 'Success', description: `Modification request has been ${variant === 'default' ? 'approved' : 'rejected'}.` });
+                window.dispatchEvent(new CustomEvent('approvalCountChanged'));
                 onAction(requestId);
             }
         });

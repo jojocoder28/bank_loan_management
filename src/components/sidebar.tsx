@@ -137,13 +137,25 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
 export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isCollapsed: boolean, setIsCollapsed: (isCollapsed: boolean) => void }) {
     const [approvalCount, setApprovalCount] = React.useState(0);
     
-    React.useEffect(() => {
+    const fetchApprovalCount = React.useCallback(() => {
         if (user.role === 'admin') {
             getPendingApprovalCount().then(count => {
                 setApprovalCount(count);
             });
         }
     }, [user.role]);
+
+    React.useEffect(() => {
+        fetchApprovalCount();
+        
+        const handleCountChanged = () => fetchApprovalCount();
+
+        window.addEventListener('approvalCountChanged', handleCountChanged);
+
+        return () => {
+            window.removeEventListener('approvalCountChanged', handleCountChanged);
+        }
+    }, [fetchApprovalCount]);
 
     if (!user) return null;
 

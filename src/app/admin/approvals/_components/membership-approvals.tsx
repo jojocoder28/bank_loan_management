@@ -56,6 +56,7 @@ export function MembershipApprovals({ pendingUsers: initialUsers }: { pendingUse
                 title: 'Success',
                 description: `Membership has been ${isApproval ? 'approved' : 'rejected'}.`
             });
+            window.dispatchEvent(new CustomEvent('approvalCountChanged'));
             setPendingUsers(currentUsers => currentUsers.filter(u => u._id.toString() !== userId));
         }
     }

@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { ILoan } from "@/models/loan";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition } from "react";
+import React from "react";
 
 interface PopulatedLoan extends Omit<ILoan, 'user'> {
     _id: string;
@@ -39,6 +40,7 @@ const ApprovalButton = ({ loanId, action, children, variant, onAction }: { loanI
                 toast({ variant: 'destructive', title: 'Action Failed', description: result.error });
             } else {
                 toast({ title: 'Success', description: `Loan has been ${variant === 'default' ? 'approved' : 'rejected'}.` });
+                window.dispatchEvent(new CustomEvent('approvalCountChanged'));
                 onAction(loanId);
             }
         });
