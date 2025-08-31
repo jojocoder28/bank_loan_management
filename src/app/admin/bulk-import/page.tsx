@@ -70,6 +70,7 @@ export default function BulkImportPage() {
                   <li>The <strong className="text-primary">'MembershipNumber'</strong> is the critical key used to link all three files together. Ensure it is consistent for each member.</li>
                   <li>All three files are required for the import to work correctly.</li>
                   <li>The import process will not create duplicates if a membership number already exists.</li>
+                  <li>All imported members will have a temporary password of <strong className="text-primary font-mono bg-background p-1 rounded">password123</strong>. They should be instructed to change it after their first login.</li>
                 </ul>
               </AlertDescription>
             </Alert>
