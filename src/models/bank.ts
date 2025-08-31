@@ -6,12 +6,14 @@ export interface IBank extends Document {
   loanInterestRate: number;
   thriftFundInterestRate: number;
   shareFundDividendRate: number;
+  guaranteedFundInterestRate: number; // New field
   initialShareFundDeposit: number;
   monthlyThriftContribution: number;
   maxLoanTenureMonths: number;
   maxLoanAmount: number;
   lastMonthlyProcess?: Date;
   lastAnnualProcess?: Date;
+  lastGuaranteedFundProcess?: Date; // New field
   // This is a unique key to ensure we only have one document
   singleton: string; 
 }
@@ -21,12 +23,14 @@ const BankSchema = new Schema<IBank>({
   loanInterestRate: { type: Number, required: true, default: 10 },
   thriftFundInterestRate: { type: Number, required: true, default: 6 },
   shareFundDividendRate: { type: Number, required: true, default: 12 },
+  guaranteedFundInterestRate: { type: Number, required: true, default: 4 }, // New field with default
   initialShareFundDeposit: { type: Number, required: true, default: 5000 },
   monthlyThriftContribution: { type: Number, required: true, default: 1000 },
   maxLoanTenureMonths: { type: Number, required: true, default: 60 },
   maxLoanAmount: { type: Number, required: true, default: 600000 },
   lastMonthlyProcess: { type: Date },
   lastAnnualProcess: { type: Date },
+  lastGuaranteedFundProcess: { type: Date }, // New field
   singleton: { type: String, default: 'bank-settings', unique: true }
 });
 

@@ -6,7 +6,7 @@ import User, { IUser } from "@/models/user";
 import Loan, { ILoan } from "@/models/loan";
 import Bank from "@/models/bank";
 import { getBankSettings } from "../settings/actions";
-import { calculateMonthlyInterest } from "@/lib/coop-calculations";
+import { calculateAnnualInterest, calculateMonthlyInterest } from "@/lib/coop-calculations";
 import { revalidatePath } from "next/cache";
 
 export interface StatementRow {
@@ -117,7 +117,7 @@ export async function getStatementSummary(): Promise<StatementSummary> {
 }
 
 
-async function checkLastProcessed(key: 'monthly' | 'annual'): Promise<{ canProcess: boolean, message: string }> {
+async function checkLastProcessed(key: 'monthly' | 'annual' | 'guaranteed'): Promise<{ canProcess: boolean, message: string }> {
     const bank = await Bank.findOne({ singleton: 'bank-settings' });
     const now = new Date();
 
@@ -131,7 +131,14 @@ async function checkLastProcessed(key: 'monthly' | 'annual'): Promise<{ canProce
     if (key === 'annual') {
         const lastProcessed = bank?.lastAnnualProcess;
         if (lastProcessed && lastProcessed.getFullYear() === now.getFullYear()) {
-            return { canProcess: false, message: `Annual interest already processed for ${now.getFullYear()}.` };
+            return { canProcess: false, message: `Annual thrift interest already processed for ${now.getFullYear()}.` };
+        }
+    }
+    
+    if (key === 'guaranteed') {
+        const lastProcessed = bank?.lastGuaranteedFundProcess;
+        if (lastProcessed && lastProcessed.getFullYear() === now.getFullYear()) {
+            return { canProcess: false, message: `Annual guaranteed fund interest already processed for ${now.getFullYear()}.` };
         }
     }
     
@@ -215,7 +222,45 @@ export async function processAnnualInterest(): Promise<{ error?: string; success
         revalidatePath('/admin/ledger');
         revalidatePath('/my-finances');
 
-        return { success: `Successfully credited annual interest of ₹${interestAmount.toFixed(2)} to ${activeMembers.length} members.` };
+        return { success: `Successfully credited annual thrift interest of ₹${interestAmount.toFixed(2)} to ${activeMembers.length} members.` };
+
+    } catch (e: any) {
+        return { error: e.message || "An unknown error occurred." };
+    }
+}
+
+
+export async function processGuaranteedFundInterest(): Promise<{ error?: string; success?: string }> {
+     const { canProcess, message } = await checkLastProcessed('guaranteed');
+    if (!canProcess) {
+        return { error: message };
+    }
+    
+    try {
+        await dbConnect();
+        const [bankSettings, activeMembers] = await Promise.all([
+            getBankSettings(),
+            User.find({ role: 'member', status: 'active' }),
+        ]);
+
+        const interestRate = bankSettings.guaranteedFundInterestRate;
+
+        const memberUpdatePromises = activeMembers.map(member => {
+            const currentGF = member.guaranteedFund || 0;
+            const interestAmount = calculateAnnualInterest(currentGF, interestRate);
+            const newGF = currentGF + interestAmount;
+            return User.updateOne({ _id: member._id }, { $set: { guaranteedFund: newGF } });
+        });
+
+        await Promise.all(memberUpdatePromises);
+        
+        await Bank.updateOne({ singleton: 'bank-settings' }, { $set: { lastGuaranteedFundProcess: new Date() } });
+        
+        revalidatePath('/admin/statement');
+        revalidatePath('/admin/ledger');
+        revalidatePath('/my-finances');
+
+        return { success: `Successfully credited annual guaranteed fund interest to ${activeMembers.length} members.` };
 
     } catch (e: any) {
         return { error: e.message || "An unknown error occurred." };

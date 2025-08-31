@@ -14,14 +14,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Cog, Calendar } from "lucide-react";
+import { Loader2, Cog, Calendar, ShieldCheck } from "lucide-react";
 import { useState, useTransition } from "react";
-import { processMonthlyDeductions, processAnnualInterest } from "../actions";
+import { processMonthlyDeductions, processAnnualInterest, processGuaranteedFundInterest } from "../actions";
 
 export function ProcessActions() {
   const { toast } = useToast();
   const [isMonthlyPending, startMonthlyTransition] = useTransition();
   const [isAnnualPending, startAnnualTransition] = useTransition();
+  const [isGFPending, startGFTransition] = useTransition();
 
   const handleProcessMonthly = () => {
     startMonthlyTransition(async () => {
@@ -44,9 +45,20 @@ export function ProcessActions() {
       }
     });
   };
+  
+  const handleProcessGF = () => {
+    startGFTransition(async () => {
+      const result = await processGuaranteedFundInterest();
+      if (result.error) {
+        toast({ variant: 'destructive', title: "Processing Failed", description: result.error });
+      } else {
+        toast({ title: 'Success', description: result.success });
+      }
+    });
+  };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 flex-wrap">
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button variant="destructive">
@@ -74,7 +86,7 @@ export function ProcessActions() {
         <AlertDialogTrigger asChild>
           <Button variant="outline">
             {isAnnualPending ? <Loader2 className="mr-2 animate-spin" /> : <Calendar className="mr-2" />}
-            Process Annual Interest
+            Process Annual Thrift Interest
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
@@ -92,6 +104,30 @@ export function ProcessActions() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline">
+            {isGFPending ? <Loader2 className="mr-2 animate-spin" /> : <ShieldCheck className="mr-2" />}
+            Process GF Interest
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will calculate and credit the annual interest on Guaranteed Funds (GF) for all active members. This action can only be performed ONCE per year.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleProcessGF} disabled={isGFPending}>
+              Yes, Process GF Interest
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

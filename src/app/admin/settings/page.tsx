@@ -148,6 +148,19 @@ export default function AdminSettingsPage() {
                <p className="text-xs text-muted-foreground">The annual interest rate paid to members for their thrift fund balance.</p>
               {formState.error?.thriftFundInterestRate && <p className="text-sm text-destructive">{formState.error.thriftFundInterestRate[0]}</p>}
           </div>
+           <div className="grid gap-2">
+              <Label htmlFor="guaranteedFundInterestRate">Guaranteed Fund Interest Rate (%)</Label>
+              <Input 
+                id="guaranteedFundInterestRate" 
+                name="guaranteedFundInterestRate" 
+                type="number" 
+                defaultValue={settings?.guaranteedFundInterestRate ?? 4}
+                step="0.1"
+                required 
+              />
+               <p className="text-xs text-muted-foreground">The annual interest paid to members for their guaranteed fund balance.</p>
+              {formState.error?.guaranteedFundInterestRate && <p className="text-sm text-destructive">{formState.error.guaranteedFundInterestRate[0]}</p>}
+          </div>
           <div className="grid gap-2">
               <Label htmlFor="shareFundDividendRate">Share Fund Dividend Rate (%)</Label>
               <Input 
