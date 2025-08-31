@@ -55,6 +55,7 @@ export async function getMonthlyStatementData(): Promise<StatementRow[]> {
 
     let slNoCounter = 1;
     const statementData: StatementRow[] = members.map(member => {
+        // This is the required monthly thrift contribution from bank settings
         const thriftFundContribution = bankSettings.monthlyThriftContribution;
         const loan = loansByUserId.get(member._id.toString());
         
@@ -62,6 +63,7 @@ export async function getMonthlyStatementData(): Promise<StatementRow[]> {
         let loanInterestPayment = 0;
         let loanDetails: StatementRow['loanDetails'] = null;
         
+        // Share fund contribution is currently not a recurring deduction
         const shareFundContribution = 0;
 
         if (loan) {
