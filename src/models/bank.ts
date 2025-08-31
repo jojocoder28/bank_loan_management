@@ -10,6 +10,8 @@ export interface IBank extends Document {
   monthlyThriftContribution: number;
   maxLoanTenureMonths: number;
   maxLoanAmount: number;
+  lastMonthlyProcess?: Date;
+  lastAnnualProcess?: Date;
   // This is a unique key to ensure we only have one document
   singleton: string; 
 }
@@ -23,6 +25,8 @@ const BankSchema = new Schema<IBank>({
   monthlyThriftContribution: { type: Number, required: true, default: 1000 },
   maxLoanTenureMonths: { type: Number, required: true, default: 60 },
   maxLoanAmount: { type: Number, required: true, default: 600000 },
+  lastMonthlyProcess: { type: Date },
+  lastAnnualProcess: { type: Date },
   singleton: { type: String, default: 'bank-settings', unique: true }
 });
 

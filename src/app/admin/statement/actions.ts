@@ -4,8 +4,10 @@
 import dbConnect from "@/lib/mongodb";
 import User, { IUser } from "@/models/user";
 import Loan, { ILoan } from "@/models/loan";
+import Bank from "@/models/bank";
 import { getBankSettings } from "../settings/actions";
 import { calculateMonthlyInterest } from "@/lib/coop-calculations";
+import { revalidatePath } from "next/cache";
 
 export interface StatementRow {
     slNo: number;
@@ -37,7 +39,7 @@ export async function getMonthlyStatementData(): Promise<StatementRow[]> {
     await dbConnect();
 
     const [members, bankSettings] = await Promise.all([
-        User.find({ role: 'member' }).sort({ name: 1 }).lean(),
+        User.find({ role: 'member', status: 'active' }).sort({ name: 1 }).lean(),
         getBankSettings(),
     ]);
 
@@ -55,7 +57,6 @@ export async function getMonthlyStatementData(): Promise<StatementRow[]> {
 
     let slNoCounter = 1;
     const statementData: StatementRow[] = members.map(member => {
-        // This is the required monthly thrift contribution from bank settings
         const thriftFundContribution = bankSettings.monthlyThriftContribution;
         const loan = loansByUserId.get(member._id.toString());
         
@@ -63,7 +64,6 @@ export async function getMonthlyStatementData(): Promise<StatementRow[]> {
         let loanInterestPayment = 0;
         let loanDetails: StatementRow['loanDetails'] = null;
         
-        // Share fund contribution is currently not a recurring deduction
         const shareFundContribution = 0;
 
         if (loan) {
@@ -114,4 +114,110 @@ export async function getStatementSummary(): Promise<StatementSummary> {
     });
 
     return totals;
+}
+
+
+async function checkLastProcessed(key: 'monthly' | 'annual'): Promise<{ canProcess: boolean, message: string }> {
+    const bank = await Bank.findOne({ singleton: 'bank-settings' });
+    const now = new Date();
+
+    if (key === 'monthly') {
+        const lastProcessed = bank?.lastMonthlyProcess;
+        if (lastProcessed && lastProcessed.getMonth() === now.getMonth() && lastProcessed.getFullYear() === now.getFullYear()) {
+            return { canProcess: false, message: `Monthly deductions already processed for ${now.toLocaleString('default', { month: 'long', year: 'numeric' })}.` };
+        }
+    }
+
+    if (key === 'annual') {
+        const lastProcessed = bank?.lastAnnualProcess;
+        if (lastProcessed && lastProcessed.getFullYear() === now.getFullYear()) {
+            return { canProcess: false, message: `Annual interest already processed for ${now.getFullYear()}.` };
+        }
+    }
+    
+    return { canProcess: true, message: "" };
+}
+
+export async function processMonthlyDeductions(): Promise<{ error?: string; success?: string }> {
+    const { canProcess, message } = await checkLastProcessed('monthly');
+    if (!canProcess) {
+        return { error: message };
+    }
+
+    try {
+        await dbConnect();
+        const [bankSettings, activeMembers, activeLoans] = await Promise.all([
+            getBankSettings(),
+            User.find({ role: 'member', status: 'active' }),
+            Loan.find({ status: 'active' })
+        ]);
+        
+        const monthlyThrift = bankSettings.monthlyThriftContribution;
+
+        // 1. Update Thrift Funds for all members
+        const memberUpdatePromises = activeMembers.map(member => {
+            const currentThrift = member.thriftFund || 0;
+            return User.updateOne({ _id: member._id }, { $set: { thriftFund: currentThrift + monthlyThrift } });
+        });
+
+        // 2. Update Loan Principals
+        const loanUpdatePromises = activeLoans.map(loan => {
+            const newPrincipal = Math.max(0, loan.principal - loan.monthlyPrincipalPayment);
+            const newStatus = newPrincipal === 0 ? 'paid' : loan.status;
+            return Loan.updateOne({ _id: loan._id }, { $set: { principal: newPrincipal, status: newStatus } });
+        });
+
+        await Promise.all([...memberUpdatePromises, ...loanUpdatePromises]);
+
+        // 3. Update the last processed date
+        await Bank.updateOne({ singleton: 'bank-settings' }, { $set: { lastMonthlyProcess: new Date() } });
+
+        revalidatePath('/admin/statement');
+        revalidatePath('/admin/ledger');
+        revalidatePath('/my-finances');
+        
+        return { success: `Successfully processed monthly deductions for ${activeMembers.length} members and ${activeLoans.length} loans.` };
+
+    } catch (e: any) {
+        return { error: e.message || "An unknown error occurred." };
+    }
+}
+
+export async function processAnnualInterest(): Promise<{ error?: string; success?: string }> {
+     const { canProcess, message } = await checkLastProcessed('annual');
+    if (!canProcess) {
+        return { error: message };
+    }
+    
+    try {
+        await dbConnect();
+        const [bankSettings, activeMembers] = await Promise.all([
+            getBankSettings(),
+            User.find({ role: 'member', status: 'active' }),
+        ]);
+
+        const monthlyThrift = bankSettings.monthlyThriftContribution;
+        const interestRate = bankSettings.thriftFundInterestRate / 100;
+
+        // Formula: 78 * MonthlyContribution * (InterestRate / 12)
+        const interestAmount = 78 * monthlyThrift * (interestRate / 12);
+
+        const memberUpdatePromises = activeMembers.map(member => {
+            const currentThrift = member.thriftFund || 0;
+            return User.updateOne({ _id: member._id }, { $set: { thriftFund: currentThrift + interestAmount } });
+        });
+
+        await Promise.all(memberUpdatePromises);
+        
+        await Bank.updateOne({ singleton: 'bank-settings' }, { $set: { lastAnnualProcess: new Date() } });
+        
+        revalidatePath('/admin/statement');
+        revalidatePath('/admin/ledger');
+        revalidatePath('/my-finances');
+
+        return { success: `Successfully credited annual interest of ₹${interestAmount.toFixed(2)} to ${activeMembers.length} members.` };
+
+    } catch (e: any) {
+        return { error: e.message || "An unknown error occurred." };
+    }
 }
