@@ -140,8 +140,19 @@ export async function activateUser(formData: FormData): Promise<{error?: string,
 
     try {
         await dbConnect();
+        
+        const user = await User.findById(userId);
 
-        await User.findByIdAndUpdate(userId, { status: 'active' });
+        if (!user) {
+            return { error: 'User not found.' };
+        }
+
+        if (user.status === 'retired') {
+            return { error: 'A retired member cannot be made active again.' };
+        }
+
+        user.status = 'active';
+        await user.save();
         
         revalidatePath("/admin/users");
         revalidatePath(`/admin/users/${userId}`);
