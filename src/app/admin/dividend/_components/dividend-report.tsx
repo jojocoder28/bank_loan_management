@@ -45,8 +45,8 @@ export function DividendReport({ data }: { data: DividendReportRow[] }) {
                     row.membershipNumber,
                     row.shareFund,
                     row.dividendRate,
-                    row.dividendAmount,
-                    row.finalShareFund
+                    row.dividendAmount, // Use the raw number for CSV
+                    row.finalShareFund // Use the raw number for CSV
                 ].join(',')
             );
             
