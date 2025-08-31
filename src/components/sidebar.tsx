@@ -19,6 +19,7 @@ import {
     FileText,
     User as UserIcon,
     Gift,
+    UploadCloud,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
@@ -47,6 +48,7 @@ const adminNavLinks = [
     { href: "/admin/statement", label: "Monthly Statement", icon: <FileText className="size-5" /> },
     { href: "/admin/dividend", label: "Share Fund Dividend", icon: <Gift className="size-5" /> },
     { href: "/admin/audit", label: "AI Auditor", icon: <ShieldCheck className="size-5" /> },
+    { href: "/admin/bulk-import", label: "Bulk Import", icon: <UploadCloud className="size-5" /> },
     { href: "/admin/settings", label: "Settings", icon: <Settings className="size-5" /> },
 ]
 
@@ -77,7 +79,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
                   href={link.href}
                   className={cn(
                     "relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                    pathname === link.href && "bg-accent text-accent-foreground"
+                    pathname.startsWith(link.href) && "bg-accent text-accent-foreground"
                   )}
                 >
                   {link.icon}
@@ -97,7 +99,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
               href={link.href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                pathname === link.href && "bg-muted text-primary",
+                pathname.startsWith(link.href) && "bg-muted text-primary",
                 isMobile && "text-lg"
               )}
             >
