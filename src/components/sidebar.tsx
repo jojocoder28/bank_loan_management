@@ -18,6 +18,7 @@ import {
     PanelRightClose,
     FileText,
     User as UserIcon,
+    Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
@@ -44,6 +45,7 @@ const adminNavLinks = [
     { href: "/admin/ledger", label: "Loan Ledger", icon: <BookCopy className="size-5" /> },
     { href: "/admin/profit-loss", label: "Profit & Loss", icon: <BarChart3 className="size-5" /> },
     { href: "/admin/statement", label: "Monthly Statement", icon: <FileText className="size-5" /> },
+    { href: "/admin/dividend", label: "Share Fund Dividend", icon: <Gift className="size-5" /> },
     { href: "/admin/audit", label: "AI Auditor", icon: <ShieldCheck className="size-5" /> },
     { href: "/admin/settings", label: "Settings", icon: <Settings className="size-5" /> },
 ]
