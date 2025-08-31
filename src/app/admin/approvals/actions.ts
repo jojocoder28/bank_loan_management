@@ -152,9 +152,11 @@ export async function approveMembership(formData: FormData): Promise<{error?: st
     }
 
     await dbConnect();
+    const [existingUser, bankSettings] = await Promise.all([
+        User.findOne({ membershipNumber }),
+        getBankSettings()
+    ]);
 
-    // Check if membership number is already taken
-    const existingUser = await User.findOne({ membershipNumber });
     if (existingUser) {
         return { error: 'This membership number is already assigned.' }
     }
@@ -162,7 +164,7 @@ export async function approveMembership(formData: FormData): Promise<{error?: st
     await User.findByIdAndUpdate(userId, {
         role: 'member',
         membershipNumber: membershipNumber,
-        thriftFund: 1000 // Initialize thrift fund with the first month's contribution
+        thriftFund: bankSettings.monthlyThriftContribution // Initialize thrift fund with the first month's contribution
     });
 
     revalidatePath('/admin/approvals');
