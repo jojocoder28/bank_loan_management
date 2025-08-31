@@ -120,6 +120,7 @@ export async function applyForMembership(prevState: any, formData: FormData) {
     user.membershipApplied = true;
     // For the demo, we'll auto-credit the initial amount from the bank settings.
     user.shareFund = (user.shareFund || 0) + bankSettings.initialShareFundDeposit;
+    user.thriftFund = 0;
     
     await user.save();
 
