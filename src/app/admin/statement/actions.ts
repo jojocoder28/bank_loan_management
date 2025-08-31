@@ -129,6 +129,10 @@ async function checkLastProcessed(key: 'monthly' | 'annual_all'): Promise<{ canP
     }
     
     if (key === 'annual_all') {
+        if (now.getMonth() !== 2) { // 2 corresponds to March (0-indexed)
+             return { canProcess: false, message: "Annual dues can only be processed in the month of March." };
+        }
+
         const lastProcessed = bank?.lastAnnualAllProcess;
         if (lastProcessed && lastProcessed.getFullYear() === now.getFullYear()) {
             return { canProcess: false, message: `All annual dues have already been processed for ${now.getFullYear()}.` };
