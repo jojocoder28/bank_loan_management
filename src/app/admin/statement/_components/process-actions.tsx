@@ -14,15 +14,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Cog, Calendar, ShieldCheck } from "lucide-react";
-import { useState, useTransition } from "react";
-import { processMonthlyDeductions, processAnnualInterest, processGuaranteedFundInterest } from "../actions";
+import { Loader2, Cog, Calendar, Gift } from "lucide-react";
+import { useTransition } from "react";
+import { processMonthlyDeductions, processAllAnnualDues } from "../actions";
 
 export function ProcessActions() {
   const { toast } = useToast();
   const [isMonthlyPending, startMonthlyTransition] = useTransition();
   const [isAnnualPending, startAnnualTransition] = useTransition();
-  const [isGFPending, startGFTransition] = useTransition();
 
   const handleProcessMonthly = () => {
     startMonthlyTransition(async () => {
@@ -37,18 +36,7 @@ export function ProcessActions() {
 
   const handleProcessAnnual = () => {
     startAnnualTransition(async () => {
-      const result = await processAnnualInterest();
-      if (result.error) {
-        toast({ variant: 'destructive', title: "Processing Failed", description: result.error });
-      } else {
-        toast({ title: 'Success', description: result.success });
-      }
-    });
-  };
-  
-  const handleProcessGF = () => {
-    startGFTransition(async () => {
-      const result = await processGuaranteedFundInterest();
+      const result = await processAllAnnualDues();
       if (result.error) {
         toast({ variant: 'destructive', title: "Processing Failed", description: result.error });
       } else {
@@ -85,44 +73,21 @@ export function ProcessActions() {
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button variant="outline">
-            {isAnnualPending ? <Loader2 className="mr-2 animate-spin" /> : <Calendar className="mr-2" />}
-            Process Annual Thrift Interest
+            {isAnnualPending ? <Loader2 className="mr-2 animate-spin" /> : <Gift className="mr-2" />}
+            Process All Annual Dues
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will calculate and credit the annual interest on thrift funds for all active members. This action can only be performed ONCE per year.
+              This will calculate and credit the annual interest for the Thrift Fund, Guaranteed Fund, and the annual dividend for the Share Fund for all active members. This action can only be performed ONCE per year.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleProcessAnnual} disabled={isAnnualPending}>
-              Yes, Process Annual Interest
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button variant="outline">
-            {isGFPending ? <Loader2 className="mr-2 animate-spin" /> : <ShieldCheck className="mr-2" />}
-            Process GF Interest
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will calculate and credit the annual interest on Guaranteed Funds (GF) for all active members. This action can only be performed ONCE per year.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleProcessGF} disabled={isGFPending}>
-              Yes, Process GF Interest
+              Yes, Process Annual Dues
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
