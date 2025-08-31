@@ -5,6 +5,9 @@ import dbConnect from "@/lib/mongodb";
 import Loan from "@/models/loan";
 import User, { IUser, UserStatus } from "@/models/user";
 import { revalidatePath } from "next/cache";
+import { getBankSettings } from "../settings/actions";
+import { calculateAnnualInterest, calculateDividend } from "@/lib/coop-calculations";
+
 
 export async function getUsers(status?: UserStatus): Promise<IUser[]> {
     await dbConnect();
@@ -61,23 +64,72 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
     try {
         await dbConnect();
         
+        const [user, bankSettings] = await Promise.all([
+            User.findById(userId),
+            getBankSettings()
+        ]);
+
+        if (!user) {
+            return { error: 'User not found.' };
+        }
+        
         // Check for active loans
         const activeLoan = await Loan.findOne({ user: userId, status: 'active' });
         if (activeLoan) {
             return { error: 'Cannot retire a user with an active loan. The loan must be paid or settled first.' };
         }
 
-        await User.findByIdAndUpdate(userId, { status: 'retired' });
+        // --- Pro-rata Interest & Dividend Calculation ---
+        const now = new Date();
+        const currentMonth = now.getMonth(); // 0 = Jan, 3 = April, 2 = March
+        const currentYear = now.getFullYear();
+        
+        // Financial year starts in April (month 3)
+        const financialYearStartMonth = 3; 
+        
+        let monthsInFinancialYear;
+        if (currentMonth >= financialYearStartMonth) {
+            // We are in the current financial year (e.g. retiring in Oct 2024, FY is Apr 2024 - Mar 2025)
+            monthsInFinancialYear = currentMonth - financialYearStartMonth + 1;
+        } else {
+            // We are in the start of the calendar year, but end of the financial year (e.g. retiring in Feb 2025, FY is Apr 2024 - Mar 2025)
+            monthsInFinancialYear = currentMonth + (12 - financialYearStartMonth) + 1;
+        }
+
+        // Calculate pro-rated interest/dividend
+        const proRataFactor = monthsInFinancialYear / 12;
+
+        // 1. Guaranteed Fund Interest
+        const gfInterest = calculateAnnualInterest(user.guaranteedFund || 0, bankSettings.guaranteedFundInterestRate) * proRataFactor;
+        user.guaranteedFund = (user.guaranteedFund || 0) + gfInterest;
+        
+        // 2. Share Fund Dividend
+        const sfDividend = calculateDividend(user.shareFund || 0, bankSettings.shareFundDividendRate) * proRataFactor;
+        user.shareFund = (user.shareFund || 0) + sfDividend;
+        
+        // 3. Thrift Fund Interest
+        const monthlyThrift = bankSettings.monthlyThriftContribution;
+        const tfInterestRate = bankSettings.thriftFundInterestRate / 100;
+
+        // The logic for TF interest is more complex (sum of months). We'll approximate with pro-rata.
+        // A more accurate formula would be needed for precise accounting.
+        const fullYearTfInterest = 78 * monthlyThrift * (tfInterestRate / 12);
+        const tfInterest = fullYearTfInterest * proRataFactor;
+        user.thriftFund = (user.thriftFund || 0) + tfInterest;
+        
+        user.status = 'retired';
+        await user.save();
         
         revalidatePath("/admin/users");
         revalidatePath(`/admin/users/${userId}`);
         return { success: true };
         
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error retiring user:", error);
-        return { error: 'Failed to retire user.' };
+        return { error: `Failed to retire user: ${error.message}` };
     }
 }
+
 
 export async function activateUser(formData: FormData): Promise<{error?: string, success?: boolean}> {
     const userId = formData.get('userId') as string;

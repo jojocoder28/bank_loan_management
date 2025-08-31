@@ -59,7 +59,7 @@ export function RetireUserButton({ userId, userName, onStatusChange }: { userId:
         <AlertDialogHeader>
           <AlertDialogTitle>Retire Member?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action will mark the member <strong>{userName}</strong> as retired. They will retain access but may have different privileges. Their data will be preserved.
+            This action will calculate all pro-rated financial dues (Thrift, Guaranteed, and Share fund interest/dividends) for <strong>{userName}</strong> for the current financial year and finalize their account. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex items-center space-x-2">
@@ -69,7 +69,7 @@ export function RetireUserButton({ userId, userName, onStatusChange }: { userId:
             onCheckedChange={(checked) => setIsConfirmed(checked as boolean)}
           />
           <Label htmlFor={`confirm-retire-${userId}`} className="text-sm font-normal">
-            I understand and wish to mark this member as retired.
+            I understand and wish to retire this member.
           </Label>
         </div>
         <AlertDialogFooter>
