@@ -99,7 +99,7 @@ async function importMembers(data: any[]) {
             name: row.FullName,
             phone: String(row.PhoneNumber),
             email: row.Email?.toLowerCase() || null,
-            password: 'password123', // Set a default temporary password
+            password: `password${String(row.MembershipNumber)}`, // Dynamic temporary password
             role: 'member',
             status: row.Status?.toLowerCase() || 'active',
             membershipApplied: true,
