@@ -1,24 +1,11 @@
-
-
-import type { Metadata } from 'next';
-import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { AppProvider } from '@/components/app-provider';
-import { getSession } from '@/lib/session';
 import { ThemeProvider } from '@/components/theme-provider';
 
-export const metadata: Metadata = {
-  title: 'S&KGPPS Co-op',
-  description:
-    'Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD',
-};
-
-export default async function RootLayout({
+export default function PublicLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getSession();
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -37,7 +24,9 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-          <AppProvider user={user}>{children}</AppProvider>
+          <main className="flex min-h-screen items-start justify-center bg-muted/40 p-4 sm:p-6 md:p-8">
+            {children}
+          </main>
           <Toaster />
         </ThemeProvider>
       </body>

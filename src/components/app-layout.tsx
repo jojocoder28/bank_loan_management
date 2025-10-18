@@ -17,10 +17,11 @@ export function AppLayout({
 }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isPublicPage = pathname.startsWith('/public');
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
-  if (isAuthPage) {
-    return <main>{children}</main>;
+  if (isAuthPage || isPublicPage) {
+    return <>{children}</>;
   }
 
   if (!user) {
