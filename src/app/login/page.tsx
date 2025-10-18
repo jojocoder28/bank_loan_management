@@ -39,9 +39,10 @@ export default function LoginPage() {
 
       if (result.error) {
         setError(result.error);
-      } else if (result.role) {
-        // Handle redirection on the client side
-        if (result.role === 'admin') {
+      } else {
+        if (result.requiresPasswordChange) {
+            router.push('/force-password-change');
+        } else if (result.role === 'admin') {
             router.push('/admin/dashboard');
         } else {
             router.push('/dashboard');

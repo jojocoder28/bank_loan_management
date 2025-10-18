@@ -95,7 +95,7 @@ async function importMembers(data: any[]) {
             continue;
         }
 
-        const userData: Partial<IUser> = {
+        const userData: Partial<IUser> & { requiresPasswordChange?: boolean } = {
             name: row.FullName,
             phone: String(row.PhoneNumber),
             email: row.Email?.toLowerCase() || null,
@@ -104,6 +104,7 @@ async function importMembers(data: any[]) {
             status: row.Status?.toLowerCase() || 'active',
             membershipApplied: true,
             isVerified: true,
+            requiresPasswordChange: true, // Force password change on first login
             createdAt: row.JoinDate ? new Date(row.JoinDate) : new Date(),
             photoUrl: row.PhotoURL,
             workplace: row.Workplace,

@@ -48,6 +48,7 @@ export async function signUp(formData: FormData): Promise<{ error: string | null
       phone,
       password,
       isVerified: true, // User is verified immediately
+      requiresPasswordChange: false, // Users signing up don't need to change password
     });
     
     return { error: null, success: true }; // Success

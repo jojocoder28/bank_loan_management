@@ -17,6 +17,7 @@ export interface IUser extends Document {
   createdAt: Date;
   membershipApplied?: boolean;
   isVerified?: boolean;
+  requiresPasswordChange?: boolean;
 
 
   // New Fields
@@ -63,6 +64,7 @@ const UserSchema = new Schema<IUser>({
   },
   membershipApplied: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: true },
+  requiresPasswordChange: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   
   // New Fields

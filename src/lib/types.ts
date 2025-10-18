@@ -9,6 +9,7 @@ export interface User {
     role: UserRole;
     photoUrl?: string;
     membershipApplied?: boolean;
+    requiresPasswordChange?: boolean;
 }
 
 export interface DecodedToken {

@@ -15,6 +15,7 @@ const loginSchema = z.object({
 type LoginResult = { 
     error: string | null; 
     role?: 'admin' | 'user' | 'member' | 'board_member' | null;
+    requiresPasswordChange?: boolean;
 }
 
 // Return type updated to send role or error
@@ -35,7 +36,7 @@ export async function login(formData: FormData): Promise<LoginResult> {
     const isEmail = identifier.includes('@');
     const query = isEmail ? { email: identifier.toLowerCase() } : { phone: identifier };
 
-    const foundUser = await User.findOne(query).select('+password +photoUrl +membershipApplied +name +email +role +isVerified +phone');
+    const foundUser = await User.findOne(query).select('+password +photoUrl +membershipApplied +name +email +role +isVerified +phone +requiresPasswordChange');
     if (!foundUser) {
       return { error: 'Invalid email/phone or password.' };
     }
@@ -64,8 +65,9 @@ export async function login(formData: FormData): Promise<LoginResult> {
     photoUrl: user.photoUrl,
     membershipApplied: user.membershipApplied,
     phone: user.phone,
+    requiresPasswordChange: user.requiresPasswordChange,
   });
 
   // Return role instead of redirecting
-  return { error: null, role: user.role };
+  return { error: null, role: user.role, requiresPasswordChange: user.requiresPasswordChange };
 }

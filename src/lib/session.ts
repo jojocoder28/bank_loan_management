@@ -68,6 +68,7 @@ export async function createSession(user: User) {
         photoUrl: user.photoUrl,
         membershipApplied: user.membershipApplied,
         phone: user.phone,
+        requiresPasswordChange: user.requiresPasswordChange
     }
 
     const session = await encrypt({ user: sessionUser, exp: expires.getTime() / 1000 });
