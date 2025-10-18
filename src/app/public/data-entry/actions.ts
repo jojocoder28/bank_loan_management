@@ -1,19 +1,23 @@
-"use server";
 
-import dbConnect from "@/lib/mongodb";
-import BulkImportData from "@/models/bulkImportData";
-import { z } from "zod";
-import { revalidatePath } from "next/cache";
+'use server';
 
-const dataEntrySchema = z.object({
-  fullName: z.string().min(2, "Full Name must be at least 2 characters."),
-  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits."),
+import { z } from 'zod';
+import dbConnect from '@/lib/mongodb';
+import BulkImportData from '@/models/bulkImportData';
+import { revalidatePath } from 'next/cache';
+
+const applicationSchema = z.object({
+  fullName: z.string().min(1, 'Full name is required.'),
+  phoneNumber: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits."),
   email: z.string().email("Invalid email address.").optional().or(z.literal('')),
+  
+  joinDay: z.coerce.number().min(1).max(31),
+  joinMonth: z.coerce.number().min(1).max(12),
+  joinYear: z.coerce.number().min(1950).max(new Date().getFullYear()),
+
   personalAddress: z.string().min(1, 'Personal address is required.'),
   age: z.coerce.number().min(18, 'You must be at least 18 years old.'),
   gender: z.enum(['male', 'female', 'other']),
-  membershipNumber: z.string().min(1, 'Membership number is required.'),
-  joinDate: z.string().min(1, 'Joining date is required.'),
   workplace: z.string().min(1, 'Workplace is required.'),
   profession: z.string().min(1, 'Profession is required.'),
   workplaceAddress: z.string().min(1, 'Workplace address is required.'),
@@ -24,79 +28,43 @@ const dataEntrySchema = z.object({
 });
 
 
-export async function submitDataEntryForm(prevState: any, formData: FormData) {
+export async function submitPublicData(prevState: any, formData: FormData) {
     const values = Object.fromEntries(formData.entries());
+    const validatedFields = applicationSchema.safeParse(values);
     
-    const validatedFields = dataEntrySchema.safeParse(values);
     if (!validatedFields.success) {
         return { error: validatedFields.error.flatten().fieldErrors };
     }
 
-    const {
-        fullName,
-        phoneNumber,
-        email,
-        personalAddress,
-        age,
-        gender,
-        membershipNumber,
-        joinDate,
-        workplace,
-        profession,
-        workplaceAddress,
-        bankAccountNumber,
-        nomineeName,
-        nomineeRelation,
-        nomineeAge
-    } = validatedFields.data;
-
     try {
         await dbConnect();
         
-        const existingByPhone = await BulkImportData.findOne({ phoneNumber });
-        if (existingByPhone) {
-            return { error: { phoneNumber: ["An entry with this phone number already exists."] } };
-        }
-        
-        const existingByMembership = await BulkImportData.findOne({ membershipNumber });
-        if (existingByMembership) {
-            return { error: { membershipNumber: ["An entry with this membership number already exists."] } };
-        }
+        const { joinDay, joinMonth, joinYear, ...restOfData } = validatedFields.data;
 
-        if (email) {
-            const existingByEmail = await BulkImportData.findOne({ email });
-            if (existingByEmail) {
-                return { error: { email: ["An entry with this email address already exists."] } };
-            }
+        // Construct the date. The month is 0-indexed in JavaScript's Date constructor.
+        const joinDate = new Date(joinYear, joinMonth - 1, joinDay);
+        if (isNaN(joinDate.getTime())) {
+            return { error: { form: "The selected joining date is invalid." } };
         }
 
         await BulkImportData.create({
-            fullName,
-            phoneNumber,
-            email: email || null,
-            personalAddress,
-            age,
-            gender,
-            membershipNumber,
-            joinDate: new Date(joinDate),
-            workplace,
-            profession,
-            workplaceAddress,
-            bankAccountNumber,
-            nomineeName,
-            nomineeRelation,
-            nomineeAge,
-            isExported: false, // Always new
+            ...restOfData,
+            joinDate,
         });
 
     } catch (error: any) {
-        console.error("Data Entry Error:", error);
+        console.error("Public Data Entry Error:", error);
         if (error.code === 11000) {
-            return { error: { form: "A record with one of these unique fields (Phone, Email, Membership #) already exists." } };
+            if (error.keyPattern?.phoneNumber) {
+                return { error: { phoneNumber: ["This phone number is already in use."] } };
+            }
+            if (error.keyPattern?.email && validatedFields.data.email) {
+                 return { error: { email: ["This email address is already in use."] } };
+            }
         }
-        return { error: { form: "An unexpected error occurred. Please try again." } };
+        return { error: { form: 'An unexpected error occurred. Please try again.' } };
     }
 
-    revalidatePath("/admin/data-export");
-    return { success: true, error: null };
+    revalidatePath('/admin/data-export');
+    return { success: true, error: null }
 }
