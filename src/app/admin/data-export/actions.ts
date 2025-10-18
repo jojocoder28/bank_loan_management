@@ -4,6 +4,7 @@
 import dbConnect from "@/lib/mongodb";
 import BulkImportData, { IBulkImportData } from "@/models/bulkImportData";
 import * as XLSX from "xlsx";
+import { revalidatePath } from "next/cache";
 
 export async function getSubmittedData(): Promise<IBulkImportData[]> {
   await dbConnect();
@@ -56,11 +57,40 @@ export async function downloadMembersXlsx(data: IBulkImportData[]) {
         { _id: { $in: idsToUpdate } },
         { $set: { isExported: true } }
     );
+
+    revalidatePath("/admin/data-export");
     
     return { success: true, file: buffer.toString('base64') };
 
   } catch (error) {
     console.error("Download Error:", error);
     return { success: false, error: "Failed to generate Excel file." };
+  }
+}
+
+
+export async function deleteSubmittedData(ids: string[]): Promise<{ success: boolean; error?: string }> {
+  "use server";
+  
+  if (!ids || ids.length === 0) {
+    return { success: false, error: "No records selected for deletion." };
+  }
+
+  try {
+    await dbConnect();
+    
+    const result = await BulkImportData.deleteMany({ _id: { $in: ids } });
+
+    if (result.deletedCount === 0) {
+      return { success: false, error: "No matching records found to delete." };
+    }
+    
+    revalidatePath("/admin/data-export");
+    
+    return { success: true };
+
+  } catch (error) {
+    console.error("Delete Error:", error);
+    return { success: false, error: "Failed to delete records." };
   }
 }

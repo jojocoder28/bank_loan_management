@@ -7,6 +7,7 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
+  RowSelectionState,
 } from "@tanstack/react-table"
 
 import {
@@ -22,6 +23,8 @@ import { useState } from "react"
 import { downloadMembersXlsx } from "../actions"
 import { Download, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { DeleteButton } from "./delete-button"
+import { IBulkImportData } from "@/models/bulkImportData"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -32,7 +35,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = useState({})
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [isDownloading, setIsDownloading] = useState(false)
   const { toast } = useToast()
 
@@ -99,13 +102,19 @@ export function DataTable<TData, TValue>({
     setIsDownloading(false);
   }
 
+  const selectedIds = table.getFilteredSelectedRowModel().rows.map(row => (row.original as IBulkImportData)._id);
+
   return (
     <div>
         <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                {Object.keys(rowSelection).length} of{" "}
                 {table.getCoreRowModel().rows.length} row(s) selected.
             </div>
+             <DeleteButton 
+              selectedIds={selectedIds}
+              onDelete={() => table.resetRowSelection()} 
+            />
             <Button
                 variant="outline"
                 size="sm"
@@ -113,12 +122,13 @@ export function DataTable<TData, TValue>({
                 disabled={isDownloading}
             >
                 {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                Download Selected
+                Download {Object.keys(rowSelection).length > 0 ? 'Selected' : 'All'}
             </Button>
             <Button
                 variant="outline"
                 size="sm"
                 onClick={() => table.toggleAllPageRowsSelected(false)}
+                 disabled={Object.keys(rowSelection).length === 0}
             >
                 Clear Selection
             </Button>
