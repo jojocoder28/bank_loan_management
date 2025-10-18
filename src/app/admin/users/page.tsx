@@ -8,13 +8,19 @@ import { getUsers } from "./actions";
 import { UserRole, IUser, UserStatus } from "@/models/user";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus, Loader2, Edit, Trash2 } from "lucide-react";
 import { DeactivateUserButton } from "./_components/deactivate-user-button";
 import { UserTableFilters } from "./_components/user-table-filters";
 import { RetireUserButton } from "./_components/retire-user-button";
 import { ActivateUserButton } from "./_components/activate-user-button";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useTransition } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default function UsersPage() {
   const searchParams = useSearchParams();
@@ -118,16 +124,39 @@ export default function UsersPage() {
                         </TableCell>
                         <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
                         <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right flex justify-end gap-1">
-                            {user.status === 'active' && user.role === 'member' && (
-                                <RetireUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
-                            )}
-                            {user.status === 'active' && user.role !== 'admin' && (
-                                <DeactivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
-                            )}
-                            {(user.status === 'inactive' || user.status === 'retired') && user.role !== 'admin' && (
-                                <ActivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
-                            )}
+                        <TableCell className="text-right">
+                           <div className="flex justify-end items-center gap-1">
+                               <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                             <Button variant="ghost" size="icon" asChild>
+                                                <Link href={`/admin/users/${user._id.toString()}`}>
+                                                    <Edit className="size-4" />
+                                                </Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>View/Edit Details</p></TooltipContent>
+                                    </Tooltip>
+                                    {user.status === 'active' && user.role === 'member' && (
+                                        <Tooltip>
+                                            <TooltipTrigger asChild><RetireUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
+                                            <TooltipContent><p>Retire Member</p></TooltipContent>
+                                        </Tooltip>
+                                    )}
+                                    {user.status === 'active' && user.role !== 'admin' && (
+                                        <Tooltip>
+                                            <TooltipTrigger asChild><DeactivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
+                                            <TooltipContent><p>Deactivate User</p></TooltipContent>
+                                        </Tooltip>
+                                    )}
+                                    {(user.status === 'inactive' || user.status === 'retired') && user.role !== 'admin' && (
+                                        <Tooltip>
+                                            <TooltipTrigger asChild><ActivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
+                                            <TooltipContent><p>Reactivate User</p></TooltipContent>
+                                        </Tooltip>
+                                    )}
+                               </TooltipProvider>
+                           </div>
                         </TableCell>
                     </TableRow>
                     ))

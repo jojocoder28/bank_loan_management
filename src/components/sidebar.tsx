@@ -221,3 +221,4 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
         </aside>
     );
 }
+

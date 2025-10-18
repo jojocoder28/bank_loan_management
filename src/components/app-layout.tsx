@@ -19,19 +19,28 @@ export function AppLayout({
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const isPublicPage = pathname.startsWith('/public');
   const isForcePasswordChangePage = pathname === '/force-password-change';
-  
+
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   if (isAuthPage || isPublicPage || isForcePasswordChangePage) {
     return <>{children}</>;
   }
 
   if (!user) {
-    return null; 
+    return null;
+  }
+  
+  if (!isClient) {
+    return null;
   }
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="relative flex min-h-screen w-full">
       <Sidebar 
         user={user} 
         isCollapsed={isCollapsed}
