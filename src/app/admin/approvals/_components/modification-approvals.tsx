@@ -16,8 +16,9 @@ import Link from 'next/link';
 import { useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const ModificationActionButton = ({ loanId, requestId, action, children, variant, onAction }: { loanId: string, requestId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (requestId: string) => void }) => {
+const ModificationActionButton = ({ loanId, requestId, action, children, variant, onAction, tooltip }: { loanId: string, requestId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (requestId: string) => void, tooltip: string }) => {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
@@ -38,9 +39,19 @@ const ModificationActionButton = ({ loanId, requestId, action, children, variant
         <form action={handleAction}>
             <input type="hidden" name="loanId" value={loanId} />
             <input type="hidden" name="requestId" value={requestId} />
-            <Button size="sm" variant={variant} disabled={isPending}>
-                {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : children}
-            </Button>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button size="sm" variant={variant} disabled={isPending} className="w-full md:w-auto">
+                            {isPending ? <Loader2 className="mr-0 md:mr-2 size-4 animate-spin" /> : children}
+                            <span className="hidden md:inline">{variant === 'default' ? 'Approve' : 'Reject'}</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{tooltip}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
         </form>
     );
 };
@@ -67,7 +78,7 @@ export function ModificationApprovals({ pendingModifications: initialModificatio
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="w-full overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -104,11 +115,11 @@ export function ModificationApprovals({ pendingModifications: initialModificatio
                                 <TableCell className="font-bold">₹{request.requestedValue.toLocaleString()}</TableCell>
                                 <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
                                 <TableCell className="flex justify-end gap-2">
-                                    <ModificationActionButton loanId={loan._id} requestId={request._id} action={approveModification} variant="default" onAction={handleModificationAction}>
-                                        <Check className="mr-2 size-4" /> Approve
+                                    <ModificationActionButton loanId={loan._id} requestId={request._id} action={approveModification} variant="default" onAction={handleModificationAction} tooltip="Approve Request">
+                                        <Check className="size-4" />
                                     </ModificationActionButton>
-                                    <ModificationActionButton loanId={loan._id} requestId={request._id} action={rejectModification} variant="destructive" onAction={handleModificationAction}>
-                                        <X className="mr-2 size-4" /> Reject
+                                    <ModificationActionButton loanId={loan._id} requestId={request._id} action={rejectModification} variant="destructive" onAction={handleModificationAction} tooltip="Reject Request">
+                                        <X className="size-4" />
                                     </ModificationActionButton>
                                 </TableCell>
                             </TableRow>

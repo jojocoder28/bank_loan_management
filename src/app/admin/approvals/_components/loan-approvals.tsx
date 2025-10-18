@@ -17,6 +17,7 @@ import { ILoan } from "@/models/loan";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition } from "react";
 import React from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PopulatedLoan extends Omit<ILoan, 'user'> {
     _id: string;
@@ -29,7 +30,7 @@ interface PopulatedLoan extends Omit<ILoan, 'user'> {
     }
 }
 
-const ApprovalButton = ({ loanId, action, children, variant, onAction }: { loanId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (loanId: string) => void }) => {
+const ApprovalButton = ({ loanId, action, children, variant, onAction, tooltip }: { loanId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (loanId: string) => void, tooltip: string }) => {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
@@ -49,9 +50,19 @@ const ApprovalButton = ({ loanId, action, children, variant, onAction }: { loanI
     return (
         <form action={handleAction}>
             <input type="hidden" name="loanId" value={loanId} />
-            <Button size="sm" variant={variant} disabled={isPending}>
-                {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : children}
-            </Button>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button size="sm" variant={variant} disabled={isPending} className="w-full md:w-auto">
+                            {isPending ? <Loader2 className="mr-0 md:mr-2 size-4 animate-spin" /> : children}
+                            <span className="hidden md:inline">{variant === 'default' ? 'Approve' : 'Reject'}</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{tooltip}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
         </form>
     )
 }
@@ -72,7 +83,7 @@ export function LoanApprovals({ pendingLoans: initialLoans }: { pendingLoans: Po
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="w-full overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -102,11 +113,11 @@ export function LoanApprovals({ pendingLoans: initialLoans }: { pendingLoans: Po
                             <TableCell>₹{loan.user.guaranteedFund.toLocaleString()}</TableCell>
                             <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell className="flex justify-end gap-2">
-                                <ApprovalButton loanId={loan._id} action={approveLoan} variant="default" onAction={handleLoanAction}>
-                                    <Check className="mr-2 size-4" /> Approve
+                                <ApprovalButton loanId={loan._id} action={approveLoan} variant="default" onAction={handleLoanAction} tooltip="Approve Loan">
+                                    <Check className="size-4" />
                                 </ApprovalButton>
-                                <ApprovalButton loanId={loan._id} action={rejectLoan} variant="destructive" onAction={handleLoanAction}>
-                                    <X className="mr-2 size-4" /> Reject
+                                <ApprovalButton loanId={loan._id} action={rejectLoan} variant="destructive" onAction={handleLoanAction} tooltip="Reject Loan">
+                                    <X className="size-4" />
                                 </ApprovalButton>
                             </TableCell>
                         </TableRow>

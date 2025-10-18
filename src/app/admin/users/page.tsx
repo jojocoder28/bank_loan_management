@@ -8,7 +8,7 @@ import { getUsers } from "./actions";
 import { UserRole, IUser, UserStatus } from "@/models/user";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UserPlus, Loader2, Edit, Trash2 } from "lucide-react";
+import { UserPlus, Loader2, Edit } from "lucide-react";
 import { DeactivateUserButton } from "./_components/deactivate-user-button";
 import { UserTableFilters } from "./_components/user-table-filters";
 import { RetireUserButton } from "./_components/retire-user-button";
@@ -62,7 +62,7 @@ export default function UsersPage() {
           <CardTitle>User Management</CardTitle>
           <CardDescription>View and manage all registered users and members.</CardDescription>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 flex-wrap">
             <UserTableFilters />
             <Button asChild>
                 <Link href="/admin/users/add">
@@ -73,7 +73,7 @@ export default function UsersPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="w-full overflow-x-auto">
             <Table>
             <TableHeader>
                 <TableRow>

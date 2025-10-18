@@ -38,7 +38,7 @@ export function Header({ user }: { user: User }) {
     }, [fetchApprovalCount]);
   
   return (
-    <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sticky top-0 z-30 md:hidden">
+    <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-40 md:hidden">
         <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -58,16 +58,16 @@ export function Header({ user }: { user: User }) {
                <SidebarNav user={user} isMobile={true} approvalCount={approvalCount}/>
             </SheetContent>
           </Sheet>
-        <div className="flex items-center">
+        <div className="flex-1">
              <Link
                 href={user.role === 'admin' ? "/admin/dashboard" : "/dashboard"}
-                className="flex items-center gap-2 font-semibold text-lg"
+                className="flex items-center gap-2 font-semibold text-lg justify-center"
             >
                 <Landmark className="h-6 w-6 text-primary" />
-                <span className="">S&KGPPS Co-op</span>
+                <span className="sr-only">S&KGPPS Co-op</span>
             </Link>
         </div>
-        <UserNav user={user} />
+        <UserNav user={user} isMobile={true} />
     </header>
   );
 }

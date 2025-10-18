@@ -11,31 +11,40 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { logout } from "@/app/logout/actions";
 import { ThemeToggle } from "./theme-toggle";
 
-export function UserNav({ user, isCollapsed = false }: { user: User; isCollapsed?: boolean }) {
+export function UserNav({ user, isCollapsed = false, isMobile = false }: { user: User; isCollapsed?: boolean; isMobile?: boolean }) {
   if (!user) return null;
 
   return (
-    <div className={cn("px-2", isCollapsed ? "flex justify-center" : "")}>
+    <div className={cn(isCollapsed ? "flex justify-center" : "")}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className={cn("w-full justify-start text-left gap-3", isCollapsed && "justify-center size-12 p-0")}
-          >
-            <Avatar className="size-8">
-              <AvatarImage src={user.photoUrl ?? undefined} alt={user.name ?? "User"} />
-              <AvatarFallback>{user.name?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>
-            </Avatar>
-            <div
-              className={cn(
-                "flex flex-col items-start max-w-28",
-                isCollapsed && "hidden"
-              )}
+          {isMobile ? (
+             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="size-8">
+                <AvatarImage src={user.photoUrl ?? undefined} alt={user.name ?? "User"} />
+                <AvatarFallback>{user.name?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>
+              </Avatar>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              className={cn("w-full justify-start text-left gap-3 px-2", isCollapsed && "justify-center size-12 p-0")}
             >
-              <p className="text-sm font-medium leading-none truncate">{user.name}</p>
-              <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
-            </div>
-          </Button>
+              <Avatar className="size-8">
+                <AvatarImage src={user.photoUrl ?? undefined} alt={user.name ?? "User"} />
+                <AvatarFallback>{user.name?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>
+              </Avatar>
+              <div
+                className={cn(
+                  "flex flex-col items-start max-w-28",
+                  isCollapsed && "hidden"
+                )}
+              >
+                <p className="text-sm font-medium leading-none truncate">{user.name}</p>
+                <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </Button>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={12} className="w-56">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
