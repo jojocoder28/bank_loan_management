@@ -51,7 +51,7 @@ export default function UsersPage() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <CardTitle>User Management</CardTitle>
           <CardDescription>View and manage all registered users and members.</CardDescription>
@@ -67,72 +67,74 @@ export default function UsersPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Membership #</TableHead>
-              <TableHead>Registered On</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isPending ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center">
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="size-8 animate-spin text-muted-foreground" />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : users.length === 0 ? (
-               <TableRow>
-                <TableCell colSpan={8} className="text-center h-24">
-                  No users found for this filter.
-                </TableCell>
-              </TableRow>
-            ) : (
-                users.map((user) => (
-                  <TableRow key={user._id.toString()}>
-                    <TableCell className="font-medium">
-                       <Link href={`/admin/users/${user._id.toString()}`} className="text-primary hover:underline">
-                          {user.name}
-                        </Link>
+        <div className="overflow-x-auto">
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Membership #</TableHead>
+                <TableHead>Registered On</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {isPending ? (
+                <TableRow>
+                    <TableCell colSpan={8} className="text-center">
+                    <div className="flex justify-center items-center py-8">
+                        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+                    </div>
                     </TableCell>
-                    <TableCell>{user.phone || 'N/A'}</TableCell>
-                    <TableCell>{user.email || 'N/A'}</TableCell>
-                    <TableCell>
-                      <Badge variant={roleVariant[user.role] || "outline"} className="capitalize">
-                        {user.role.replace("_", " ")}
-                      </Badge>
+                </TableRow>
+                ) : users.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={8} className="text-center h-24">
+                    No users found for this filter.
                     </TableCell>
-                     <TableCell>
-                        <Badge variant={statusVariant[user.status]} className="capitalize">
-                            {user.status}
+                </TableRow>
+                ) : (
+                    users.map((user) => (
+                    <TableRow key={user._id.toString()}>
+                        <TableCell className="font-medium">
+                        <Link href={`/admin/users/${user._id.toString()}`} className="text-primary hover:underline">
+                            {user.name}
+                            </Link>
+                        </TableCell>
+                        <TableCell>{user.phone || 'N/A'}</TableCell>
+                        <TableCell>{user.email || 'N/A'}</TableCell>
+                        <TableCell>
+                        <Badge variant={roleVariant[user.role] || "outline"} className="capitalize">
+                            {user.role.replace("_", " ")}
                         </Badge>
-                    </TableCell>
-                    <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
-                    <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right flex justify-end gap-1">
-                        {user.status === 'active' && user.role === 'member' && (
-                            <RetireUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
-                        )}
-                        {user.status === 'active' && user.role !== 'admin' && (
-                            <DeactivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
-                        )}
-                        {(user.status === 'inactive' || user.status === 'retired') && user.role !== 'admin' && (
-                            <ActivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
-                        )}
-                    </TableCell>
-                  </TableRow>
-                ))
-            )}
-          </TableBody>
-        </Table>
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant={statusVariant[user.status]} className="capitalize">
+                                {user.status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
+                        <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right flex justify-end gap-1">
+                            {user.status === 'active' && user.role === 'member' && (
+                                <RetireUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
+                            )}
+                            {user.status === 'active' && user.role !== 'admin' && (
+                                <DeactivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
+                            )}
+                            {(user.status === 'inactive' || user.status === 'retired') && user.role !== 'admin' && (
+                                <ActivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
+                            )}
+                        </TableCell>
+                    </TableRow>
+                    ))
+                )}
+            </TableBody>
+            </Table>
+        </div>
       </CardContent>
     </Card>
   );

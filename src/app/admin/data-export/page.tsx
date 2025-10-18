@@ -27,7 +27,9 @@ export default async function DataExportPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <DataTable columns={columns} data={data} />
+                <div className="overflow-x-auto">
+                    <DataTable columns={columns} data={data} />
+                </div>
             </CardContent>
         </Card>
     );

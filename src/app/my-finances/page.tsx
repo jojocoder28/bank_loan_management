@@ -118,6 +118,7 @@ export default async function MyFinancesPage() {
               <CardDescription>A complete record of all your loan applications and their status.</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="overflow-x-auto">
               {allLoans.length > 0 ? (
                 <Table>
                     <TableHeader>
@@ -161,6 +162,7 @@ export default async function MyFinancesPage() {
                     <p className="mt-4">You have not applied for any loans yet.</p>
                 </div>
               )}
+            </div>
           </CardContent>
       </Card>
 

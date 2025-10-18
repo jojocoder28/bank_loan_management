@@ -72,45 +72,47 @@ export function LoanApprovals({ pendingLoans: initialLoans }: { pendingLoans: Po
     }
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Applicant</TableHead>
-                    <TableHead>Loan Amount</TableHead>
-                    <TableHead>Monthly Payment</TableHead>
-                    <TableHead>Tenure (Months)</TableHead>
-                    <TableHead>Share Fund</TableHead>
-                    <TableHead>Guaranteed Fund</TableHead>
-                    <TableHead>Applied On</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {pendingLoans.map((loan) => (
-                    <TableRow key={loan._id}>
-                        <TableCell className="font-medium">
-                            <Link href={`/admin/users/${loan.user._id}`} className="text-primary hover:underline">
-                                {loan.user.name}
-                            </Link>
-                             <p className="text-xs text-muted-foreground">{loan.user.email}</p>
-                        </TableCell>
-                        <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
-                        <TableCell>₹{(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}</TableCell>
-                        <TableCell>{loan.loanTenureMonths ? `${loan.loanTenureMonths} months` : 'N/A'}</TableCell>
-                        <TableCell>₹{loan.user.shareFund.toLocaleString()}</TableCell>
-                        <TableCell>₹{loan.user.guaranteedFund.toLocaleString()}</TableCell>
-                        <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="flex justify-end gap-2">
-                            <ApprovalButton loanId={loan._id} action={approveLoan} variant="default" onAction={handleLoanAction}>
-                                <Check className="mr-2 size-4" /> Approve
-                            </ApprovalButton>
-                            <ApprovalButton loanId={loan._id} action={rejectLoan} variant="destructive" onAction={handleLoanAction}>
-                                <X className="mr-2 size-4" /> Reject
-                            </ApprovalButton>
-                        </TableCell>
+        <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Applicant</TableHead>
+                        <TableHead>Loan Amount</TableHead>
+                        <TableHead>Monthly Payment</TableHead>
+                        <TableHead>Tenure (Months)</TableHead>
+                        <TableHead>Share Fund</TableHead>
+                        <TableHead>Guaranteed Fund</TableHead>
+                        <TableHead>Applied On</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+                </TableHeader>
+                <TableBody>
+                    {pendingLoans.map((loan) => (
+                        <TableRow key={loan._id}>
+                            <TableCell className="font-medium">
+                                <Link href={`/admin/users/${loan.user._id}`} className="text-primary hover:underline">
+                                    {loan.user.name}
+                                </Link>
+                                <p className="text-xs text-muted-foreground">{loan.user.email}</p>
+                            </TableCell>
+                            <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
+                            <TableCell>₹{(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}</TableCell>
+                            <TableCell>{loan.loanTenureMonths ? `${loan.loanTenureMonths} months` : 'N/A'}</TableCell>
+                            <TableCell>₹{loan.user.shareFund.toLocaleString()}</TableCell>
+                            <TableCell>₹{loan.user.guaranteedFund.toLocaleString()}</TableCell>
+                            <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell className="flex justify-end gap-2">
+                                <ApprovalButton loanId={loan._id} action={approveLoan} variant="default" onAction={handleLoanAction}>
+                                    <Check className="mr-2 size-4" /> Approve
+                                </ApprovalButton>
+                                <ApprovalButton loanId={loan._id} action={rejectLoan} variant="destructive" onAction={handleLoanAction}>
+                                    <X className="mr-2 size-4" /> Reject
+                                </ApprovalButton>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
     )
 }

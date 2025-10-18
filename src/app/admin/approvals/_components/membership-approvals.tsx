@@ -76,52 +76,54 @@ export function MembershipApprovals({ pendingUsers: initialUsers }: { pendingUse
     }
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Applicant</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Applied On</TableHead>
-                    <TableHead>Assign Membership #</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {pendingUsers.map((user) => (
-                     <TableRow key={user._id.toString()}>
-                        <TableCell className="font-medium">
-                            <Link href={`/admin/users/${user._id.toString()}`} className="text-primary hover:underline">
-                                {user.name}
-                            </Link>
-                        </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                             <form action={async (formData) => {
-                                 const result = await approveMembership(formData);
-                                 handleAction(user._id.toString(), !!result.success, result.error);
-                             }} id={`form-${user._id.toString()}`}>
-                                <input type="hidden" name="userId" value={user._id.toString()} />
-                                <Input
-                                    name="membershipNumber"
-                                    placeholder="Required for approval"
-                                    required
-                                    value={membershipNumbers[user._id.toString()] || ''}
-                                    onChange={(e) => handleNumberChange(user._id.toString(), e.target.value)}
-                                />
-                            </form>
-                        </TableCell>
-                         <TableCell className="text-right flex justify-end gap-2">
-                            <Button size="sm" type="submit" form={`form-${user._id.toString()}`} disabled={!membershipNumbers[user._id.toString()]}>
-                                 <Check className="mr-2 size-4" /> Approve
-                           </Button>
-                           <MembershipActionButton userId={user._id.toString()} action={rejectMembership} variant="destructive" onAction={handleAction}>
-                                <X className="mr-2 size-4" /> Reject
-                            </MembershipActionButton>
-                        </TableCell>
+        <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Applicant</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Applied On</TableHead>
+                        <TableHead>Assign Membership #</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
                     </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+                </TableHeader>
+                <TableBody>
+                    {pendingUsers.map((user) => (
+                        <TableRow key={user._id.toString()}>
+                            <TableCell className="font-medium">
+                                <Link href={`/admin/users/${user._id.toString()}`} className="text-primary hover:underline">
+                                    {user.name}
+                                </Link>
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                                <form action={async (formData) => {
+                                    const result = await approveMembership(formData);
+                                    handleAction(user._id.toString(), !!result.success, result.error);
+                                }} id={`form-${user._id.toString()}`}>
+                                    <input type="hidden" name="userId" value={user._id.toString()} />
+                                    <Input
+                                        name="membershipNumber"
+                                        placeholder="Required for approval"
+                                        required
+                                        value={membershipNumbers[user._id.toString()] || ''}
+                                        onChange={(e) => handleNumberChange(user._id.toString(), e.target.value)}
+                                    />
+                                </form>
+                            </TableCell>
+                            <TableCell className="text-right flex justify-end gap-2">
+                                <Button size="sm" type="submit" form={`form-${user._id.toString()}`} disabled={!membershipNumbers[user._id.toString()]}>
+                                    <Check className="mr-2 size-4" /> Approve
+                            </Button>
+                            <MembershipActionButton userId={user._id.toString()} action={rejectMembership} variant="destructive" onAction={handleAction}>
+                                    <X className="mr-2 size-4" /> Reject
+                                </MembershipActionButton>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
     );
 }

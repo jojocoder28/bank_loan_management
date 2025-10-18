@@ -43,7 +43,9 @@ export default async function StatementPage() {
              </div>
         </CardHeader>
         <CardContent>
-            <StatementTable data={statementData} month={month} year={year} />
+            <div className="overflow-x-auto">
+                <StatementTable data={statementData} month={month} year={year} />
+            </div>
         </CardContent>
     </Card>
   );

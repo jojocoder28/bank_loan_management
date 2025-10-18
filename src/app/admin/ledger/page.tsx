@@ -92,41 +92,43 @@ export default async function LedgerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Applicant</TableHead>
-                <TableHead>Loan Amount</TableHead>
-                <TableHead>Outstanding</TableHead>
-                <TableHead>Monthly Payment</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Issued On</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loans.map((loan: PopulatedLoan) => (
-                <TableRow key={loan._id}>
-                  <TableCell className="font-medium">
-                    <Link href={`/admin/users/${loan.user._id}`} className="text-primary hover:underline">
-                      {loan.user.name}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">{loan.user.email}</p>
-                  </TableCell>
-                  <TableCell>₹{(loan.loanAmount ?? 0).toLocaleString()}</TableCell>
-                  <TableCell>₹{(loan.principal ?? 0).toLocaleString()}</TableCell>
-                  <TableCell>₹{(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Badge variant={loanStatusVariant[loan.status]} className="capitalize">
-                      {loan.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {loan.issueDate && loan.status !== 'pending' ? new Date(loan.issueDate).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Applicant</TableHead>
+                    <TableHead>Loan Amount</TableHead>
+                    <TableHead>Outstanding</TableHead>
+                    <TableHead>Monthly Payment</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Issued On</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loans.map((loan: PopulatedLoan) => (
+                    <TableRow key={loan._id}>
+                      <TableCell className="font-medium">
+                        <Link href={`/admin/users/${loan.user._id}`} className="text-primary hover:underline">
+                          {loan.user.name}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">{loan.user.email}</p>
+                      </TableCell>
+                      <TableCell>₹{(loan.loanAmount ?? 0).toLocaleString()}</TableCell>
+                      <TableCell>₹{(loan.principal ?? 0).toLocaleString()}</TableCell>
+                      <TableCell>₹{(loan.monthlyPrincipalPayment ?? 0).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge variant={loanStatusVariant[loan.status]} className="capitalize">
+                          {loan.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {loan.issueDate && loan.status !== 'pending' ? new Date(loan.issueDate).toLocaleDateString() : 'N/A'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
         </CardContent>
       </Card>
     </div>

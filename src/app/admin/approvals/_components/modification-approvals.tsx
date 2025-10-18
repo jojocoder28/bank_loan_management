@@ -67,53 +67,55 @@ export function ModificationApprovals({ pendingModifications: initialModificatio
     }
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Applicant</TableHead>
-                    <TableHead>Request Type</TableHead>
-                    <TableHead>Current Value</TableHead>
-                    <TableHead>Requested Value</TableHead>
-                    <TableHead>Requested On</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {pendingModifications.flatMap((loan) => 
-                    loan.modificationRequests.map(request => (
-                        <TableRow key={request._id}>
-                            <TableCell className="font-medium">
-                                <Link href={`/admin/users/${loan.user._id}`} className="text-primary hover:underline">
-                                    {loan.user.name}
-                                </Link>
-                                <p className="text-xs text-muted-foreground">{loan.user.email}</p>
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex items-center gap-2">
-                                {request.type === 'increase_amount' ? <TrendingUp className="size-4" /> : <HandCoins className="size-4" />}
-                                <span className="capitalize">{request.type.replace('_', ' ')}</span>
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                {request.type === 'increase_amount' 
-                                    ? `₹${loan.loanAmount.toLocaleString()}`
-                                    : `₹${loan.monthlyPrincipalPayment.toLocaleString()}`
-                                }
-                            </TableCell>
-                             <TableCell className="font-bold">₹{request.requestedValue.toLocaleString()}</TableCell>
-                            <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
-                            <TableCell className="flex justify-end gap-2">
-                                <ModificationActionButton loanId={loan._id} requestId={request._id} action={approveModification} variant="default" onAction={handleModificationAction}>
-                                    <Check className="mr-2 size-4" /> Approve
-                                </ModificationActionButton>
-                                <ModificationActionButton loanId={loan._id} requestId={request._id} action={rejectModification} variant="destructive" onAction={handleModificationAction}>
-                                    <X className="mr-2 size-4" /> Reject
-                                </ModificationActionButton>
-                            </TableCell>
-                        </TableRow>
-                    ))
-                )}
-            </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Applicant</TableHead>
+                        <TableHead>Request Type</TableHead>
+                        <TableHead>Current Value</TableHead>
+                        <TableHead>Requested Value</TableHead>
+                        <TableHead>Requested On</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {pendingModifications.flatMap((loan) => 
+                        loan.modificationRequests.map(request => (
+                            <TableRow key={request._id}>
+                                <TableCell className="font-medium">
+                                    <Link href={`/admin/users/${loan.user._id}`} className="text-primary hover:underline">
+                                        {loan.user.name}
+                                    </Link>
+                                    <p className="text-xs text-muted-foreground">{loan.user.email}</p>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                    {request.type === 'increase_amount' ? <TrendingUp className="size-4" /> : <HandCoins className="size-4" />}
+                                    <span className="capitalize">{request.type.replace('_', ' ')}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    {request.type === 'increase_amount' 
+                                        ? `₹${loan.loanAmount.toLocaleString()}`
+                                        : `₹${loan.monthlyPrincipalPayment.toLocaleString()}`
+                                    }
+                                </TableCell>
+                                <TableCell className="font-bold">₹{request.requestedValue.toLocaleString()}</TableCell>
+                                <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                                <TableCell className="flex justify-end gap-2">
+                                    <ModificationActionButton loanId={loan._id} requestId={request._id} action={approveModification} variant="default" onAction={handleModificationAction}>
+                                        <Check className="mr-2 size-4" /> Approve
+                                    </ModificationActionButton>
+                                    <ModificationActionButton loanId={loan._id} requestId={request._id} action={rejectModification} variant="destructive" onAction={handleModificationAction}>
+                                        <X className="mr-2 size-4" /> Reject
+                                    </ModificationActionButton>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+        </div>
     )
 }
