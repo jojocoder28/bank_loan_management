@@ -4,13 +4,12 @@ import { decrypt, encrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 import type { User } from '@/lib/types';
 
-const publicRoutes = ['/login', '/signup'];
-const adminRoutes = ['/admin/dashboard', '/admin/approvals', '/admin/users', '/admin/audit', '/admin/ledger', '/admin/settings', '/admin/profit-loss', '/admin/bulk-import'];
+const publicRoutes = ['/login', '/signup', '/public/data-entry'];
+const adminRoutes = ['/admin/dashboard', '/admin/approvals', '/admin/users', '/admin/audit', '/admin/ledger', '/admin/settings', '/admin/profit-loss', '/admin/bulk-import', '/admin/data-export'];
 const userRoutes = ['/dashboard', '/apply-loan', '/my-finances', '/become-member'];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  // const isPublicRoute = publicRoutes.includes(path);
   const isPublicRoute = publicRoutes.some(route => path.startsWith(route));
   
   // Normalize path for dynamic routes like /admin/users/[id]

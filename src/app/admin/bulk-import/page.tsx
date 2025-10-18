@@ -15,8 +15,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle2, FileUp, Info, Loader2, UploadCloud, List, Wallet, HandCoins } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileUp, Info, Loader2, UploadCloud, List, Wallet, HandCoins, ArrowRight } from "lucide-react";
 import { bulkImportData } from "./actions";
+import Link from "next/link";
 
 const initialState = {
   error: null,
@@ -48,6 +49,23 @@ export default function BulkImportPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+       <Card className="mb-8">
+            <CardHeader>
+                <CardTitle>Data Collection & Export</CardTitle>
+                <CardDescription>
+                    Use the public-facing form to collect member data, then export it from the admin panel to begin the import process.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center justify-between p-4 rounded-md bg-secondary">
+                    <p className="text-sm font-medium">View submitted data and download the `Members.xlsx` file.</p>
+                    <Button asChild>
+                        <Link href="/admin/data-export">Go to Data Export <ArrowRight /></Link>
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+
       <Card>
         <form action={formAction}>
           <CardHeader>
@@ -66,7 +84,8 @@ export default function BulkImportPage() {
               <AlertTitle>Instructions</AlertTitle>
               <AlertDescription>
                 <ul className="list-disc pl-5 space-y-1 mt-2">
-                  <li>Use the exact column headers specified for each file to avoid errors.</li>
+                  <li>First, download the `Members.xlsx` file from the <Link href="/admin/data-export" className="font-bold text-primary hover:underline">Data Export page</Link>.</li>
+                  <li>Manually create the `Fund_Balances.xlsx` and `Loans.xlsx` files using the specified columns below.</li>
                   <li>The <strong className="text-primary">'MembershipNumber'</strong> is the critical key used to link all three files together. Ensure it is consistent for each member.</li>
                   <li>All three files are required for the import to work correctly.</li>
                   <li>The import process will not create duplicates if a membership number already exists.</li>
@@ -86,7 +105,7 @@ export default function BulkImportPage() {
                       <Input id="membersFile" name="membersFile" type="file" required accept=".xlsx" />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Required Columns: <code className="font-mono bg-background p-1 rounded">MembershipNumber</code>, <code className="font-mono bg-background p-1 rounded">FullName</code>, <code className="font-mono bg-background p-1 rounded">PhoneNumber</code>, <code className="font-mono bg-background p-1 rounded">JoinDate</code>, <code className="font-mono bg-background p-1 rounded">Status</code>, etc.
+                    Columns: <code className="font-mono bg-background p-1 rounded">MembershipNumber</code>, <code className="font-mono bg-background p-1 rounded">FullName</code>, <code className="font-mono bg-background p-1 rounded">PhoneNumber</code>, <code className="font-mono bg-background p-1 rounded">Email</code>, <code className="font-mono bg-background p-1 rounded">JoinDate</code>, <code className="font-mono bg-background p-1 rounded">Status</code>, <code className="font-mono bg-background p-1 rounded">PhotoURL</code>, <code className="font-mono bg-background p-1 rounded">Workplace</code>, <code className="font-mono bg-background p-1 rounded">Profession</code>, <code className="font-mono bg-background p-1 rounded">WorkplaceAddress</code>, <code className="font-mono bg-background p-1 rounded">PersonalAddress</code>, <code className="font-mono bg-background p-1 rounded">BankAccountNumber</code>, <code className="font-mono bg-background p-1 rounded">Age</code>, <code className="font-mono bg-background p-1 rounded">Gender</code>, <code className="font-mono bg-background p-1 rounded">NomineeName</code>, <code className="font-mono bg-background p-1 rounded">NomineeRelation</code>, <code className="font-mono bg-background p-1 rounded">NomineeAge</code>
                   </p>
                 </CardContent>
               </Card>
@@ -101,7 +120,7 @@ export default function BulkImportPage() {
                       <Input id="fundsFile" name="fundsFile" type="file" required accept=".xlsx" />
                    </div>
                   <p className="text-xs text-muted-foreground">
-                    Required Columns: <code className="font-mono bg-background p-1 rounded">MembershipNumber</code>, <code className="font-mono bg-background p-1 rounded">ShareFund</code>, <code className="font-mono bg-background p-1 rounded">GuaranteedFund</code>, <code className="font-mono bg-background p-1 rounded">ThriftFund</code>.
+                    Columns: <code className="font-mono bg-background p-1 rounded">MembershipNumber</code>, <code className="font-mono bg-background p-1 rounded">ShareFund</code>, <code className="font-mono bg-background p-1 rounded">GuaranteedFund</code>, <code className="font-mono bg-background p-1 rounded">ThriftFund</code>.
                   </p>
                 </CardContent>
               </Card>
@@ -116,7 +135,7 @@ export default function BulkImportPage() {
                       <Input id="loansFile" name="loansFile" type="file" required accept=".xlsx" />
                    </div>
                    <p className="text-xs text-muted-foreground">
-                    Required Columns: <code className="font-mono bg-background p-1 rounded">MembershipNumber</code>, <code className="font-mono bg-background p-1 rounded">LoanIssueDate</code>, <code className="font-mono bg-background p-1 rounded">OriginalLoanAmount</code>, etc.
+                    Columns: <code className="font-mono bg-background p-1 rounded">MembershipNumber</code>, <code className="font-mono bg-background p-1 rounded">LoanIssueDate</code>, <code className="font-mono bg-background p-1 rounded">OriginalLoanAmount</code>, <code className="font-mono bg-background p-1 rounded">CurrentOutstandingPrincipal</code>, <code className="font-mono bg-background p-1 rounded">InterestRate</code>, <code className="font-mono bg-background p-1 rounded">MonthlyPayment</code>, <code className="font-mono bg-background p-1 rounded">TenureMonths</code>, <code className="font-mono bg-background p-1 rounded">Status</code>
                   </p>
                 </CardContent>
               </Card>
