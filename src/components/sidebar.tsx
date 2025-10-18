@@ -152,17 +152,13 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
     }, [user.role]);
 
     React.useEffect(() => {
-        // Initial fetch
         fetchApprovalCount();
         
-        // Listen for the custom event to force a refresh
         const handleCountChanged = () => fetchApprovalCount();
         window.addEventListener('approvalCountChanged', handleCountChanged);
 
-        // Set up polling to refresh every 30 seconds
-        const intervalId = setInterval(fetchApprovalCount, 30000); // 30000ms = 30 seconds
+        const intervalId = setInterval(fetchApprovalCount, 30000);
 
-        // Cleanup on component unmount
         return () => {
             window.removeEventListener('approvalCountChanged', handleCountChanged);
             clearInterval(intervalId);
@@ -172,8 +168,8 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
     if (!user) return null;
 
     return (
-        <div className={cn(
-            "hidden md:flex flex-col h-screen border-r bg-muted/40 fixed transition-all duration-300",
+        <aside className={cn(
+            "hidden md:flex flex-col h-screen border-r bg-muted/40 fixed z-50 transition-all duration-300",
             isCollapsed ? "w-20" : "w-64"
         )}>
              <div className={cn(
@@ -222,6 +218,6 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
                 <PanelRightClose className="size-5" />
                 <span className="sr-only">Expand Sidebar</span>
             </Button>
-        </div>
+        </aside>
     );
 }

@@ -24,17 +24,13 @@ export function Header({ user }: { user: User }) {
     }, [user.role]);
 
     React.useEffect(() => {
-        // Initial fetch
         fetchApprovalCount();
         
-        // Listen for the custom event to force a refresh
         const handleCountChanged = () => fetchApprovalCount();
         window.addEventListener('approvalCountChanged', handleCountChanged);
 
-        // Set up polling to refresh every 30 seconds
-        const intervalId = setInterval(fetchApprovalCount, 30000); // 30000ms = 30 seconds
+        const intervalId = setInterval(fetchApprovalCount, 30000);
 
-        // Cleanup on component unmount
         return () => {
             window.removeEventListener('approvalCountChanged', handleCountChanged);
             clearInterval(intervalId);
@@ -42,7 +38,7 @@ export function Header({ user }: { user: User }) {
     }, [fetchApprovalCount]);
   
   return (
-    <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sticky top-0 z-40 md:hidden">
+    <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sticky top-0 z-30 md:hidden">
         <Sheet>
             <SheetTrigger asChild>
               <Button

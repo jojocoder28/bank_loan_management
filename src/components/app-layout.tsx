@@ -27,8 +27,6 @@ export function AppLayout({
   }
 
   if (!user) {
-    // This can happen briefly on page refresh before redirect.
-    // Or if the session is lost. A redirect will handle it.
     return null; 
   }
 
@@ -41,12 +39,12 @@ export function AppLayout({
       />
       <div 
         className={cn(
-          "flex flex-col flex-1 transition-all duration-300",
+          "flex flex-col flex-1 w-full transition-all duration-300",
           isCollapsed ? "md:ml-20" : "md:ml-64"
         )}
       >
         <Header user={user} />
-        <main className="flex-1 bg-muted/40 p-4 md:p-8">
+        <main className="flex-1 bg-muted/40 p-4 md:p-8 overflow-y-auto">
             {children}
         </main>
       </div>
