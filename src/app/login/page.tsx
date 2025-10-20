@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { LogIn, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { LogIn, AlertTriangle, Eye, EyeOff, Landmark } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { login } from "./actions";
 
@@ -41,9 +41,7 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error);
       } else {
-        if (result.requiresPasswordChange) {
-            router.push('/force-password-change');
-        } else if (result.role === 'admin') {
+        if (result.role === 'admin') {
             router.push('/admin/dashboard');
         } else {
             router.push('/dashboard');
@@ -55,18 +53,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <Card className="mx-auto max-w-sm w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <LogIn/> Login
-          </CardTitle>
-          <CardDescription>
-            Enter your email or phone number below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error && (
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+            <h1 className="text-3xl font-bold">Login</h1>
+            <p className="text-balance text-muted-foreground">
+              Enter your email or phone to access your account
+            </p>
+          </div>
+           {error && (
              <Alert variant="destructive" className="mb-4">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Login Failed</AlertTitle>
@@ -91,6 +87,12 @@ export default function LoginPage() {
             <div className="grid gap-2">
               <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
+                 {/* <Link
+                  href="/forgot-password"
+                  className="ml-auto inline-block text-sm underline"
+                >
+                  Forgot your password?
+                </Link> */}
               </div>
               <div className="relative">
                 <Input
@@ -123,8 +125,17 @@ export default function LoginPage() {
               Sign up
             </Link>
           </div> */}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      <div className="hidden bg-muted lg:flex items-center justify-center flex-col text-center p-8">
+         <Landmark className="size-16 text-primary mb-4" />
+        <h2 className="text-3xl font-bold">
+            Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD
+        </h2>
+         <p className="text-balance text-muted-foreground mt-4 max-w-md">
+            Your trusted financial partner, dedicated to serving the teacher community with integrity and excellence.
+        </p>
+      </div>
     </div>
   );
 }
