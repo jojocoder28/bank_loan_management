@@ -12,9 +12,12 @@ import { calculateAnnualInterest, calculateDividend } from "@/lib/coop-calculati
 export async function getUsers(status?: UserStatus): Promise<IUser[]> {
     await dbConnect();
     
-    const query: Partial<{ status: UserStatus }> = {};
+    const query: any = {};
     if (status && ['active', 'inactive', 'retired'].includes(status)) {
         query.status = status;
+    } else {
+        // By default, do not show retired members in the main list
+        query.status = { $ne: 'retired' };
     }
 
     const users = await User.find(query).sort({ createdAt: -1 }).lean();

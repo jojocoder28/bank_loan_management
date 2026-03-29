@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 
 const initialState = {
@@ -68,6 +69,7 @@ export default function SettingsPage() {
     const [state, formAction] = useActionState(updateUserProfile, initialState as any);
     const { toast } = useToast();
     const [user, setUser] = useState<IUser | null>(null);
+    const [pendingModification, setPendingModification] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,9 +78,10 @@ export default function SettingsPage() {
       async function fetchProfile() {
         setIsLoading(true);
         const data = await getProfileForEditing();
-        setUser(data);
-        if (data?.photoUrl) {
-            setPhotoPreview(data.photoUrl);
+        setUser(data?.user || null);
+        setPendingModification(data?.pendingModification || null);
+        if (data?.user?.photoUrl) {
+            setPhotoPreview(data.user.photoUrl);
         }
         setIsLoading(false);
       }
@@ -149,6 +152,16 @@ export default function SettingsPage() {
                         <AlertDescription>{state.error.form}</AlertDescription>
                     </Alert>
                  )}
+
+                 {pendingModification && (
+                     <Alert>
+                         <Shield className="h-4 w-4" />
+                         <AlertTitle>Pending Approval</AlertTitle>
+                         <AlertDescription>
+                             You have a profile update request waiting for Admin Approval. Changes to your address or nominee details will not be visible until approved.
+                         </AlertDescription>
+                     </Alert>
+                 )}
                  
                  <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
                     <AccordionItem value="item-1">
@@ -187,8 +200,8 @@ export default function SettingsPage() {
                                     </div>
                                 )}
                                  <div className="grid gap-1.5">
-                                    <Label htmlFor="personalAddress">Personal Address</Label>
-                                    <Input id="personalAddress" name="personalAddress" defaultValue={user.personalAddress} required />
+                                    <Label htmlFor="personalAddress" className="flex items-center gap-2">Personal Address {pendingModification?.requestedChanges?.personalAddress && <Badge variant="secondary" className="text-[10px]">Pending Change</Badge>}</Label>
+                                    <Input id="personalAddress" name="personalAddress" defaultValue={pendingModification?.requestedChanges?.personalAddress || user.personalAddress} required />
                                     {state?.error?.personalAddress && <p className="text-sm text-destructive">{state.error.personalAddress[0]}</p>}
                                 </div>
                                 <div className="grid gap-1.5">
@@ -227,8 +240,8 @@ export default function SettingsPage() {
                                      {state?.error?.workplace && <p className="text-sm text-destructive">{state.error.workplace[0]}</p>}
                                 </div>
                                 <div className="md:col-span-2 grid gap-1.5">
-                                    <Label htmlFor="workplaceAddress">Workplace Address</Label>
-                                    <Input id="workplaceAddress" name="workplaceAddress" defaultValue={user.workplaceAddress} required />
+                                    <Label htmlFor="workplaceAddress" className="flex items-center gap-2">Workplace Address {pendingModification?.requestedChanges?.workplaceAddress && <Badge variant="secondary" className="text-[10px]">Pending Change</Badge>}</Label>
+                                    <Input id="workplaceAddress" name="workplaceAddress" defaultValue={pendingModification?.requestedChanges?.workplaceAddress || user.workplaceAddress} required />
                                      {state?.error?.workplaceAddress && <p className="text-sm text-destructive">{state.error.workplaceAddress[0]}</p>}
                                 </div>
                                  <div className="md:col-span-2 grid gap-1.5">
@@ -249,18 +262,18 @@ export default function SettingsPage() {
                         <AccordionContent className="pt-4">
                              <div className="grid md:grid-cols-3 gap-x-6 gap-y-4">
                                 <div className="grid gap-1.5">
-                                    <Label htmlFor="nomineeName">Nominee's Full Name</Label>
-                                    <Input id="nomineeName" name="nomineeName" defaultValue={user.nomineeName} required />
+                                    <Label htmlFor="nomineeName" className="flex items-center gap-2">Nominee's Full Name {pendingModification?.requestedChanges?.nomineeName && <Badge variant="secondary" className="text-[10px]">Pending Change</Badge>}</Label>
+                                    <Input id="nomineeName" name="nomineeName" defaultValue={pendingModification?.requestedChanges?.nomineeName || user.nomineeName} required />
                                     {state?.error?.nomineeName && <p className="text-sm text-destructive">{state.error.nomineeName[0]}</p>}
                                 </div>
                                  <div className="grid gap-1.5">
-                                    <Label htmlFor="nomineeRelation">Relation to Nominee</Label>
-                                    <Input id="nomineeRelation" name="nomineeRelation" defaultValue={user.nomineeRelation} required />
+                                    <Label htmlFor="nomineeRelation" className="flex items-center gap-2">Relation to Nominee {pendingModification?.requestedChanges?.nomineeRelation && <Badge variant="secondary" className="text-[10px]">Pending Change</Badge>}</Label>
+                                    <Input id="nomineeRelation" name="nomineeRelation" defaultValue={pendingModification?.requestedChanges?.nomineeRelation || user.nomineeRelation} required />
                                     {state?.error?.nomineeRelation && <p className="text-sm text-destructive">{state.error.nomineeRelation[0]}</p>}
                                 </div>
                                  <div className="grid gap-1.5">
-                                    <Label htmlFor="nomineeAge">Nominee's Age</Label>
-                                    <Input id="nomineeAge" name="nomineeAge" type="number" defaultValue={user.nomineeAge} required />
+                                    <Label htmlFor="nomineeAge" className="flex items-center gap-2">Nominee's Age {pendingModification?.requestedChanges?.nomineeAge && <Badge variant="secondary" className="text-[10px]">Pending Change</Badge>}</Label>
+                                    <Input id="nomineeAge" name="nomineeAge" type="number" defaultValue={pendingModification?.requestedChanges?.nomineeAge || user.nomineeAge} required />
                                     {state?.error?.nomineeAge && <p className="text-sm text-destructive">{state.error.nomineeAge[0]}</p>}
                                 </div>
                             </div>

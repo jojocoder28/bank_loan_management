@@ -49,7 +49,7 @@ export async function updateSession(request: NextRequest) {
     parsed.expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
     const res = await encrypt(parsed);
     
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('session', res, {
         httpOnly: true,
         expires: parsed.expires,
@@ -73,9 +73,9 @@ export async function createSession(user: User) {
 
     const session = await encrypt({ user: sessionUser, exp: expires.getTime() / 1000 });
 
-    cookies().set('session', session, { expires, httpOnly: true });
+    (await cookies()).set('session', session, { expires, httpOnly: true });
 }
 
 export async function deleteSession() {
-    cookies().set('session', '', { expires: new Date(0) });
+    (await cookies()).set('session', '', { expires: new Date(0) });
 }

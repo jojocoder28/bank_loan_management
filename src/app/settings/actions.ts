@@ -4,6 +4,7 @@
 import { getSession, createSession } from "@/lib/session";
 import dbConnect from "@/lib/mongodb";
 import User, { IUser } from "@/models/user";
+import ProfileModificationRequest from "@/models/profileModification";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { v2 as cloudinary } from 'cloudinary';
@@ -17,7 +18,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function getProfileForEditing(): Promise<IUser | null> {
+export async function getProfileForEditing(): Promise<{ user: IUser, pendingModification: any } | null> {
     const session = await getSession();
     if (!session) {
         return null;
@@ -27,7 +28,8 @@ export async function getProfileForEditing(): Promise<IUser | null> {
     if (!user) {
         return null;
     }
-    return JSON.parse(JSON.stringify(user));
+    const pending = await ProfileModificationRequest.findOne({ user: user._id, status: 'pending' }).lean();
+    return JSON.parse(JSON.stringify({ user, pendingModification: pending }));
 }
 
 const profileSchema = z.object({
@@ -104,6 +106,37 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
 
     // Build an update object with only the validated fields
     const updateData: Partial<IUser> = { ...profileData };
+    
+    // Intercept restricted fields for admin approval
+    const restrictedFields = ['personalAddress', 'workplaceAddress', 'nomineeName', 'nomineeRelation', 'nomineeAge'] as const;
+    const requestedChanges: any = {};
+    let hasRestrictedChanges = false;
+    
+    for (const field of restrictedFields) {
+        if (updateData[field] !== undefined && String(updateData[field]) !== String(user[field] || '')) {
+            requestedChanges[field] = updateData[field];
+            hasRestrictedChanges = true;
+        }
+        // Always remove restricted fields from direct update so they don't save instantly
+        delete updateData[field];
+    }
+    
+    if (hasRestrictedChanges) {
+        // Find existing pending request or create a new one
+        await ProfileModificationRequest.findOneAndUpdate(
+            { user: (user as any)._id, status: 'pending' },
+            { 
+               $set: { 
+                   'requestedChanges.personalAddress': requestedChanges.personalAddress,
+                   'requestedChanges.workplaceAddress': requestedChanges.workplaceAddress,
+                   'requestedChanges.nomineeName': requestedChanges.nomineeName,
+                   'requestedChanges.nomineeRelation': requestedChanges.nomineeRelation,
+                   'requestedChanges.nomineeAge': requestedChanges.nomineeAge,
+               }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+    }
 
     if (photoUrl) {
         updateData.photoUrl = photoUrl;
@@ -120,7 +153,7 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
     
     // Create a new session with the updated data
     const updatedSessionUser = {
-        id: user._id.toString(),
+        id: (user as any)._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
@@ -133,6 +166,10 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
     revalidatePath('/settings');
     revalidatePath('/profile');
     revalidatePath('/become-member');
+
+    if (hasRestrictedChanges) {
+        return { success: "Profile updated successfully. Note: Address and Nominee changes require admin approval and are pending.", error: null }
+    }
 
     return { success: "Profile updated successfully.", error: null }
 }

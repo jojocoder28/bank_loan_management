@@ -16,7 +16,8 @@ export default async function middleware(req: NextRequest) {
   const normalizedPath = path.split('/').slice(0, 3).join('/');
 
   // 1. Get the session from the cookie
-  const cookie = cookies().get('session')?.value;
+  const cookieStore = await cookies();
+  const cookie = cookieStore.get('session')?.value;
   const session = cookie ? await decrypt(cookie) : null;
   const user: User | null = session?.user ?? null;
 

@@ -66,8 +66,14 @@ export default function UsersPage() {
             <UserTableFilters />
             <Button asChild>
                 <Link href="/admin/users/add">
-                    <UserPlus className="mr-2" />
+                    <UserPlus className="mr-2 size-4" />
                     Add New Admin
+                </Link>
+            </Button>
+            <Button asChild variant="secondary">
+                <Link href="/admin/users/retired">
+                    <UserPlus className="mr-2 size-4" />
+                    Retired Members
                 </Link>
             </Button>
         </div>
@@ -104,9 +110,9 @@ export default function UsersPage() {
                 </TableRow>
                 ) : (
                     users.map((user) => (
-                    <TableRow key={user._id.toString()}>
+                    <TableRow key={(user as any)._id.toString()}>
                         <TableCell className="font-medium">
-                        <Link href={`/admin/users/${user._id.toString()}`} className="text-primary hover:underline">
+                        <Link href={`/admin/users/${(user as any)._id.toString()}`} className="text-primary hover:underline">
                             {user.name}
                             </Link>
                         </TableCell>
@@ -130,7 +136,7 @@ export default function UsersPage() {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                              <Button variant="ghost" size="icon" asChild>
-                                                <Link href={`/admin/users/${user._id.toString()}`}>
+                                                <Link href={`/admin/users/${(user as any)._id.toString()}`}>
                                                     <Edit className="size-4" />
                                                 </Link>
                                             </Button>
@@ -139,19 +145,19 @@ export default function UsersPage() {
                                     </Tooltip>
                                     {user.status === 'active' && user.role === 'member' && (
                                         <Tooltip>
-                                            <TooltipTrigger asChild><RetireUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
+                                            <TooltipTrigger asChild><RetireUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
                                             <TooltipContent><p>Retire Member</p></TooltipContent>
                                         </Tooltip>
                                     )}
                                     {user.status === 'active' && user.role !== 'admin' && (
                                         <Tooltip>
-                                            <TooltipTrigger asChild><DeactivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
+                                            <TooltipTrigger asChild><DeactivateUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
                                             <TooltipContent><p>Deactivate User</p></TooltipContent>
                                         </Tooltip>
                                     )}
                                     {(user.status === 'inactive' || user.status === 'retired') && user.role !== 'admin' && (
                                         <Tooltip>
-                                            <TooltipTrigger asChild><ActivateUserButton userId={user._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
+                                            <TooltipTrigger asChild><ActivateUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
                                             <TooltipContent><p>Reactivate User</p></TooltipContent>
                                         </Tooltip>
                                     )}

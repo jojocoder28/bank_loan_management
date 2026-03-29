@@ -7,23 +7,25 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getPendingLoans, getPendingMemberships, getPendingModifications } from "./actions";
+import { getPendingLoans, getPendingMemberships, getPendingModifications, getPendingProfileModifications } from "./actions";
 import { LoanApprovals } from "./_components/loan-approvals";
 import { MembershipApprovals } from "./_components/membership-approvals";
 import { ModificationApprovals } from "./_components/modification-approvals";
-
+import { ProfileApprovals } from "./_components/profile-approvals";
 
 export default async function ApprovalsPage() {
   const pendingLoans = await getPendingLoans();
   const pendingUsers = await getPendingMemberships();
   const pendingModifications = await getPendingModifications();
+  const pendingProfileModifications = await getPendingProfileModifications();
 
   return (
     <Tabs defaultValue="memberships" className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="memberships">Membership Applications ({pendingUsers.length})</TabsTrigger>
         <TabsTrigger value="loans">Loan Applications ({pendingLoans.length})</TabsTrigger>
         <TabsTrigger value="modifications">Loan Modifications ({pendingModifications.length})</TabsTrigger>
+        <TabsTrigger value="profiles">Profile Updates ({pendingProfileModifications.length})</TabsTrigger>
       </TabsList>
       <TabsContent value="memberships">
         <Card>
@@ -51,7 +53,7 @@ export default async function ApprovalsPage() {
           </CardContent>
         </Card>
       </TabsContent>
-        <TabsContent value="modifications">
+      <TabsContent value="modifications">
         <Card>
           <CardHeader>
             <CardTitle>Loan Modification Approvals</CardTitle>
@@ -61,6 +63,19 @@ export default async function ApprovalsPage() {
           </CardHeader>
           <CardContent>
             <ModificationApprovals pendingModifications={pendingModifications} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="profiles">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Update Approvals</CardTitle>
+            <CardDescription>
+              Review and process member requests to change their addresses and nominee details.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProfileApprovals pendingRequests={pendingProfileModifications} />
           </CardContent>
         </Card>
       </TabsContent>

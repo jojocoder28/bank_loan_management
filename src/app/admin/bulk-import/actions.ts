@@ -76,12 +76,78 @@ export async function bulkImportData(prevState: any, formData: FormData) {
   }
 }
 
+function normalizeData(rows: any[][]): any[] {
+  let headerRowIndex = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const rowStr = rows[i].join(' ').toUpperCase();
+    if (rowStr.includes('MEMBERSHIP') || rowStr.includes('NAME') || rowStr.includes('PHONE')) {
+      headerRowIndex = i;
+      break;
+    }
+  }
+
+  const rawHeaders = rows[headerRowIndex] || [];
+  const headers = rawHeaders.map((h: any) => {
+    if (!h) return '';
+    const str = String(h).toUpperCase().trim();
+    if (str.includes('MEMBERSHIP NUMBER') || str === 'MEMBERSHIPNUMBER') return 'MembershipNumber';
+    if (str === 'NAME' || str === 'FULLNAME' || str.includes('FULL NAME')) return 'FullName';
+    if (str === 'MOBILE NUMBER' || str.includes('PHONE')) return 'PhoneNumber';
+    if (str === 'EMAIL') return 'Email';
+    if (str === 'STATUS') return 'Status';
+    if (str === 'MEMBERSHIP DATE' || str === 'JOINDATE' || str === 'JOIN DATE') return 'JoinDate';
+    if (str.includes('PHOTO')) return 'PhotoURL';
+    if (str === 'WORKPLACE' || str === 'NAME OF OFFICE') return 'Workplace';
+    if (str === 'PROFESSION' || str === 'DESIGNATION') return 'Profession';
+    if (str === 'WORKPLACE ADDRESS' || str === 'ADDRESS OF OFFICE') return 'WorkplaceAddress';
+    if (str === 'PERSONAL ADDRESS' || str === 'ADDRESS OF MEMBER') return 'PersonalAddress';
+    if (str.includes('BANK') && str.includes('ACCOUNT')) return 'BankAccountNumber';
+    if (str === 'AGE') return 'Age';
+    if (str === 'GENDER') return 'Gender';
+    if (str === 'NOMINEE NAME' || str === 'NAME OF NOMINEE') return 'NomineeName';
+    if (str === 'NOMINEE RELATION' || str === 'RELATIONSHIP') return 'NomineeRelation';
+    if (str === 'NOMINEE AGE') return 'NomineeAge';
+    
+    if (str === 'SHARE FUND' || str === 'SHAREFUND') return 'ShareFund';
+    if (str === 'GUARANTEED FUND' || str === 'GUARANTEEDFUND') return 'GuaranteedFund';
+    if (str === 'THRIFT FUND' || str === 'THRIFTFUND') return 'ThriftFund';
+    
+    if (str === 'ORIGINAL LOAN AMOUNT' || str === 'ORIGINALLOANAMOUNT') return 'OriginalLoanAmount';
+    if (str === 'CURRENT OUTSTANDING PRINCIPAL') return 'CurrentOutstandingPrincipal';
+    if (str === 'INTEREST RATE' || str === 'INTERESTRATE') return 'InterestRate';
+    if (str === 'LOAN ISSUE DATE' || str === 'LOANISSUEDATE') return 'LoanIssueDate';
+    if (str === 'MONTHLY PAYMENT' || str === 'MONTHLYPAYMENT') return 'MonthlyPayment';
+    if (str === 'TENURE MONTHS' || str === 'TENUREMONTHS') return 'TenureMonths';
+
+    return String(h).replace(/\s+(.)/g, (match, group) => group.toUpperCase()).replace(/\s/g, '');
+  });
+
+  const data = [];
+  for (let i = headerRowIndex + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    const obj: any = {};
+    let hasData = false;
+    for (let j = 0; j < headers.length; j++) {
+      if (headers[j]) {
+        obj[headers[j]] = row[j] !== undefined ? row[j] : "";
+        if (row[j] !== undefined && row[j] !== "") hasData = true;
+      }
+    }
+    if (hasData) {
+      data.push(obj);
+    }
+  }
+  return data;
+}
+
 async function parseFile(file: File): Promise<any[]> {
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: "buffer", cellDates: true });
   const sheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[sheetName];
-  return XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+  const rawData: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+  return normalizeData(rawData);
 }
 
 // --- Member Import Logic ---

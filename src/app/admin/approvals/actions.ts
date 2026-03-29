@@ -4,6 +4,7 @@
 import dbConnect from "@/lib/mongodb";
 import Loan, { ILoan, IModificationRequest, ModificationRequestStatus } from "@/models/loan";
 import User, { IUser } from "@/models/user";
+import ProfileModificationRequest, { IProfileModificationRequest } from "@/models/profileModification";
 import { revalidatePath } from "next/cache";
 import { calculateRequiredFunds } from "@/lib/coop-calculations";
 import { getBankSettings } from "../settings/actions";
@@ -86,8 +87,9 @@ export async function getPendingApprovalCount(): Promise<number> {
         return count + loan.modificationRequests.filter(req => req.status === 'pending').length;
     }, 0);
 
+    const pendingProfileModificationsCount = await ProfileModificationRequest.countDocuments({ status: 'pending' });
 
-    return pendingLoansCount + pendingMembershipsCount + pendingModificationsCount;
+    return pendingLoansCount + pendingMembershipsCount + pendingModificationsCount + pendingProfileModificationsCount;
 }
 
 
@@ -128,7 +130,7 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
     revalidatePath('/dashboard'); 
     revalidatePath('/admin/users');
     if (userToUpdate) {
-        revalidatePath(`/admin/users/${userToUpdate._id.toString()}`);
+        revalidatePath(`/admin/users/${(userToUpdate as any)._id.toString()}`);
     }
 
 
@@ -225,7 +227,7 @@ async function updateModificationStatus(formData: FormData, newStatus: Modificat
         return { error: 'Loan not found' };
     }
 
-    const request = loan.modificationRequests.id(requestId);
+    const request = (loan.modificationRequests as any).id(requestId);
     if (!request) {
         return { error: 'Modification request not found' };
     }
@@ -260,7 +262,7 @@ async function updateModificationStatus(formData: FormData, newStatus: Modificat
     await loan.save();
     revalidatePath('/admin/approvals');
     revalidatePath('/my-finances');
-    revalidatePath(`/admin/users/${loan.user._id.toString()}`);
+    revalidatePath(`/admin/users/${(loan.user as any)._id.toString()}`);
     return { success: true };
 }
 
@@ -271,4 +273,62 @@ export async function approveModification(formData: FormData) {
 
 export async function rejectModification(formData: FormData) {
     return await updateModificationStatus(formData, 'rejected');
+}
+
+export interface PopulatedProfileModification extends Omit<IProfileModificationRequest, 'user'> {
+    _id: string;
+    user: {
+        _id: string;
+        name: string;
+        email: string;
+        membershipNumber: string;
+        phone: string;
+    }
+}
+
+export async function getPendingProfileModifications(): Promise<PopulatedProfileModification[]> {
+    await dbConnect();
+    const requests = await ProfileModificationRequest.find({ status: 'pending' })
+        .populate('user', 'name email membershipNumber phone')
+        .sort({ requestDate: 'asc' })
+        .lean();
+    return JSON.parse(JSON.stringify(requests));
+}
+
+export async function approveProfileModification(formData: FormData) {
+    const requestId = formData.get('requestId') as string;
+    if (!requestId) return { error: 'Request ID missing' };
+    await dbConnect();
+    const request = await ProfileModificationRequest.findById(requestId);
+    if (!request || request.status !== 'pending') return { error: 'Invalid or missing request' };
+    
+    const user = await User.findById(request.user);
+    if (!user) return { error: 'User not found' };
+
+    // Apply changes
+    Object.assign(user, request.requestedChanges);
+    await user.save();
+
+    request.status = 'approved';
+    request.approvalDate = new Date();
+    await request.save();
+
+    revalidatePath('/admin/approvals');
+    revalidatePath('/admin/users');
+    revalidatePath(`/admin/users/${(user as any)._id.toString()}`);
+    return { success: true };
+}
+
+export async function rejectProfileModification(formData: FormData) {
+    const requestId = formData.get('requestId') as string;
+    if (!requestId) return { error: 'Request ID missing' };
+    await dbConnect();
+    const request = await ProfileModificationRequest.findById(requestId);
+    if (!request || request.status !== 'pending') return { error: 'Invalid request' };
+
+    request.status = 'rejected';
+    await request.save();
+
+    revalidatePath('/admin/approvals');
+    return { success: true };
 }
