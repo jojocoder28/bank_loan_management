@@ -96,7 +96,7 @@ export function MembershipApprovals({ pendingUsers: initialUsers }: { pendingUse
                                 </Link>
                             </TableCell>
                             <TableCell>{user.email}</TableCell>
-                            <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell suppressHydrationWarning>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell>
                                 <form action={async (formData) => {
                                     const result = await approveMembership(formData);
@@ -112,13 +112,15 @@ export function MembershipApprovals({ pendingUsers: initialUsers }: { pendingUse
                                     />
                                 </form>
                             </TableCell>
-                            <TableCell className="text-right flex justify-end gap-2">
-                                <Button size="sm" type="submit" form={`form-${user._id.toString()}`} disabled={!membershipNumbers[user._id.toString()]}>
-                                    <Check className="mr-2 size-4" /> Approve
-                            </Button>
-                            <MembershipActionButton userId={user._id.toString()} action={rejectMembership} variant="destructive" onAction={handleAction}>
-                                    <X className="mr-2 size-4" /> Reject
-                                </MembershipActionButton>
+                            <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                    <Button size="sm" type="submit" form={`form-${user._id.toString()}`} disabled={!membershipNumbers[user._id.toString()]}>
+                                        <Check className="mr-2 size-4" /> Approve
+                                    </Button>
+                                    <MembershipActionButton userId={user._id.toString()} action={rejectMembership} variant="destructive" onAction={handleAction}>
+                                        <X className="mr-2 size-4" /> Reject
+                                    </MembershipActionButton>
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

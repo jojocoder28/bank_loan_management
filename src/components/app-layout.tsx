@@ -40,7 +40,7 @@ export function AppLayout({
   }
 
   return (
-    <div className="relative flex min-h-screen w-full">
+    <div className="relative flex h-screen w-full overflow-hidden">
       <Sidebar 
         user={user} 
         isCollapsed={isCollapsed}
@@ -48,12 +48,12 @@ export function AppLayout({
       />
       <div 
         className={cn(
-          "flex flex-col flex-1 w-full transition-all duration-300",
+          "flex flex-col flex-1 h-screen w-full transition-all duration-300 overflow-hidden",
           isCollapsed ? "md:ml-20" : "md:ml-64"
         )}
       >
         <Header user={user} />
-        <main className="flex-1 bg-muted/40 p-4 md:p-8 overflow-y-auto">
+        <main className="flex-1 bg-muted/40 p-4 md:p-8 overflow-y-auto min-w-0">
             {children}
         </main>
       </div>

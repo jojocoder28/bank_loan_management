@@ -111,14 +111,16 @@ export function LoanApprovals({ pendingLoans: initialLoans }: { pendingLoans: Po
                             <TableCell>{loan.loanTenureMonths ? `${loan.loanTenureMonths} months` : 'N/A'}</TableCell>
                             <TableCell>₹{loan.user.shareFund.toLocaleString()}</TableCell>
                             <TableCell>₹{loan.user.guaranteedFund.toLocaleString()}</TableCell>
-                            <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
-                            <TableCell className="flex justify-end gap-2">
-                                <ApprovalButton loanId={loan._id} action={approveLoan} variant="default" onAction={handleLoanAction} tooltip="Approve Loan">
-                                    <Check className="size-4" />
-                                </ApprovalButton>
-                                <ApprovalButton loanId={loan._id} action={rejectLoan} variant="destructive" onAction={handleLoanAction} tooltip="Reject Loan">
-                                    <X className="size-4" />
-                                </ApprovalButton>
+                            <TableCell suppressHydrationWarning>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                    <ApprovalButton loanId={loan._id} action={approveLoan} variant="default" onAction={handleLoanAction} tooltip="Approve Loan">
+                                        <Check className="size-4" />
+                                    </ApprovalButton>
+                                    <ApprovalButton loanId={loan._id} action={rejectLoan} variant="destructive" onAction={handleLoanAction} tooltip="Reject Loan">
+                                        <X className="size-4" />
+                                    </ApprovalButton>
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

@@ -99,3 +99,101 @@ export async function updateUserRole(prevState: any, formData: FormData): Promis
         return { error: "An unexpected error occurred." };
     }
 }
+
+export async function updateUserCapital(prevState: any, formData: FormData): Promise<{error?: string; success?: boolean}> {
+    const userId = formData.get('userId') as string;
+    const shareFund = Number(formData.get('shareFund'));
+    const thriftFund = Number(formData.get('thriftFund'));
+    const guaranteedFund = Number(formData.get('guaranteedFund'));
+
+    const session = await getSession();
+
+    if (!session || session.role !== 'admin') {
+        return { error: "Unauthorized." };
+    }
+
+    if (!userId) {
+        return { error: "Missing user ID." };
+    }
+
+    if (isNaN(shareFund) || shareFund < 0 ||
+        isNaN(thriftFund) || thriftFund < 0 ||
+        isNaN(guaranteedFund) || guaranteedFund < 0) {
+        return { error: "Capital/fund values must be non-negative numbers." };
+    }
+
+    try {
+        await dbConnect();
+        const userToUpdate = await User.findById(userId);
+        if (!userToUpdate) {
+            return { error: "User not found." };
+        }
+
+        await User.findByIdAndUpdate(userId, {
+            $set: {
+                shareFund,
+                thriftFund,
+                guaranteedFund
+            }
+        });
+
+        revalidatePath(`/admin/users/${userId}`);
+        revalidatePath('/admin/users');
+        revalidatePath('/admin/ledger');
+        revalidatePath('/admin/statement');
+        revalidatePath('/my-finances');
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update user capital:", error);
+        return { error: "An unexpected error occurred while updating funds." };
+    }
+}
+
+export async function updateLoanMonthlyPayment(prevState: any, formData: FormData): Promise<{error?: string; success?: boolean}> {
+    const loanId = formData.get('loanId') as string;
+    const monthlyPrincipalPayment = Number(formData.get('monthlyPrincipalPayment'));
+
+    const session = await getSession();
+
+    if (!session || session.role !== 'admin') {
+        return { error: "Unauthorized." };
+    }
+
+    if (!loanId) {
+        return { error: "Missing loan ID." };
+    }
+
+    if (isNaN(monthlyPrincipalPayment) || monthlyPrincipalPayment < 0) {
+        return { error: "Monthly principal payment must be a non-negative number." };
+    }
+
+    try {
+        await dbConnect();
+        const loan = await Loan.findById(loanId);
+        if (!loan) {
+            return { error: "Loan not found." };
+        }
+
+        if (monthlyPrincipalPayment > loan.principal) {
+            return { error: `Monthly payment cannot exceed the remaining principal of ₹${loan.principal.toLocaleString()}.` };
+        }
+
+        await Loan.findByIdAndUpdate(loanId, {
+            $set: {
+                monthlyPrincipalPayment
+            }
+        });
+
+        revalidatePath(`/admin/users/${loan.user.toString()}`);
+        revalidatePath('/admin/users');
+        revalidatePath('/admin/ledger');
+        revalidatePath('/admin/statement');
+        revalidatePath('/my-finances');
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update loan monthly payment:", error);
+        return { error: "An unexpected error occurred while updating the loan payment." };
+    }
+}

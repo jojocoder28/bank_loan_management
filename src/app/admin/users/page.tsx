@@ -62,16 +62,22 @@ export default function UsersPage() {
           <CardTitle>User Management</CardTitle>
           <CardDescription>View and manage all registered users and members.</CardDescription>
         </div>
-        <div className="flex items-center gap-2 md:gap-4 flex-wrap">
+        <div className="flex items-center gap-2 md:gap-4 flex-wrap w-full md:w-auto">
             <UserTableFilters />
-            <Button asChild>
-                <Link href="/admin/users/add">
+            <Button asChild variant="default" className="w-full sm:w-auto">
+                <Link href="/admin/users/add-member" className="w-full justify-center">
+                    <UserPlus className="mr-2 size-4" />
+                    Add New Member
+                </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+                <Link href="/admin/users/add" className="w-full justify-center">
                     <UserPlus className="mr-2 size-4" />
                     Add New Admin
                 </Link>
             </Button>
-            <Button asChild variant="secondary">
-                <Link href="/admin/users/retired">
+            <Button asChild variant="secondary" className="w-full sm:w-auto">
+                <Link href="/admin/users/retired" className="w-full justify-center">
                     <UserPlus className="mr-2 size-4" />
                     Retired Members
                 </Link>
@@ -129,7 +135,7 @@ export default function UsersPage() {
                             </Badge>
                         </TableCell>
                         <TableCell>{user.membershipNumber || 'N/A'}</TableCell>
-                        <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell suppressHydrationWarning>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                            <div className="flex justify-end items-center gap-1">
                                <TooltipProvider>

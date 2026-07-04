@@ -212,7 +212,7 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-8">
        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="bg-primary/10 p-3 rounded-full">
                 <Landmark className="size-6 text-primary" />
@@ -224,25 +224,25 @@ export default async function DashboardPage() {
                 </CardDescription>
               </div>
             </div>
-             <Button asChild>
-                <Link href="/apply-loan">Apply for New Loan <ArrowRight className="ml-2" /></Link>
+             <Button asChild className="w-full sm:w-auto">
+                <Link href="/apply-loan" className="w-full justify-center">Apply for New Loan <ArrowRight className="ml-2" /></Link>
             </Button>
           </CardHeader>
           <CardContent className="grid gap-6">
             {activeLoans.length > 0 ? (
               <div>
-                <div className='grid grid-cols-2 md:grid-cols-3 gap-4 text-center pb-6'>
+                <div className='grid grid-cols-3 gap-2 sm:gap-4 text-center pb-6'>
                     <div>
-                        <p className="text-sm text-muted-foreground">Total Loan Amount</p>
-                        <p className="text-2xl font-bold">₹{totalLoanAmount.toLocaleString()}</p>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground">Total Loan Amount</p>
+                        <p className="text-xs sm:text-2xl font-bold">₹{totalLoanAmount.toLocaleString()}</p>
                     </div>
                      <div>
-                        <p className="text-sm text-muted-foreground">Total Principal Left</p>
-                        <p className="text-2xl font-bold">₹{totalPrincipalLeft.toLocaleString()}</p>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground">Total Principal Left</p>
+                        <p className="text-xs sm:text-2xl font-bold">₹{totalPrincipalLeft.toLocaleString()}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-muted-foreground">Active Loans</p>
-                        <p className="text-2xl font-bold">{activeLoans.length}</p>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground">Active Loans</p>
+                        <p className="text-xs sm:text-2xl font-bold">{activeLoans.length}</p>
                     </div>
                 </div>
                 <Progress value={loanProgress} aria-label={`${loanProgress.toFixed(0)}% of total loans paid`} />
@@ -325,9 +325,9 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent className="grid gap-4 text-sm md:grid-cols-2">
                 {benefits.map(benefit => (
-                    <div key={benefit.title} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                    <div key={benefit.title} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-secondary/50">
                         <p className="font-medium">{benefit.title}</p>
-                        <Badge variant="outline">{benefit.description}</Badge>
+                        <Badge variant="outline" className="w-fit">{benefit.description}</Badge>
                     </div>
                 ))}
             </CardContent>
@@ -343,32 +343,34 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
              {loanHistory.length > 0 ? (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Applied On</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Action</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loanHistory.map(loan => (
-                             <TableRow key={loan._id.toString()}>
-                                <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
-                                <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
-                                <TableCell>
-                                    <Badge variant={loanStatusVariant[loan.status]} className="capitalize">{loan.status}</Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="outline" size="sm" asChild>
-                                        <Link href="/my-finances">View Details</Link>
-                                    </Button>
-                                </TableCell>
+                <div className="w-full overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Applied On</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {loanHistory.map(loan => (
+                                 <TableRow key={loan._id.toString()}>
+                                    <TableCell suppressHydrationWarning>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
+                                    <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={loanStatusVariant[loan.status]} className="capitalize">{loan.status}</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link href="/my-finances">View Details</Link>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
              ) : (
                 <p className="text-sm text-muted-foreground">No loan history to display.</p>
              )}

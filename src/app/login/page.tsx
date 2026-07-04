@@ -41,7 +41,9 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error);
       } else {
-        if (result.role === 'admin') {
+        if (result.requiresPasswordChange) {
+            router.push('/force-password-change');
+        } else if (result.role === 'admin') {
             router.push('/admin/dashboard');
         } else {
             router.push('/dashboard');

@@ -14,6 +14,7 @@ import { getPendingApprovalCount } from "@/app/admin/approvals/actions";
 
 export function Header({ user }: { user: User }) {
   const [approvalCount, setApprovalCount] = React.useState(0);
+  const [open, setOpen] = React.useState(false);
     
     const fetchApprovalCount = React.useCallback(() => {
         if (user.role === 'admin') {
@@ -39,7 +40,7 @@ export function Header({ user }: { user: User }) {
   
   return (
     <header className="flex h-14 items-center justify-between gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-40 md:hidden">
-        <Sheet>
+        <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="outline"
@@ -55,7 +56,7 @@ export function Header({ user }: { user: User }) {
                   <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                   <SheetDescription className="sr-only">Main menu for navigating the application.</SheetDescription>
                 </SheetHeader>
-               <SidebarNav user={user} isMobile={true} approvalCount={approvalCount}/>
+               <SidebarNav user={user} isMobile={true} approvalCount={approvalCount} onLinkClick={() => setOpen(false)}/>
             </SheetContent>
           </Sheet>
         <div className="flex-1">

@@ -113,14 +113,16 @@ export function ModificationApprovals({ pendingModifications: initialModificatio
                                     }
                                 </TableCell>
                                 <TableCell className="font-bold">₹{request.requestedValue.toLocaleString()}</TableCell>
-                                <TableCell>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
-                                <TableCell className="flex justify-end gap-2">
-                                    <ModificationActionButton loanId={loan._id} requestId={request._id} action={approveModification} variant="default" onAction={handleModificationAction} tooltip="Approve Request">
-                                        <Check className="size-4" />
-                                    </ModificationActionButton>
-                                    <ModificationActionButton loanId={loan._id} requestId={request._id} action={rejectModification} variant="destructive" onAction={handleModificationAction} tooltip="Reject Request">
-                                        <X className="size-4" />
-                                    </ModificationActionButton>
+                                <TableCell suppressHydrationWarning>{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                                <TableCell className="text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <ModificationActionButton loanId={loan._id} requestId={request._id} action={approveModification} variant="default" onAction={handleModificationAction} tooltip="Approve Request">
+                                            <Check className="size-4" />
+                                        </ModificationActionButton>
+                                        <ModificationActionButton loanId={loan._id} requestId={request._id} action={rejectModification} variant="destructive" onAction={handleModificationAction} tooltip="Reject Request">
+                                            <X className="size-4" />
+                                        </ModificationActionButton>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))

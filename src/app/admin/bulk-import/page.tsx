@@ -57,10 +57,10 @@ export default function BulkImportPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-md bg-secondary">
+                <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between p-4 rounded-md bg-secondary">
                     <p className="text-sm font-medium">View submitted data and download the `Members.xlsx` file.</p>
-                    <Button asChild>
-                        <Link href="/admin/data-export">Go to Data Export <ArrowRight /></Link>
+                    <Button asChild className="w-full sm:w-auto">
+                        <Link href="/admin/data-export" className="w-full justify-center">Go to Data Export <ArrowRight className="ml-2 size-4" /></Link>
                     </Button>
                 </div>
             </CardContent>

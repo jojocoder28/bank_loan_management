@@ -54,7 +54,7 @@ const adminNavLinks = [
     { href: "/admin/settings", label: "Settings", icon: <Settings className="size-5" /> },
 ]
 
-export function SidebarNav({ user, isMobile = false, isCollapsed = false, approvalCount = 0 }: { user: User, isMobile?: boolean, isCollapsed?: boolean, approvalCount?: number }) {
+export function SidebarNav({ user, isMobile = false, isCollapsed = false, approvalCount = 0, onLinkClick }: { user: User, isMobile?: boolean, isCollapsed?: boolean, approvalCount?: number, onLinkClick?: () => void }) {
     const pathname = usePathname();
     
     let navLinks;
@@ -79,6 +79,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
               <TooltipTrigger asChild>
                 <Link
                   href={link.href}
+                  onClick={onLinkClick}
                   className={cn(
                     "relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
                     pathname.startsWith(link.href) && "bg-accent text-accent-foreground"
@@ -99,6 +100,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
             <Link
               key={link.href}
               href={link.href}
+              onClick={onLinkClick}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                 pathname.startsWith(link.href) && "bg-muted text-primary",
@@ -120,6 +122,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
             <nav className="grid gap-2 text-lg font-medium">
                  <Link
                     href={user.role === 'admin' ? "/admin/dashboard" : "/dashboard"}
+                    onClick={onLinkClick}
                     className="flex items-center gap-2 text-lg font-semibold mb-4"
                     >
                     <Landmark className="h-6 w-6" />

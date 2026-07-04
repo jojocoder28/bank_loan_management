@@ -51,7 +51,7 @@ export default function ProfitLossPage() {
   return (
     <div className="grid gap-8">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
                 <CardTitle className="flex items-center gap-2">
                     <BarChart3 />
@@ -61,10 +61,10 @@ export default function ProfitLossPage() {
                     An overview of the bank's income and expenses.
                 </CardDescription>
             </div>
-             <div className="flex items-center gap-2">
+             <div className="flex items-center gap-2 w-full sm:w-auto">
                 <CalendarIcon className="size-4 text-muted-foreground" />
                 <Select value={range} onValueChange={setRange} disabled={isPending}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Select date range" />
                   </SelectTrigger>
                   <SelectContent>

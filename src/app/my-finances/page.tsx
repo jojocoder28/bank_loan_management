@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PiggyBank, ShieldCheck, Handshake, Landmark } from 'lucide-react';
+import { PiggyBank, ShieldCheck, Handshake, Landmark, Wallet } from 'lucide-react';
 import { getMyFinancesData } from './actions';
 import { redirect } from 'next/navigation';
 import { ILoan } from '@/models/loan';
@@ -54,20 +54,27 @@ export default async function MyFinancesPage() {
               A complete overview of your funds and loan history.
             </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
+        <CardContent className="grid gap-6 md:grid-cols-3">
             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-full"><PiggyBank className="size-5 text-primary" /></div>
                 <p className="font-medium">Share Fund</p>
               </div>
-              <p className="font-bold text-lg">₹{user.shareFund.toLocaleString()}</p>
+              <p className="font-bold text-lg">₹{(user.shareFund || 0).toLocaleString()}</p>
+            </div>
+            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-full"><Wallet className="size-5 text-primary" /></div>
+                <p className="font-medium">Thrift Fund</p>
+              </div>
+              <p className="font-bold text-lg">₹{(user.thriftFund || 0).toLocaleString()}</p>
             </div>
              <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
               <div className="flex items-center gap-3">
                  <div className="p-2 bg-green-500/10 rounded-full"><ShieldCheck className="size-5 text-green-500" /></div>
                 <p className="font-medium">Guaranteed Fund</p>
               </div>
-              <p className="font-bold text-lg">₹{user.guaranteedFund.toLocaleString()}</p>
+              <p className="font-bold text-lg">₹{(user.guaranteedFund || 0).toLocaleString()}</p>
             </div>
         </CardContent>
       </Card>
@@ -134,7 +141,7 @@ export default async function MyFinancesPage() {
                     <TableBody>
                         {allLoans.map((loan: ILoan) => (
                             <TableRow key={loan._id.toString()}>
-                                <TableCell>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
+                                <TableCell suppressHydrationWarning>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
                                 <TableCell>₹{loan.principal.toLocaleString()}</TableCell>
                                 <TableCell>

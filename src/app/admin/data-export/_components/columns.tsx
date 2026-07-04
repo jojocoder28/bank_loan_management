@@ -50,7 +50,7 @@ export const columns: ColumnDef<IBulkImportData>[] = [
     header: "Join Date",
     cell: ({ row }) => {
       const date = new Date(row.getValue("joinDate"))
-      return <span>{date.toLocaleDateString()}</span>
+      return <span suppressHydrationWarning>{date.toLocaleDateString()}</span>
     },
   },
   {

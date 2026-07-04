@@ -21,11 +21,11 @@ export default async function ApprovalsPage() {
 
   return (
     <Tabs defaultValue="memberships" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="memberships">Membership Applications ({pendingUsers.length})</TabsTrigger>
-        <TabsTrigger value="loans">Loan Applications ({pendingLoans.length})</TabsTrigger>
-        <TabsTrigger value="modifications">Loan Modifications ({pendingModifications.length})</TabsTrigger>
-        <TabsTrigger value="profiles">Profile Updates ({pendingProfileModifications.length})</TabsTrigger>
+      <TabsList className="flex flex-col md:grid w-full md:grid-cols-4 h-auto gap-1 bg-muted p-1">
+        <TabsTrigger value="memberships" className="w-full justify-start md:justify-center py-2">Membership Applications ({pendingUsers.length})</TabsTrigger>
+        <TabsTrigger value="loans" className="w-full justify-start md:justify-center py-2">Loan Applications ({pendingLoans.length})</TabsTrigger>
+        <TabsTrigger value="modifications" className="w-full justify-start md:justify-center py-2">Loan Modifications ({pendingModifications.length})</TabsTrigger>
+        <TabsTrigger value="profiles" className="w-full justify-start md:justify-center py-2">Profile Updates ({pendingProfileModifications.length})</TabsTrigger>
       </TabsList>
       <TabsContent value="memberships">
         <Card>

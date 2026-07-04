@@ -95,7 +95,7 @@ export default function RetiredUsersPage() {
                             </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{user.membershipNumber || 'N/A'}</TableCell>
-                        <TableCell className="text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell suppressHydrationWarning className="text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                            <Button asChild variant="outline" size="sm">
                                <Link href={`/admin/users/${(user as any)._id.toString()}`}>

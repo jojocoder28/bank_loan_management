@@ -96,7 +96,7 @@ export function ProfileApprovals({ pendingRequests: initialRequests }: { pending
                                     ))}
                                 </ul>
                             </TableCell>
-                            <TableCell className="align-top whitespace-nowrap">{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                            <TableCell suppressHydrationWarning className="align-top whitespace-nowrap">{new Date(request.requestDate).toLocaleDateString()}</TableCell>
                             
                             <TableCell className="text-right align-top">
                                 <div className="flex justify-end gap-2">
