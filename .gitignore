@@ -45,3 +45,4 @@ firebase-debug.log
 firestore-debug.log
 
 important_docs
+import_data.js
