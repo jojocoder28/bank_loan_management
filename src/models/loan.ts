@@ -26,6 +26,8 @@ export interface IModificationRequest extends Document {
     // For payment changes, which month it applies to
     effectiveMonth?: number; 
     effectiveYear?: number;
+    requestType?: 'temporary' | 'permanent';
+    durationMonths?: number;
 }
 
 
@@ -67,6 +69,7 @@ const ModificationRequestSchema = new Schema<IModificationRequest>({
     effectiveMonth: { type: Number },
     effectiveYear: { type: Number },
     requestType: { type: String, enum: ['temporary', 'permanent'], default: 'temporary' },
+    durationMonths: { type: Number, default: 1 },
 });
 
 // Mongoose Schema for Loans

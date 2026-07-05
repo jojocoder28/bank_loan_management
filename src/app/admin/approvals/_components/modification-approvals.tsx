@@ -114,7 +114,10 @@ export function ModificationApprovals({ pendingModifications: initialModificatio
                                                     ? "text-purple-600 bg-purple-50 border-purple-200 dark:text-purple-400 dark:bg-purple-950/30 dark:border-purple-800"
                                                     : "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/30 dark:border-blue-800"
                                             )}>
-                                                {request.requestType || 'temporary'}
+                                                {request.requestType === 'permanent' 
+                                                    ? 'permanent' 
+                                                    : `temporary (${request.durationMonths || 1} mo)`
+                                                }
                                             </span>
                                         )}
                                     </div>

@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const initialState = {
   error: null,
@@ -37,6 +38,7 @@ export function UpdatePaymentForm({ loan }: { loan: ILoan }) {
   const [state, formAction] = useActionState(requestPaymentChange, initialState);
   const [amount, setAmount] = useState(loan.monthlyPrincipalPayment ?? 0);
   const [reqType, setReqType] = useState<"temporary" | "permanent">("temporary");
+  const [durationMonths, setDurationMonths] = useState<string>("1");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -97,11 +99,29 @@ export function UpdatePaymentForm({ loan }: { loan: ILoan }) {
                  </RadioGroup>
             </div>
 
+            {reqType === "temporary" && (
+              <div className="space-y-2">
+                <Label htmlFor="duration-months">Duration (Months)</Label>
+                <Select value={durationMonths} onValueChange={setDurationMonths} name="durationMonths">
+                  <SelectTrigger id="duration-months">
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Month</SelectItem>
+                    <SelectItem value="2">2 Months</SelectItem>
+                    <SelectItem value="3">3 Months</SelectItem>
+                    <SelectItem value="6">6 Months</SelectItem>
+                    <SelectItem value="12">12 Months</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <Alert variant="default" className="text-xs">
                 <Info className="size-4" />
                 <AlertDescription>
                     {reqType === 'temporary' 
-                      ? "This is a one-time change for your next payment cycle. Your payment amount will revert to the original value afterwards."
+                      ? `This is a temporary change for your next ${durationMonths} payment cycle${Number(durationMonths) > 1 ? 's' : ''}. Your payment amount will revert to the original value afterwards.`
                       : "This is a permanent change to your monthly principal payment amount."
                     } This request requires admin approval.
                 </AlertDescription>

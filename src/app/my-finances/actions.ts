@@ -54,6 +54,7 @@ const updatePaymentSchema = z.object({
   loanId: z.string(),
   newMonthlyPayment: z.coerce.number().min(0, "Monthly payment cannot be negative."),
   requestType: z.enum(['temporary', 'permanent']),
+  durationMonths: z.coerce.number().min(1, "Duration must be at least 1 month.").optional(),
 });
 
 export async function requestPaymentChange(prevState: any, formData: FormData): Promise<{ error: string | null, success: boolean }> {
@@ -68,7 +69,7 @@ export async function requestPaymentChange(prevState: any, formData: FormData): 
         return { error: validatedFields.error.flatten().fieldErrors.newMonthlyPayment?.[0] || validatedFields.error.flatten().fieldErrors.requestType?.[0] || "Invalid input.", success: false };
     }
 
-    const { loanId, newMonthlyPayment, requestType } = validatedFields.data;
+    const { loanId, newMonthlyPayment, requestType, durationMonths } = validatedFields.data;
 
     try {
         await dbConnect();
@@ -93,6 +94,7 @@ export async function requestPaymentChange(prevState: any, formData: FormData): 
             effectiveMonth: now.getMonth(), // 0-indexed
             effectiveYear: now.getFullYear(),
             requestType,
+            durationMonths: requestType === 'temporary' ? (durationMonths ?? 1) : undefined,
         } as any);
 
 

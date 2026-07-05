@@ -145,14 +145,20 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
         if (loan) {
             loanPrincipalPayment = loan.monthlyPrincipalPayment;
             
-            // Check for approved temporary change_payment request for this targetMonth & targetYear
+            // Check for approved temporary change_payment request that spans this targetMonth & targetYear
             const tempChangeRequest = loan.modificationRequests?.find(
-                (req: any) => 
-                    req.type === 'change_payment' && 
-                    req.status === 'approved' && 
-                    req.requestType === 'temporary' && 
-                    req.effectiveMonth === targetMonth && 
-                    req.effectiveYear === targetYear
+                (req: any) => {
+                    if (req.type !== 'change_payment' || req.status !== 'approved' || req.requestType !== 'temporary') {
+                        return false;
+                    }
+                    if (req.effectiveMonth === undefined || req.effectiveYear === undefined) {
+                        return false;
+                    }
+                    const startVal = req.effectiveYear * 12 + req.effectiveMonth;
+                    const targetVal = targetYear * 12 + targetMonth;
+                    const duration = req.durationMonths || 1;
+                    return targetVal >= startVal && targetVal < startVal + duration;
+                }
             );
             if (tempChangeRequest) {
                 loanPrincipalPayment = tempChangeRequest.requestedValue;
