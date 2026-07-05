@@ -1,40 +1,40 @@
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    CardFooter,
 } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
-  Landmark,
-  PiggyBank,
-  History,
-  TrendingUp,
-  CreditCard,
-  Calendar,
-  ShieldCheck,
-  Award,
-  CircleDollarSign,
-  ArrowRight,
-  UserCheck,
-  Wallet,
-  Handshake,
-  HeartHandshake,
-  StepForward,
-  Target
+    Landmark,
+    PiggyBank,
+    History,
+    TrendingUp,
+    CreditCard,
+    Calendar,
+    ShieldCheck,
+    Award,
+    CircleDollarSign,
+    ArrowRight,
+    UserCheck,
+    Wallet,
+    Handshake,
+    HeartHandshake,
+    StepForward,
+    Target
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
@@ -44,22 +44,22 @@ import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 
 const benefits = [
-    { title: "Annual Durga Puja Dividend", description: "10-12% on Share Fund", icon: <TrendingUp className="size-6 text-primary"/> },
-    { title: "One-Day Picnic", description: "Fully Self-Sponsored", icon: <UserCheck className="size-6 text-primary"/> },
-    { title: "Annual Tour Support", description: "Contribution from Profits", icon: <Landmark className="size-6 text-primary"/> },
-    { title: "Yearly Gift", description: "Yearly Gift", icon: <Award className="size-6 text-primary"/> },
+    { title: "Annual Durga Puja Dividend", description: "10-12% on Share Fund", icon: <TrendingUp className="size-6 text-primary" /> },
+    { title: "One-Day Picnic", description: "Fully Co-operative Sponsored", icon: <UserCheck className="size-6 text-primary" /> },
+    { title: "Annual Tour Support", description: "Contribution from Profits", icon: <Landmark className="size-6 text-primary" /> },
+    { title: "Yearly Gift", description: "Yearly Gift", icon: <Award className="size-6 text-primary" /> },
 ]
 
 const offerings = [
-    { title: "Secure & Fair Loans", description: "Access loans at competitive interest rates with transparent terms.", icon: <Handshake className="size-8 text-primary"/> },
-    { title: "Savings & Growth", description: "Grow your savings with Share, Guaranteed, and Thrift funds.", icon: <PiggyBank className="size-8 text-primary"/> },
-    { title: "Community & Support", description: "Be part of a supportive community of fellow teachers.", icon: <HeartHandshake className="size-8 text-primary"/> },
+    { title: "Secure & Fair Loans", description: "Access loans at competitive interest rates with transparent terms.", icon: <Handshake className="size-8 text-primary" /> },
+    { title: "Savings & Growth", description: "Grow your savings with Share, Guaranteed, and Thrift funds.", icon: <PiggyBank className="size-8 text-primary" /> },
+    { title: "Community & Support", description: "Be part of a supportive community of fellow teachers.", icon: <HeartHandshake className="size-8 text-primary" /> },
 ]
 
 const steps = [
-    { title: "Fill Out the Form", description: "Complete the simple online membership application with your details.", icon: <StepForward className="size-8 text-primary"/> },
-    { title: "Admin Review", description: "Our team will review your application for approval.", icon: <UserCheck className="size-8 text-primary"/> },
-    { title: "Become a Member", description: "Once approved, you'll have full access to all member benefits and services.", icon: <Target className="size-8 text-primary"/> },
+    { title: "Fill Out the Form", description: "Complete the simple online membership application with your details.", icon: <StepForward className="size-8 text-primary" /> },
+    { title: "Admin Review", description: "Our team will review your application for approval.", icon: <UserCheck className="size-8 text-primary" /> },
+    { title: "Become a Member", description: "Once approved, you'll have full access to all member benefits and services.", icon: <Target className="size-8 text-primary" /> },
 ]
 
 
@@ -69,18 +69,18 @@ const UserLandingPage = () => {
             {/* Hero Section */}
             <section className="text-center">
                 <div className="max-w-3xl mx-auto py-12 md:py-20">
-                     <Badge variant="outline" className="mb-4">For Teachers, By Teachers</Badge>
+                    <Badge variant="outline" className="mb-4">For Teachers, By Teachers</Badge>
                     <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-primary">A Financial Cooperative You Can Trust</h1>
                     <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
                         Join the Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD. We provide exclusive financial products and community benefits, built on trust and mutual growth.
                     </p>
                     <Button asChild size="lg" className="mt-8">
-                        <Link href="/become-member">Become a Member Today <ArrowRight className="ml-2"/></Link>
+                        <Link href="/become-member">Become a Member Today <ArrowRight className="ml-2" /></Link>
                     </Button>
                 </div>
             </section>
-            
-             {/* Offerings Section */}
+
+            {/* Offerings Section */}
             <section>
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold">Our Core Offerings</h2>
@@ -91,7 +91,7 @@ const UserLandingPage = () => {
                         <Card key={item.title} className="text-center hover:shadow-lg transition-shadow duration-300">
                             <CardHeader className="items-center">
                                 <div className="bg-primary/10 p-4 rounded-full mb-4">
-                                  {item.icon}
+                                    {item.icon}
                                 </div>
                                 <CardTitle>{item.title}</CardTitle>
                             </CardHeader>
@@ -113,9 +113,9 @@ const UserLandingPage = () => {
                         <div className="space-y-4 pt-4">
                             {benefits.map(benefit => (
                                 <div key={benefit.title} className="flex items-start gap-4">
-                                     <div className="bg-primary/10 p-3 rounded-full mt-1">
-                                         {benefit.icon}
-                                     </div>
+                                    <div className="bg-primary/10 p-3 rounded-full mt-1">
+                                        {benefit.icon}
+                                    </div>
                                     <div>
                                         <h4 className="font-semibold text-lg">{benefit.title}</h4>
                                         <p className="text-sm text-muted-foreground">{benefit.description}</p>
@@ -125,45 +125,45 @@ const UserLandingPage = () => {
                         </div>
                     </div>
                     <div className="h-[400px] w-full bg-secondary/30 rounded-lg flex items-center justify-center p-4 overflow-hidden relative" data-ai-hint="community people">
-                       {/* Abstract CSS art for community */}
-                       <div className="absolute w-40 h-80 rounded-full bg-primary/20 -bottom-10 -left-10"></div>
-                       <div className="absolute w-56 h-96 rounded-full bg-accent/80 -top-20 -right-20"></div>
-                       <div className="relative flex items-end gap-2 isolate">
+                        {/* Abstract CSS art for community */}
+                        <div className="absolute w-40 h-80 rounded-full bg-primary/20 -bottom-10 -left-10"></div>
+                        <div className="absolute w-56 h-96 rounded-full bg-accent/80 -top-20 -right-20"></div>
+                        <div className="relative flex items-end gap-2 isolate">
                             {/* Person 1 */}
                             <div className="relative flex flex-col items-center">
                                 <div className="h-16 w-16 rounded-full bg-primary/30 backdrop-blur-sm border border-white/10"></div>
                                 <div className="h-28 w-24 rounded-t-full bg-primary/30 backdrop-blur-sm border border-white/10 -mt-2"></div>
                             </div>
-                             {/* Person 2 (Center) */}
-                             <div className="relative flex flex-col items-center bottom-6 z-10">
+                            {/* Person 2 (Center) */}
+                            <div className="relative flex flex-col items-center bottom-6 z-10">
                                 <div className="h-20 w-20 rounded-full bg-primary/50 backdrop-blur-sm border border-white/10"></div>
                                 <div className="h-40 w-28 rounded-t-full bg-primary/50 backdrop-blur-sm border border-white/10 -mt-2"></div>
                             </div>
-                             {/* Person 3 */}
-                             <div className="relative flex flex-col items-center">
+                            {/* Person 3 */}
+                            <div className="relative flex flex-col items-center">
                                 <div className="h-16 w-16 rounded-full bg-primary/30 backdrop-blur-sm border border-white/10"></div>
                                 <div className="h-28 w-24 rounded-t-full bg-primary/30 backdrop-blur-sm border border-white/10 -mt-2"></div>
                             </div>
-                       </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-             {/* How to Join Section */}
+            {/* How to Join Section */}
             <section className="py-12 md:py-20">
-                 <div className="text-center mb-12">
+                <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold">Ready to Join?</h2>
                     <p className="text-muted-foreground mt-2">Becoming a member is simple. Here's how it works.</p>
                 </div>
                 <div className="relative">
                     {/* The connecting line */}
                     <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -translate-y-1/2 hidden md:block"></div>
-                    
+
                     <div className="grid md:grid-cols-3 gap-12 md:gap-8 text-center relative">
                         {steps.map((step, index) => (
                             <div key={step.title} className="flex flex-col items-center bg-background px-4">
                                 <div className="flex items-center justify-center size-16 rounded-full bg-primary/10 border-2 border-primary mb-4">
-                                   {step.icon}
+                                    {step.icon}
                                 </div>
                                 <h3 className="text-xl font-semibold mb-2">{index + 1}. {step.title}</h3>
                                 <p className="text-muted-foreground">{step.description}</p>
@@ -173,7 +173,7 @@ const UserLandingPage = () => {
                 </div>
                 <div className="text-center mt-12">
                     <Button asChild size="lg">
-                        <Link href="/become-member">Start Your Application <ArrowRight className="ml-2"/></Link>
+                        <Link href="/become-member">Start Your Application <ArrowRight className="ml-2" /></Link>
                     </Button>
                 </div>
             </section>
@@ -183,205 +183,205 @@ const UserLandingPage = () => {
 
 
 export default async function DashboardPage() {
-  const data = await getDashboardData();
+    const data = await getDashboardData();
 
-  if (!data) {
-    redirect('/login');
-  }
+    if (!data) {
+        redirect('/login');
+    }
 
-  const { user, activeLoans, loanHistory } = data;
-  
-  // If the user is not a member, show the landing page.
-  if (user.role === 'user') {
-      return <UserLandingPage />;
-  }
+    const { user, activeLoans, loanHistory } = data;
+
+    // If the user is not a member, show the landing page.
+    if (user.role === 'user') {
+        return <UserLandingPage />;
+    }
 
 
-  const totalLoanAmount = activeLoans.reduce((sum, loan) => sum + loan.loanAmount, 0);
-  const totalPrincipalLeft = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
-  const loanProgress = totalLoanAmount > 0 ? ((totalLoanAmount - totalPrincipalLeft) / totalLoanAmount) * 100 : 0;
+    const totalLoanAmount = activeLoans.reduce((sum, loan) => sum + loan.loanAmount, 0);
+    const totalPrincipalLeft = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
+    const loanProgress = totalLoanAmount > 0 ? ((totalLoanAmount - totalPrincipalLeft) / totalLoanAmount) * 100 : 0;
 
-  const loanStatusVariant: { [key: string]: "default" | "secondary" | "outline" | "destructive" } = {
-      active: 'default',
-      paid: 'secondary',
-      pending: 'outline',
-      rejected: 'destructive'
-  }
+    const loanStatusVariant: { [key: string]: "default" | "secondary" | "outline" | "destructive" } = {
+        active: 'default',
+        paid: 'secondary',
+        pending: 'outline',
+        rejected: 'destructive'
+    }
 
-  return (
-    <div className="flex flex-col gap-8">
-       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Landmark className="size-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Active Loans Overview</CardTitle>
-                <CardDescription>
-                  {activeLoans.length > 0 ? `You have ${activeLoans.length} active loan(s).`: 'You have no active loans.'}
-                </CardDescription>
-              </div>
+    return (
+        <div className="flex flex-col gap-8">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="lg:col-span-2">
+                    <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-primary/10 p-3 rounded-full">
+                                <Landmark className="size-6 text-primary" />
+                            </div>
+                            <div>
+                                <CardTitle>Active Loans Overview</CardTitle>
+                                <CardDescription>
+                                    {activeLoans.length > 0 ? `You have ${activeLoans.length} active loan(s).` : 'You have no active loans.'}
+                                </CardDescription>
+                            </div>
+                        </div>
+                        <Button asChild className="w-full sm:w-auto">
+                            <Link href="/apply-loan" className="w-full justify-center">Apply for New Loan <ArrowRight className="ml-2" /></Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="grid gap-6">
+                        {activeLoans.length > 0 ? (
+                            <div>
+                                <div className='grid grid-cols-3 gap-2 sm:gap-4 text-center pb-6'>
+                                    <div>
+                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Total Loan Amount</p>
+                                        <p className="text-xs sm:text-2xl font-bold">₹{totalLoanAmount.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Total Principal Left</p>
+                                        <p className="text-xs sm:text-2xl font-bold">₹{totalPrincipalLeft.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Active Loans</p>
+                                        <p className="text-xs sm:text-2xl font-bold">{activeLoans.length}</p>
+                                    </div>
+                                </div>
+                                <Progress value={loanProgress} aria-label={`${loanProgress.toFixed(0)}% of total loans paid`} />
+                                <p className="text-right text-sm text-muted-foreground pt-2">{loanProgress.toFixed(2)}% Paid</p>
+                            </div>
+                        ) : (
+                            <div className="text-center text-muted-foreground py-8">
+                                <p>No active loan data to display. Apply for a new loan to get started.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                    <CardFooter>
+                        <Button variant="link" asChild>
+                            <Link href="/my-finances">Manage Loans & View Details &rarr;</Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Your Funds</CardTitle>
+                        <CardDescription>Current balance of your funds.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 rounded-full"><PiggyBank className="size-5 text-primary" /></div>
+                                <p className="font-medium">Share Fund</p>
+                            </div>
+                            <p className="font-bold text-lg">₹{user.shareFund.toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-500/10 rounded-full"><ShieldCheck className="size-5 text-green-500" /></div>
+                                <p className="font-medium">Guaranteed Fund</p>
+                            </div>
+                            <p className="font-bold text-lg">₹{user.guaranteedFund.toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-purple-500/10 rounded-full"><Wallet className="size-5 text-purple-500" /></div>
+                                <p className="font-medium">Thrift Fund</p>
+                            </div>
+                            <p className="font-bold text-lg">₹{(user.thriftFund ?? 0).toLocaleString()}</p>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
-             <Button asChild className="w-full sm:w-auto">
-                <Link href="/apply-loan" className="w-full justify-center">Apply for New Loan <ArrowRight className="ml-2" /></Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="grid gap-6">
-            {activeLoans.length > 0 ? (
-              <div>
-                <div className='grid grid-cols-3 gap-2 sm:gap-4 text-center pb-6'>
-                    <div>
-                        <p className="text-[10px] sm:text-sm text-muted-foreground">Total Loan Amount</p>
-                        <p className="text-xs sm:text-2xl font-bold">₹{totalLoanAmount.toLocaleString()}</p>
-                    </div>
-                     <div>
-                        <p className="text-[10px] sm:text-sm text-muted-foreground">Total Principal Left</p>
-                        <p className="text-xs sm:text-2xl font-bold">₹{totalPrincipalLeft.toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <p className="text-[10px] sm:text-sm text-muted-foreground">Active Loans</p>
-                        <p className="text-xs sm:text-2xl font-bold">{activeLoans.length}</p>
-                    </div>
-                </div>
-                <Progress value={loanProgress} aria-label={`${loanProgress.toFixed(0)}% of total loans paid`} />
-                <p className="text-right text-sm text-muted-foreground pt-2">{loanProgress.toFixed(2)}% Paid</p>
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground py-8">
-                <p>No active loan data to display. Apply for a new loan to get started.</p>
-              </div>
-            )}
-          </CardContent>
-           <CardFooter>
-                <Button variant="link" asChild>
-                    <Link href="/my-finances">Manage Loans & View Details &rarr;</Link>
-                </Button>
-            </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Funds</CardTitle>
-            <CardDescription>Current balance of your funds.</CardDescription>
-          </CardHeader>
-           <CardContent className="flex flex-col gap-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-full"><PiggyBank className="size-5 text-primary" /></div>
-                <p className="font-medium">Share Fund</p>
-              </div>
-              <p className="font-bold text-lg">₹{user.shareFund.toLocaleString()}</p>
-            </div>
-             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-              <div className="flex items-center gap-3">
-                 <div className="p-2 bg-green-500/10 rounded-full"><ShieldCheck className="size-5 text-green-500" /></div>
-                <p className="font-medium">Guaranteed Fund</p>
-              </div>
-              <p className="font-bold text-lg">₹{user.guaranteedFund.toLocaleString()}</p>
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-              <div className="flex items-center gap-3">
-                 <div className="p-2 bg-purple-500/10 rounded-full"><Wallet className="size-5 text-purple-500" /></div>
-                <p className="font-medium">Thrift Fund</p>
-              </div>
-              <p className="font-bold text-lg">₹{(user.thriftFund ?? 0).toLocaleString()}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-1">
-          <CardHeader className="flex flex-row items-center gap-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                  <UserCheck className="size-6 text-primary" />
-              </div>
-              <div>
-                  <CardTitle>Membership Status</CardTitle>
-                  <CardDescription>Your current role and status.</CardDescription>
-              </div>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                  <p className="font-medium">Role</p>
-                  <Badge variant="outline" className="capitalize">{user.role.replace('_', ' ')}</Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                  <p className="font-medium">Membership ID</p>
-                  <Badge variant="outline">{user.membershipNumber || 'N/A'}</Badge>
-              </div>
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
-            <CardHeader className="flex flex-row items-center gap-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-                <Award className="size-6 text-primary" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <Card className="lg:col-span-1">
+                    <CardHeader className="flex flex-row items-center gap-4">
+                        <div className="bg-primary/10 p-3 rounded-full">
+                            <UserCheck className="size-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle>Membership Status</CardTitle>
+                            <CardDescription>Your current role and status.</CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="grid gap-4">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                            <p className="font-medium">Role</p>
+                            <Badge variant="outline" className="capitalize">{user.role.replace('_', ' ')}</Badge>
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                            <p className="font-medium">Membership ID</p>
+                            <Badge variant="outline">{user.membershipNumber || 'N/A'}</Badge>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="lg:col-span-2">
+                    <CardHeader className="flex flex-row items-center gap-4">
+                        <div className="bg-primary/10 p-3 rounded-full">
+                            <Award className="size-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle>Membership Benefits</CardTitle>
+                            <CardDescription>Annual perks for all members.</CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 text-sm md:grid-cols-2">
+                        {benefits.map(benefit => (
+                            <div key={benefit.title} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-secondary/50">
+                                <p className="font-medium">{benefit.title}</p>
+                                <Badge variant="outline" className="w-fit">{benefit.description}</Badge>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
-            <div>
-                <CardTitle>Membership Benefits</CardTitle>
-                <CardDescription>Annual perks for all members.</CardDescription>
-            </div>
-            </CardHeader>
-            <CardContent className="grid gap-4 text-sm md:grid-cols-2">
-                {benefits.map(benefit => (
-                    <div key={benefit.title} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-secondary/50">
-                        <p className="font-medium">{benefit.title}</p>
-                        <Badge variant="outline" className="w-fit">{benefit.description}</Badge>
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-      </div>
 
-       <Card>
-          <CardHeader>
-            <CardTitle>Recent Loan History</CardTitle>
-            <CardDescription>
-              Your last 5 loan applications.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-             {loanHistory.length > 0 ? (
-                <div className="w-full overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Applied On</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loanHistory.map(loan => (
-                                 <TableRow key={loan._id.toString()}>
-                                    <TableCell suppressHydrationWarning>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
-                                    <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={loanStatusVariant[loan.status]} className="capitalize">{loan.status}</Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="outline" size="sm" asChild>
-                                            <Link href="/my-finances">View Details</Link>
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-             ) : (
-                <p className="text-sm text-muted-foreground">No loan history to display.</p>
-             )}
-          </CardContent>
-           <CardFooter>
-                <Button variant="link" asChild>
-                    <Link href="/my-finances">View All Loan History &rarr;</Link>
-                </Button>
-            </CardFooter>
-        </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Recent Loan History</CardTitle>
+                    <CardDescription>
+                        Your last 5 loan applications.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loanHistory.length > 0 ? (
+                        <div className="w-full overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Applied On</TableHead>
+                                        <TableHead>Amount</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {loanHistory.map(loan => (
+                                        <TableRow key={loan._id.toString()}>
+                                            <TableCell suppressHydrationWarning>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
+                                            <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={loanStatusVariant[loan.status]} className="capitalize">{loan.status}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="outline" size="sm" asChild>
+                                                    <Link href="/my-finances">View Details</Link>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">No loan history to display.</p>
+                    )}
+                </CardContent>
+                <CardFooter>
+                    <Button variant="link" asChild>
+                        <Link href="/my-finances">View All Loan History &rarr;</Link>
+                    </Button>
+                </CardFooter>
+            </Card>
 
-    </div>
-  );
+        </div>
+    );
 }

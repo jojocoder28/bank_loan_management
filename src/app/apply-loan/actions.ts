@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { getSession } from '@/lib/session';
+import { logAuditActivity } from '@/lib/audit';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/user';
 import Loan from '@/models/loan';
@@ -110,6 +111,15 @@ export async function applyForLoan(prevState: any, formData: FormData) {
           guaranteed: guaranteedFundShortfall
       }
     });
+
+    // Record activity to the database audit trail
+    await logAuditActivity(
+        'LOAN_APPLIED',
+        user.email,
+        user._id,
+        `Member applied for a new loan of ₹${finalLoanAmount.toLocaleString()} (chosen monthly principal: ₹${monthlyPrincipal.toLocaleString()}).`,
+        { loanAmount: finalLoanAmount, monthlyPrincipal }
+    );
 
   } catch (error: any) {
     console.error('============== LOAN APPLICATION FAILED ==============');

@@ -8,6 +8,8 @@ import Bank from "@/models/bank";
 import { getBankSettings } from "../settings/actions";
 import { calculateAnnualInterest, calculateDividend, calculateMonthlyInterest } from "@/lib/coop-calculations";
 import { revalidatePath } from "next/cache";
+import { logAuditActivity } from "@/lib/audit";
+import { getSession } from "@/lib/session";
 
 export interface StatementRow {
     slNo: number;
@@ -346,6 +348,16 @@ export async function processMonthlyDeductions(
         const processedDate = new Date(targetYear, targetMonth, 15);
         await Bank.updateOne({ singleton: 'bank-settings' }, { $set: { lastMonthlyProcess: processedDate } });
 
+        const session = await getSession();
+        const actor = session?.user?.email || 'Admin';
+        await logAuditActivity(
+            'MONTHLY_DEDUCTION_PROCESSED',
+            actor,
+            undefined,
+            `Processed monthly thrift, share, and loan interest/principal deductions for ${targetMonthLabel}.`,
+            { month: targetMonthLabel }
+        );
+
         revalidatePath('/admin/statement');
         revalidatePath('/admin/ledger');
         revalidatePath('/my-finances');
@@ -521,6 +533,16 @@ export async function undoLastMonthlyProcess(): Promise<{ error?: string; succes
                 { $set: { lastMonthlyProcess: prevDate } }
             );
         }
+
+        const session = await getSession();
+        const actor = session?.user?.email || 'Admin';
+        await logAuditActivity(
+            'MONTHLY_DEDUCTION_UNDONE',
+            actor,
+            undefined,
+            `Rolled back and undone monthly deductions for ${targetMonthLabel}.`,
+            { month: targetMonthLabel }
+        );
 
         revalidatePath('/admin/statement');
         revalidatePath('/admin/ledger');

@@ -8,6 +8,8 @@ import ProfileModificationRequest, { IProfileModificationRequest } from "@/model
 import { revalidatePath } from "next/cache";
 import { calculateRequiredFunds } from "@/lib/coop-calculations";
 import { getBankSettings } from "../settings/actions";
+import { logAuditActivity } from "@/lib/audit";
+import { getSession } from "@/lib/session";
 
 interface PopulatedLoan extends Omit<ILoan, 'user'> {
     _id: string;
@@ -108,6 +110,9 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
     
     const userToUpdate = await User.findById(loan.user);
 
+    const session = await getSession();
+    const actor = session?.user?.email || 'Admin';
+
     if (newStatus === 'active') {
         loan.status = 'active';
         loan.issueDate = new Date();
@@ -120,8 +125,24 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
                 await userToUpdate.save();
             }
         }
+
+        await logAuditActivity(
+            'LOAN_APPROVED',
+            actor,
+            loan.user,
+            `Approved loan of ₹${loan.loanAmount.toLocaleString()} for member ${userToUpdate?.name || 'N/A'}.`,
+            { loanId: loan._id, loanAmount: loan.loanAmount }
+        );
     } else { // 'rejected'
         loan.status = 'rejected';
+
+        await logAuditActivity(
+            'LOAN_REJECTED',
+            actor,
+            loan.user,
+            `Rejected loan application of ₹${loan.loanAmount.toLocaleString()} for member ${userToUpdate?.name || 'N/A'}.`,
+            { loanId: loan._id, loanAmount: loan.loanAmount }
+        );
     }
 
     await loan.save();
@@ -160,10 +181,21 @@ export async function approveMembership(formData: FormData): Promise<{error?: st
         return { error: 'This membership number is already assigned.' }
     }
 
+    const userToOnboard = await User.findById(userId);
     await User.findByIdAndUpdate(userId, {
         role: 'member',
         membershipNumber: membershipNumber,
     });
+
+    const session = await getSession();
+    const actor = session?.user?.email || 'Admin';
+    await logAuditActivity(
+        'MEMBERSHIP_APPROVED',
+        actor,
+        userId,
+        `Approved membership for candidate ${userToOnboard?.name || 'N/A'} with Membership Number ${membershipNumber}.`,
+        { membershipNumber }
+    );
 
     revalidatePath('/admin/approvals');
     revalidatePath('/admin/users');
@@ -203,6 +235,15 @@ export async function rejectMembership(formData: FormData): Promise<{error?: str
     if (user.shareFund < 0) user.shareFund = 0; // Prevent negative funds
 
     await user.save();
+
+    const session = await getSession();
+    const actor = session?.user?.email || 'Admin';
+    await logAuditActivity(
+        'MEMBERSHIP_REJECTED',
+        actor,
+        userId,
+        `Rejected membership application for candidate ${user?.name || 'N/A'}.`
+    );
     
     revalidatePath('/admin/approvals');
     revalidatePath('/admin/users');
@@ -261,6 +302,16 @@ async function updateModificationStatus(formData: FormData, newStatus: Modificat
             }
         }
     }
+
+    const session = await getSession();
+    const actor = session?.user?.email || 'Admin';
+    await logAuditActivity(
+        newStatus === 'approved' ? 'MODIFICATION_APPROVED' : 'MODIFICATION_REJECTED',
+        actor,
+        loan.user._id,
+        `${newStatus === 'approved' ? 'Approved' : 'Rejected'} modification request of type "${request.type}" (Requested: ₹${request.requestedValue.toLocaleString()}) for member ${(loan.user as any).name || 'N/A'}.`,
+        { type: request.type, requestedValue: request.requestedValue }
+    );
 
     await loan.save();
     revalidatePath('/admin/approvals');

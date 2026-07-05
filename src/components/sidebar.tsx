@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -21,6 +20,7 @@ import {
     Gift,
     UploadCloud,
     Download,
+    ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
@@ -63,17 +63,17 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
         navLinks = adminNavLinks;
     } else if (user.role === 'member' || user.role === 'board_member') {
         navLinks = userNavLinks;
-    } else { // 'user' role (non-member)
+    } else {
         navLinks = userNavLinks.filter(link => 
             link.href === '/dashboard' || link.href === '/my-finances' || link.href === '/contact-us'
         );
     }
 
-
     const navItems = (
       <TooltipProvider>
         {navLinks.map((link) => {
             const showBadge = link.href === '/admin/approvals' && approvalCount > 0;
+            const isActive = pathname.startsWith(link.href);
             return isCollapsed ? (
             <Tooltip key={link.href} delayDuration={0}>
               <TooltipTrigger asChild>
@@ -82,7 +82,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
                   onClick={onLinkClick}
                   className={cn(
                     "relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                    pathname.startsWith(link.href) && "bg-accent text-accent-foreground"
+                    isActive && "bg-accent text-accent-foreground"
                   )}
                 >
                   {link.icon}
@@ -96,6 +96,36 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
               </TooltipTrigger>
               <TooltipContent side="right">{link.label}</TooltipContent>
             </Tooltip>
+          ) : isMobile ? (
+            // Mobile drawer link — premium pill style
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onLinkClick}
+              className={cn(
+                "group flex items-center gap-3.5 rounded-xl px-4 py-3 transition-all duration-200",
+                "text-muted-foreground hover:text-foreground",
+                isActive
+                  ? "bg-primary/10 dark:bg-primary/15 text-primary font-semibold"
+                  : "hover:bg-muted/60"
+              )}
+            >
+              <span className={cn(
+                "flex items-center justify-center size-9 rounded-lg transition-all duration-200",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+                  : "bg-muted/70 text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
+              )}>
+                {link.icon}
+              </span>
+              <span className="flex-1 text-sm font-medium">{link.label}</span>
+              {showBadge && (
+                <Badge className="shrink-0 bg-primary/90 text-primary-foreground text-xs px-2">
+                  {approvalCount}
+                </Badge>
+              )}
+              {isActive && <ChevronRight className="size-4 text-primary/70" />}
+            </Link>
           ) : (
             <Link
               key={link.href}
@@ -103,8 +133,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
               onClick={onLinkClick}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                pathname.startsWith(link.href) && "bg-muted text-primary",
-                isMobile && "text-lg"
+                isActive && "bg-muted text-primary"
               )}
             >
               {link.icon}
@@ -119,15 +148,7 @@ export function SidebarNav({ user, isMobile = false, isCollapsed = false, approv
 
     if (isMobile) {
         return (
-            <nav className="grid gap-2 text-lg font-medium">
-                 <Link
-                    href={user.role === 'admin' ? "/admin/dashboard" : "/dashboard"}
-                    onClick={onLinkClick}
-                    className="flex items-center gap-2 text-lg font-semibold mb-4"
-                    >
-                    <Landmark className="h-6 w-6" />
-                    <span>S&KGPPS Co-op</span>
-                </Link>
+            <nav className="flex flex-col gap-1">
                 {navItems}
             </nav>
         )
@@ -224,4 +245,3 @@ export function Sidebar({ user, isCollapsed, setIsCollapsed }: { user: User, isC
         </aside>
     );
 }
-

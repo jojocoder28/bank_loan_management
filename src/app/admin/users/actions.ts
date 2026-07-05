@@ -10,6 +10,8 @@ import { calculateAnnualInterest, calculateDividend, calculateRequiredFunds } fr
 import { calculateLoanTenure } from "@/lib/calculations";
 import { Resend } from "resend";
 import bcrypt from "bcrypt";
+import { logAuditActivity } from "@/lib/audit";
+import { getSession } from "@/lib/session";
 
 
 export async function getUsers(status?: UserStatus): Promise<IUser[]> {
@@ -274,6 +276,16 @@ export async function applyLoanOnBehalf(
             }
         });
 
+        const session = await getSession();
+        const actor = session?.user?.email || 'Admin';
+        await logAuditActivity(
+            'LOAN_APPLIED_ON_BEHALF',
+            actor,
+            user._id,
+            `Admin applied for a loan of ₹${finalLoanAmount.toLocaleString()} on behalf of member ${user.name} (monthly principal: ₹${monthlyPrincipal.toLocaleString()}).`,
+            { loanAmount: finalLoanAmount, monthlyPrincipal }
+        );
+
         revalidatePath(`/admin/users/${userId}`);
         revalidatePath('/admin/approvals');
         return { success: true };
@@ -327,6 +339,15 @@ export async function sendOnboardingEmail(userId: string): Promise<{ error?: str
                 </div>
             `
         });
+
+        const session = await getSession();
+        const actor = session?.user?.email || 'Admin';
+        await logAuditActivity(
+            'ONBOARDING_EMAIL_SENT',
+            actor,
+            user._id,
+            `Sent welcome onboarding credentials email to member ${user.name} (${user.email}).`
+        );
 
         return { success: true };
     } catch (e: any) {
@@ -388,6 +409,15 @@ export async function resetUserPasswordAndEmail(userId: string): Promise<{ error
                 </div>
             `
         });
+
+        const session = await getSession();
+        const actor = session?.user?.email || 'Admin';
+        await logAuditActivity(
+            'PASSWORD_RESET',
+            actor,
+            user._id,
+            `Reset member ${user.name}'s password and emailed secure temporary password.`
+        );
 
         return { success: true };
     } catch (e: any) {
@@ -453,6 +483,16 @@ export async function sendBulkOnboardingEmails(): Promise<{ error?: string; succ
                 failedCount++;
             }
         }
+
+        const session = await getSession();
+        const actor = session?.user?.email || 'Admin';
+        await logAuditActivity(
+            'ONBOARDING_BULK_EMAILS_SENT',
+            actor,
+            undefined,
+            `Sent bulk welcome onboarding credentials to ${sentCount} members (Failed: ${failedCount}).`,
+            { sentCount, failedCount }
+        );
 
         return { success: `Successfully sent onboarding credentials to ${sentCount} members.${failedCount > 0 ? ` Failed to send to ${failedCount} members.` : ''}` };
 

@@ -3,6 +3,9 @@
 
 import { z } from "zod";
 import { auditDataAnalysis } from "@/ai/flows/audit-data-analysis";
+import dbConnect from "@/lib/mongodb";
+import AuditLog from "@/models/auditLog";
+import "@/models/user";
 
 const schema = z.object({
   context: z.string().optional(),
@@ -70,12 +73,7 @@ export async function runAudit(prevState: any, formData: FormData) {
 }
 
 export async function getAuditLogs(action?: string, search?: string): Promise<any[]> {
-    const db = await import("@/lib/mongodb");
-    const AuditLog = (await import("@/models/auditLog")).default;
-    // Ensure Ref database models are loaded for populate
-    await import("@/models/user");
-    
-    await db.default();
+    await dbConnect();
     
     const query: any = {};
     if (action && action !== 'all') {
