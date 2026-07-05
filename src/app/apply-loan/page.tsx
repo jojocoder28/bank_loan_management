@@ -160,11 +160,16 @@ export default function ApplyLoanPage() {
   
   const maxLoanForUser = userData.bankSettings.maxLoanAmount - userData.activeLoanPrincipal;
 
-  const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(loanAmount);
+  const totalTargetAmount = userData.activeLoanPrincipal + loanAmount;
+  const requiredShare = totalTargetAmount * 0.05;
+  const requiredGuaranteed = totalTargetAmount * 0.05;
   
   const shareFundShortfall = Math.max(0, requiredShare - userData.shareFund);
   const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userData.guaranteedFund);
   const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
+  
+  const totalProposedLoanDebt = userData.activeLoanPrincipal + loanAmount + totalShortfall;
+  const isExceedingLimit = totalProposedLoanDebt > userData.bankSettings.maxLoanAmount;
   
   const minMonthlyPayment = Math.ceil(loanAmount / userData.bankSettings.maxLoanTenureMonths);
   
@@ -295,8 +300,18 @@ export default function ApplyLoanPage() {
           </div>
           
 
-          <div>
-            {totalShortfall > 0 ? (
+          <div className="space-y-4">
+            {isExceedingLimit && (
+                 <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Maximum Loan Limit Exceeded</AlertTitle>
+                    <AlertDescription>
+                        The requested loan of <strong>₹{loanAmount.toLocaleString()}</strong> plus the required fund top-up of <strong>₹{totalShortfall.toLocaleString()}</strong> would bring your total outstanding loan balance to <strong>₹{totalProposedLoanDebt.toLocaleString()}</strong>. This exceeds the maximum bank limit of <strong>₹{userData.bankSettings.maxLoanAmount.toLocaleString()}</strong>. Please reduce your requested amount.
+                    </AlertDescription>
+                </Alert>
+            )}
+            
+            {!isExceedingLimit && totalShortfall > 0 && (
                  <Alert variant="default" className="bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400">
                     <Info className="h-4 w-4 text-amber-600" />
                     <AlertTitle>Automatic Fund Top-Up</AlertTitle>
@@ -305,7 +320,9 @@ export default function ApplyLoanPage() {
                         This amount will be added to your total loan, and your Share and Guaranteed funds will be topped up automatically upon approval. Your final loan amount will be <strong>₹{(loanAmount + totalShortfall).toLocaleString()}</strong>.
                     </AlertDescription>
                 </Alert>
-            ) : (
+            )}
+            
+            {!isExceedingLimit && totalShortfall === 0 && (
                 <Alert variant="default" className="bg-green-600/10 border-green-600/30 text-green-700 dark:text-green-400">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <AlertTitle>Ready to Apply!</AlertTitle>
@@ -318,7 +335,7 @@ export default function ApplyLoanPage() {
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
           <Button variant="ghost" type="reset">Cancel</Button>
-          <SubmitButton disabled={isLoading} />
+          <SubmitButton disabled={isLoading || isExceedingLimit} />
         </CardFooter>
         </form>
       </Card>
