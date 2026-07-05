@@ -49,6 +49,8 @@ export async function getPendingMonths(): Promise<PendingMonth[]> {
     let startDate: Date;
     if (bank?.lastMonthlyProcess) {
         startDate = new Date(bank.lastMonthlyProcess);
+        // Set to 1st of the month first to prevent JavaScript end-of-month rollover bugs (e.g. March 31 + 1 month rolling to May 1)
+        startDate.setDate(1);
         // Start from the month after lastMonthlyProcess
         startDate.setMonth(startDate.getMonth() + 1);
     } else {
