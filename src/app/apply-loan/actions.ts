@@ -51,21 +51,20 @@ export async function applyForLoan(prevState: any, formData: FormData) {
         return { error: 'You must be a member to apply for a loan.' };
     }
 
-    // Check for existing loans
+    // Check for existing active loans
     const existingActiveLoans = await Loan.find({ user: user._id, status: 'active' });
     const totalExistingPrincipal = existingActiveLoans.reduce((sum, loan) => sum + loan.principal, 0);
-    
-    if ((totalExistingPrincipal + loanAmount) > bankSettings.maxLoanAmount) {
-         return { error: `The requested amount of ₹${loanAmount.toLocaleString()} exceeds the maximum loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}, considering your existing loan balance.` };
-    }
 
     const existingPendingLoan = await Loan.findOne({ user: user._id, status: 'pending' });
     if (existingPendingLoan) {
         return { error: 'You already have a loan application pending approval. Please wait for it to be processed.' };
     }
 
-    // Calculate required funds and any shortfall
-    const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(loanAmount);
+    // Calculate required funds (5% of the total loan size: previous outstanding principal + new requested loan amount)
+    const totalTargetAmount = totalExistingPrincipal + loanAmount;
+    const requiredShare = totalTargetAmount * 0.05;
+    const requiredGuaranteed = totalTargetAmount * 0.05;
+
     const userShareFund = user.shareFund || 0;
     const userGuaranteedFund = user.guaranteedFund || 0;
     
@@ -75,6 +74,13 @@ export async function applyForLoan(prevState: any, formData: FormData) {
 
     // The actual loan amount to be disbursed, including any shortfall
     const finalLoanAmount = loanAmount + totalShortfall;
+
+    // Verify that the final total outstanding principal (including the top-up) does not exceed max loan limit
+    if ((totalExistingPrincipal + finalLoanAmount) > bankSettings.maxLoanAmount) {
+         return { 
+             error: `The requested amount (including the automatic fund top-up of ₹${totalShortfall.toLocaleString()}) would result in a total loan balance of ₹${(totalExistingPrincipal + finalLoanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
+         };
+    }
     
     if (monthlyPrincipal <= 0) {
       return { error: 'Monthly principal payment must be a positive number.' };

@@ -223,18 +223,17 @@ export async function applyLoanOnBehalf(
         // Check for existing active loans
         const existingActiveLoans = await Loan.find({ user: user._id, status: 'active' });
         const totalExistingPrincipal = existingActiveLoans.reduce((sum, loan) => sum + loan.principal, 0);
-        
-        if ((totalExistingPrincipal + loanAmount) > bankSettings.maxLoanAmount) {
-             return { error: `Requested ₹${loanAmount.toLocaleString()} exceeds max loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()} (Current outstanding: ₹${totalExistingPrincipal.toLocaleString()}).` };
-        }
 
         const existingPendingLoan = await Loan.findOne({ user: user._id, status: 'pending' });
         if (existingPendingLoan) {
             return { error: 'User already has a pending loan application.' };
         }
 
-        // Calculate required funds and shortfall
-        const { requiredShare, requiredGuaranteed } = calculateRequiredFunds(loanAmount);
+        // Calculate required funds (5% of the total loan size: previous outstanding principal + new requested loan amount)
+        const totalTargetAmount = totalExistingPrincipal + loanAmount;
+        const requiredShare = totalTargetAmount * 0.05;
+        const requiredGuaranteed = totalTargetAmount * 0.05;
+
         const userShareFund = user.shareFund || 0;
         const userGuaranteedFund = user.guaranteedFund || 0;
         
@@ -243,6 +242,13 @@ export async function applyLoanOnBehalf(
         const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
 
         const finalLoanAmount = loanAmount + totalShortfall;
+
+        // Verify that the final total outstanding principal (including the top-up) does not exceed max loan limit
+        if ((totalExistingPrincipal + finalLoanAmount) > bankSettings.maxLoanAmount) {
+             return { 
+                 error: `The requested amount (including the automatic fund top-up of ₹${totalShortfall.toLocaleString()}) would result in a total loan balance of ₹${(totalExistingPrincipal + finalLoanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
+             };
+        }
         const interestRate = bankSettings.loanInterestRate;
         const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
         
