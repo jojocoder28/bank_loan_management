@@ -386,3 +386,131 @@ export async function processAllAnnualDues(): Promise<{ error?: string; success?
         return { error: e.message || "An unknown error occurred." };
     }
 }
+
+export async function undoLastMonthlyProcess(): Promise<{ error?: string; success?: string }> {
+    await dbConnect();
+    const bank = await Bank.findOne({ singleton: 'bank-settings' });
+    if (!bank?.lastMonthlyProcess) {
+        return { error: "No monthly deductions have been processed yet." };
+    }
+
+    const lastProcessed = new Date(bank.lastMonthlyProcess);
+    const targetMonth = lastProcessed.getMonth();
+    const targetYear = lastProcessed.getFullYear();
+    const targetMonthLabel = lastProcessed.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    // Prevent undoing the baseline Excel import (March 31, 2026)
+    const baseTime = new Date('2026-03-31T23:59:59.000Z').getTime();
+    if (lastProcessed.getTime() <= baseTime) {
+        return { error: "Cannot undo the baseline Excel import data." };
+    }
+
+    try {
+        const [bankSettings, activeMembers, allLoans] = await Promise.all([
+            getBankSettings(),
+            User.find({ role: 'member', status: 'active' }),
+            Loan.find({ status: { $in: ['active', 'paid'] } })
+        ]);
+
+        const monthlyThrift = bankSettings.monthlyThriftContribution;
+
+        // 1. Revert Loan principal and payments
+        const loanUpdatePromises = allLoans.map(async (loan) => {
+            const matchNotes = `for ${targetMonthLabel}`;
+            const paymentsToRevert = loan.payments.filter((p: any) => p.notes && p.notes.includes(matchNotes));
+            
+            if (paymentsToRevert.length === 0) {
+                return;
+            }
+
+            // Sum principal payments
+            const principalSum = paymentsToRevert
+                .filter((p: any) => p.type === 'principal')
+                .reduce((sum: number, p: any) => sum + p.amount, 0);
+
+            // Filter out these payments
+            const updatedPayments = loan.payments.filter((p: any) => !p.notes || !p.notes.includes(matchNotes));
+
+            const newPrincipal = loan.principal + principalSum;
+            // Restore status to active if it was paid
+            const newStatus = newPrincipal > 0 ? 'active' : loan.status;
+
+            return Loan.updateOne(
+                { _id: loan._id },
+                { 
+                    $set: { 
+                        principal: newPrincipal, 
+                        status: newStatus,
+                        payments: updatedPayments
+                    }
+                }
+            );
+        });
+
+        // 2. Revert Member Thrift fund accumulations
+        const memberUpdatePromises = activeMembers.map(async (member) => {
+            const loan = allLoans.find(l => l.user.toString() === member._id.toString());
+            let thriftToSubtract = monthlyThrift;
+            
+            if (loan) {
+                const matchNotes = `for ${targetMonthLabel}`;
+                const paymentsForMonth = loan.payments.filter((p: any) => p.notes && p.notes.includes(matchNotes));
+                // If they had a loan but no payments for this month, they were paused
+                if (paymentsForMonth.length === 0) {
+                    thriftToSubtract = 0;
+                }
+            }
+
+            const currentThrift = member.thriftFund || 0;
+            const newThrift = Math.max(0, currentThrift - thriftToSubtract);
+
+            return User.updateOne(
+                { _id: member._id },
+                { $set: { thriftFund: newThrift } }
+            );
+        });
+
+        await Promise.all([...loanUpdatePromises.filter(Boolean), ...memberUpdatePromises]);
+
+        // 3. Roll back lastMonthlyProcess date by 1 month
+        const prevDate = new Date(targetYear, targetMonth - 1, 15);
+        
+        // If the rolled back month is March 2026, set it to the exact March 31 base import date
+        if (targetYear === 2026 && targetMonth === 3) { // April is index 3
+            await Bank.updateOne(
+                { singleton: 'bank-settings' },
+                { $set: { lastMonthlyProcess: new Date('2026-03-31T23:59:59.000Z') } }
+            );
+        } else {
+            await Bank.updateOne(
+                { singleton: 'bank-settings' },
+                { $set: { lastMonthlyProcess: prevDate } }
+            );
+        }
+
+        revalidatePath('/admin/statement');
+        revalidatePath('/admin/ledger');
+        revalidatePath('/my-finances');
+
+        return { success: `Successfully rolled back all deductions for ${targetMonthLabel}.` };
+
+    } catch (e: any) {
+        return { error: e.message || "An unknown error occurred during rollback." };
+    }
+}
+
+export async function getLastProcessedMonthInfo(): Promise<{ canUndo: boolean; lastProcessedLabel: string | null }> {
+    await dbConnect();
+    const bank = await Bank.findOne({ singleton: 'bank-settings' });
+    if (!bank?.lastMonthlyProcess) {
+        return { canUndo: false, lastProcessedLabel: null };
+    }
+    const lastDate = new Date(bank.lastMonthlyProcess);
+    const lastProcessedLabel = lastDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+    
+    // Can only undo if it's after March 31, 2026 baseline import
+    const baseTime = new Date('2026-03-31T23:59:59.000Z').getTime();
+    const canUndo = lastDate.getTime() > baseTime;
+
+    return { canUndo, lastProcessedLabel };
+}

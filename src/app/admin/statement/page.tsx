@@ -4,7 +4,7 @@ import {
   CardContent,
   CardHeader,
 } from "@/components/ui/card";
-import { getMonthlyStatementData, getPendingMonths } from "./actions";
+import { getMonthlyStatementData, getPendingMonths, getLastProcessedMonthInfo } from "./actions";
 import { StatementDashboard } from "./_components/statement-dashboard";
 
 export default async function StatementPage({
@@ -14,6 +14,7 @@ export default async function StatementPage({
 }) {
   const resolvedParams = await searchParams;
   const pendingMonths = await getPendingMonths();
+  const { canUndo, lastProcessedLabel } = await getLastProcessedMonthInfo();
 
   let targetMonth: number;
   let targetYear: number;
@@ -46,6 +47,8 @@ export default async function StatementPage({
               selectedMonth={targetMonth}
               selectedYear={targetYear}
               monthName={selectedMonthName}
+              canUndo={canUndo}
+              lastProcessedLabel={lastProcessedLabel}
             />
         </CardContent>
     </Card>

@@ -18,8 +18,9 @@ import { Loader2, Cog, Calendar, Gift, Download, Edit2, AlertTriangle, ArrowRigh
 import Link from "next/link";
 import * as XLSX from "xlsx";
 import { numberToWords } from "@/lib/number-to-words";
-import { StatementRow, PendingMonth, DeductionOverrideInput, processMonthlyDeductions, processAllAnnualDues } from "../actions";
+import { StatementRow, PendingMonth, DeductionOverrideInput, processMonthlyDeductions, processAllAnnualDues, undoLastMonthlyProcess } from "../actions";
 import { StatementPDFGenerator } from "./statement-pdf-generator";
+import { RotateCcw } from "lucide-react";
 
 interface StatementDashboardProps {
   initialData: StatementRow[];
@@ -27,6 +28,8 @@ interface StatementDashboardProps {
   selectedMonth: number;
   selectedYear: number;
   monthName: string;
+  canUndo: boolean;
+  lastProcessedLabel: string | null;
 }
 
 export function StatementDashboard({
@@ -35,11 +38,41 @@ export function StatementDashboard({
   selectedMonth,
   selectedYear,
   monthName,
+  canUndo,
+  lastProcessedLabel,
 }: StatementDashboardProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isMonthlyPending, startMonthlyTransition] = useTransition();
   const [isAnnualPending, startAnnualTransition] = useTransition();
+  const [isUndoPending, startUndoTransition] = useTransition();
+
+  const handleUndoLastProcess = () => {
+    startUndoTransition(async () => {
+      try {
+        const result = await undoLastMonthlyProcess();
+        if (result.error) {
+          toast({
+            variant: "destructive",
+            title: "Rollback Failed",
+            description: result.error
+          });
+        } else if (result.success) {
+          toast({
+            title: "Deductions Undone",
+            description: result.success
+          });
+          router.refresh();
+        }
+      } catch (err: any) {
+        toast({
+          variant: "destructive",
+          title: "Rollback Error",
+          description: err.message || "An unexpected error occurred."
+        });
+      }
+    });
+  };
 
   // Local overrides state
   const [overrides, setOverrides] = useState<Record<string, DeductionOverrideInput>>({});
@@ -449,6 +482,34 @@ export function StatementDashboard({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          {canUndo && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="gap-2">
+                  {isUndoPending ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />}
+                  Undo Last Process ({lastProcessedLabel})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Undo Last Monthly Process</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to revert and undo the processed deductions for <strong>{lastProcessedLabel}</strong>?
+                    This will subtract the monthly thrift fund contributions and restore the loan principals back to their previous values.
+                    <br /><br />
+                    <span className="font-semibold text-destructive">Warning: This action will permanently delete payment records created for this month and cannot be undone.</span>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleUndoLastProcess} disabled={isUndoPending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                    Yes, Undo Deductions
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
 
           <Button variant="outline" onClick={downloadExcel}>
             <Download className="mr-2 size-4" /> Export Excel
