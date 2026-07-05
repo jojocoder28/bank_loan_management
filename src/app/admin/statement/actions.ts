@@ -49,10 +49,10 @@ export async function getPendingMonths(): Promise<PendingMonth[]> {
     let startDate: Date;
     if (bank?.lastMonthlyProcess) {
         startDate = new Date(bank.lastMonthlyProcess);
-        // Set to 1st of the month first to prevent JavaScript end-of-month rollover bugs (e.g. March 31 + 1 month rolling to May 1)
-        startDate.setDate(1);
+        // Set to 1st of the month first in UTC to prevent timezone end-of-month rollover bugs
+        startDate.setUTCDate(1);
         // Start from the month after lastMonthlyProcess
-        startDate.setMonth(startDate.getMonth() + 1);
+        startDate.setUTCMonth(startDate.getUTCMonth() + 1);
     } else {
         // Find oldest active loan issueDate or oldest member createdAt
         const oldestLoan = await Loan.findOne({ status: 'active' }).sort({ issueDate: 1 }).lean();
@@ -63,30 +63,31 @@ export async function getPendingMonths(): Promise<PendingMonth[]> {
         if (oldestUser?.createdAt) dates.push(new Date(oldestUser.createdAt));
         
         startDate = new Date(Math.min(...dates.map(d => d.getTime())));
+        startDate.setUTCDate(1);
     }
     
-    startDate.setDate(1); // Set to 1st of the month
+    startDate.setUTCDate(1); // Set to 1st of the month
     
     const pending: PendingMonth[] = [];
     const checkDate = new Date(startDate);
     
     while (
-        checkDate.getFullYear() < now.getFullYear() ||
-        (checkDate.getFullYear() === now.getFullYear() && checkDate.getMonth() <= now.getMonth())
+        checkDate.getUTCFullYear() < now.getUTCFullYear() ||
+        (checkDate.getUTCFullYear() === now.getUTCFullYear() && checkDate.getUTCMonth() <= now.getUTCMonth())
     ) {
         pending.push({
-            month: checkDate.getMonth(),
-            year: checkDate.getFullYear(),
-            label: checkDate.toLocaleString('default', { month: 'long', year: 'numeric' })
+            month: checkDate.getUTCMonth(),
+            year: checkDate.getUTCFullYear(),
+            label: checkDate.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: 'UTC' })
         });
-        checkDate.setMonth(checkDate.getMonth() + 1);
+        checkDate.setUTCMonth(checkDate.getUTCMonth() + 1);
     }
     
     if (pending.length === 0) {
         pending.push({
-            month: now.getMonth(),
-            year: now.getFullYear(),
-            label: now.toLocaleString('default', { month: 'long', year: 'numeric' })
+            month: now.getUTCMonth(),
+            year: now.getUTCFullYear(),
+            label: now.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: 'UTC' })
         });
     }
     
@@ -506,7 +507,7 @@ export async function getLastProcessedMonthInfo(): Promise<{ canUndo: boolean; l
         return { canUndo: false, lastProcessedLabel: null };
     }
     const lastDate = new Date(bank.lastMonthlyProcess);
-    const lastProcessedLabel = lastDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const lastProcessedLabel = lastDate.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: 'UTC' });
     
     // Can only undo if it's after March 31, 2026 baseline import
     const baseTime = new Date('2026-03-31T23:59:59.000Z').getTime();

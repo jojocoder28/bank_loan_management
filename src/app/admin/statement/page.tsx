@@ -28,7 +28,7 @@ export default async function StatementPage({
     targetYear = pendingMonths[0].year;
   }
 
-  const selectedMonthName = new Date(targetYear, targetMonth, 1).toLocaleString('default', { month: 'long' });
+  const selectedMonthName = new Date(Date.UTC(targetYear, targetMonth, 1)).toLocaleString('default', { month: 'long', timeZone: 'UTC' });
   const statementData = await getMonthlyStatementData(targetMonth, targetYear);
 
   return (
