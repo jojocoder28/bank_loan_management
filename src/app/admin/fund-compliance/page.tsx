@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import {
     AlertTriangle, CheckCircle2, Loader2, RefreshCw, ShieldAlert,
-    Users, Zap, ChevronsUp, IndianRupee,
+    Users, Zap, ChevronsUp, IndianRupee, XCircle,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -34,16 +34,26 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+function ComplianceBadge({ isCompliant, label }: { isCompliant: boolean; label?: string }) {
+    return isCompliant ? (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
+            <CheckCircle2 className="size-3.5" />{label ?? "OK"}
+        </span>
+    ) : (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+            <XCircle className="size-3.5" />{label ?? "Deficit"}
+        </span>
+    );
+}
+
 export default function FundCompliancePage() {
     const [rows, setRows] = useState<ComplianceRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
-
     const [isPending, startTransition] = useTransition();
 
-    // Custom top-up dialog state
-    const [customDialog, setCustomDialog] = useState<{ open: boolean; userId: string; name: string } | null>(null);
+    const [customDialog, setCustomDialog] = useState<{ open: boolean; userId: string; name: string; sfShortfall: number; gfShortfall: number } | null>(null);
     const [customAmount, setCustomAmount] = useState("");
     const [customNote, setCustomNote] = useState("");
 
@@ -123,7 +133,6 @@ export default function FundCompliancePage() {
 
     const compliantCount = rows.filter(r => r.compliance.isCompliant).length;
     const nonCompliantCount = rows.length - compliantCount;
-    const nonCompliantRows = rows.filter(r => !r.compliance.isCompliant);
     const allNonCompliantSelected = nonCompliantCount > 0 && selected.size === nonCompliantCount;
 
     return (
@@ -132,9 +141,7 @@ export default function FundCompliancePage() {
             {toast && (
                 <div className={cn(
                     "fixed top-4 right-4 z-50 max-w-sm rounded-xl px-4 py-3 shadow-xl text-sm font-medium flex items-start gap-2",
-                    toast.type === "success"
-                        ? "bg-green-600 text-white"
-                        : "bg-destructive text-destructive-foreground"
+                    toast.type === "success" ? "bg-green-600 text-white" : "bg-destructive text-destructive-foreground"
                 )}>
                     {toast.type === "success" ? <CheckCircle2 className="size-4 mt-0.5 shrink-0" /> : <AlertTriangle className="size-4 mt-0.5 shrink-0" />}
                     {toast.msg}
@@ -149,7 +156,7 @@ export default function FundCompliancePage() {
                         SF/GF Fund Compliance
                     </h1>
                     <p className="text-muted-foreground text-sm mt-1">
-                        Members must maintain SF + GF ≥ 5% of their total active loan principal.
+                        Each fund is checked independently: <strong>Share Fund ≥ 5%</strong> of loan principal <strong>AND Guaranteed Fund ≥ 5%</strong> of loan principal.
                     </p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -170,6 +177,17 @@ export default function FundCompliancePage() {
                 </div>
             </div>
 
+            {/* Rule explanation */}
+            <Alert className="border-primary/30 bg-primary/5">
+                <ShieldAlert className="size-4 text-primary" />
+                <AlertTitle className="text-primary">Compliance Rule</AlertTitle>
+                <AlertDescription className="text-sm">
+                    <strong>Share Fund</strong> must be ≥ 5% of total active loan principal <em>independently</em>.
+                    <strong> Guaranteed Fund</strong> must also be ≥ 5% <em>independently</em>.
+                    A member needs both funds to be compliant. A surplus in one fund does <em>not</em> offset a deficit in the other.
+                </AlertDescription>
+            </Alert>
+
             {/* Summary cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Card>
@@ -188,7 +206,7 @@ export default function FundCompliancePage() {
                         <div className="flex items-center gap-3">
                             <div className="p-2.5 bg-green-500/10 rounded-xl"><CheckCircle2 className="size-5 text-green-500" /></div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Compliant</p>
+                                <p className="text-xs text-muted-foreground">Fully Compliant (SF+GF)</p>
                                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">{compliantCount}</p>
                             </div>
                         </div>
@@ -199,7 +217,7 @@ export default function FundCompliancePage() {
                         <div className="flex items-center gap-3">
                             <div className="p-2.5 bg-amber-500/10 rounded-xl"><AlertTriangle className="size-5 text-amber-500" /></div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Non-Compliant</p>
+                                <p className="text-xs text-muted-foreground">Need Top-Up</p>
                                 <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{nonCompliantCount}</p>
                             </div>
                         </div>
@@ -229,7 +247,7 @@ export default function FundCompliancePage() {
                 <CardHeader>
                     <CardTitle>Member Fund Compliance Status</CardTitle>
                     <CardDescription>
-                        Non-compliant members are shown first. Top up individual members or use bulk actions.
+                        Non-compliant members shown first. SF and GF are each checked independently against 5% of loan principal.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -254,12 +272,14 @@ export default function FundCompliancePage() {
                                         </TableHead>
                                         <TableHead>Member</TableHead>
                                         <TableHead className="text-right">Loan Principal</TableHead>
-                                        <TableHead className="text-right">Required (5%)</TableHead>
-                                        <TableHead className="text-right">SF Balance</TableHead>
-                                        <TableHead className="text-right">GF Balance</TableHead>
-                                        <TableHead className="text-right">Current Total</TableHead>
-                                        <TableHead className="text-right">Shortfall</TableHead>
-                                        <TableHead className="text-center">Status</TableHead>
+                                        <TableHead className="text-right">Req. per Fund (5%)</TableHead>
+                                        <TableHead className="text-right">Share Fund</TableHead>
+                                        <TableHead className="text-center">SF Status</TableHead>
+                                        <TableHead className="text-right">Guaranteed Fund</TableHead>
+                                        <TableHead className="text-center">GF Status</TableHead>
+                                        <TableHead className="text-right">SF Shortfall</TableHead>
+                                        <TableHead className="text-right">GF Shortfall</TableHead>
+                                        <TableHead className="text-center">Overall</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -292,26 +312,38 @@ export default function FundCompliancePage() {
                                                     ₹{row.totalActiveLoanPrincipal.toLocaleString()}
                                                 </TableCell>
                                                 <TableCell className="text-right font-mono text-sm font-semibold">
-                                                    ₹{compliance.required.toLocaleString()}
+                                                    ₹{compliance.requiredSf.toLocaleString()}
                                                 </TableCell>
+                                                {/* SF */}
                                                 <TableCell className="text-right font-mono text-sm">
-                                                    ₹{row.shareFund.toLocaleString()}
+                                                    ₹{compliance.currentSf.toLocaleString()}
                                                 </TableCell>
-                                                <TableCell className="text-right font-mono text-sm">
-                                                    ₹{row.guaranteedFund.toLocaleString()}
+                                                <TableCell className="text-center">
+                                                    <ComplianceBadge isCompliant={compliance.isSfCompliant} />
                                                 </TableCell>
+                                                {/* GF */}
                                                 <TableCell className="text-right font-mono text-sm">
-                                                    ₹{compliance.current.toLocaleString()}
+                                                    ₹{compliance.currentGf.toLocaleString()}
                                                 </TableCell>
+                                                <TableCell className="text-center">
+                                                    <ComplianceBadge isCompliant={compliance.isGfCompliant} />
+                                                </TableCell>
+                                                {/* Shortfalls */}
                                                 <TableCell className="text-right font-mono text-sm">
-                                                    {compliance.shortfall > 0 ? (
+                                                    {compliance.sfShortfall > 0 ? (
                                                         <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                                                            ₹{compliance.shortfall.toLocaleString()}
+                                                            ₹{compliance.sfShortfall.toLocaleString()}
                                                         </span>
-                                                    ) : (
-                                                        <span className="text-muted-foreground">—</span>
-                                                    )}
+                                                    ) : <span className="text-muted-foreground">—</span>}
                                                 </TableCell>
+                                                <TableCell className="text-right font-mono text-sm">
+                                                    {compliance.gfShortfall > 0 ? (
+                                                        <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                                                            ₹{compliance.gfShortfall.toLocaleString()}
+                                                        </span>
+                                                    ) : <span className="text-muted-foreground">—</span>}
+                                                </TableCell>
+                                                {/* Overall */}
                                                 <TableCell className="text-center">
                                                     {compliance.isCompliant ? (
                                                         <Badge className="bg-green-600/15 text-green-700 dark:text-green-400 border-green-600/30 hover:bg-green-600/20">
@@ -319,10 +351,12 @@ export default function FundCompliancePage() {
                                                         </Badge>
                                                     ) : (
                                                         <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10">
-                                                            <AlertTriangle className="size-3 mr-1" />Deficit
+                                                            <AlertTriangle className="size-3 mr-1" />
+                                                            {!compliance.isSfCompliant && !compliance.isGfCompliant ? "SF+GF" : !compliance.isSfCompliant ? "SF" : "GF"} Deficit
                                                         </Badge>
                                                     )}
                                                 </TableCell>
+                                                {/* Actions */}
                                                 <TableCell className="text-right">
                                                     {!compliance.isCompliant ? (
                                                         <div className="flex gap-1.5 justify-end flex-wrap">
@@ -335,14 +369,14 @@ export default function FundCompliancePage() {
                                                                 id={`min-topup-${row.userId}`}
                                                             >
                                                                 <ChevronsUp className="size-3 mr-1" />
-                                                                Min (₹{compliance.shortfall.toLocaleString()})
+                                                                Min (₹{compliance.totalShortfall.toLocaleString()})
                                                             </Button>
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
                                                                 className="text-xs h-7 px-2"
                                                                 disabled={isPending}
-                                                                onClick={() => setCustomDialog({ open: true, userId: row.userId, name: row.name })}
+                                                                onClick={() => setCustomDialog({ open: true, userId: row.userId, name: row.name, sfShortfall: compliance.sfShortfall, gfShortfall: compliance.gfShortfall })}
                                                                 id={`custom-topup-${row.userId}`}
                                                             >
                                                                 <IndianRupee className="size-3 mr-1" />Custom
@@ -368,10 +402,26 @@ export default function FundCompliancePage() {
                     <DialogHeader>
                         <DialogTitle>Custom Fund Top-Up</DialogTitle>
                         <DialogDescription>
-                            Top up SF/GF for <strong>{customDialog?.name}</strong>. The amount will be split 50/50 between Share Fund and Guaranteed Fund.
+                            Top up for <strong>{customDialog?.name}</strong>. Funds are allocated to whichever is deficient first (SF then GF).
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-2">
+                    {customDialog && (
+                        <div className="grid gap-3 py-2 text-sm">
+                            <div className="flex justify-between p-2 rounded-lg bg-muted/50">
+                                <span className="text-muted-foreground">SF shortfall</span>
+                                <span className={cn("font-semibold", customDialog.sfShortfall > 0 ? "text-amber-600 dark:text-amber-400" : "text-green-600")}>
+                                    {customDialog.sfShortfall > 0 ? `₹${customDialog.sfShortfall.toLocaleString()}` : "✓ Compliant"}
+                                </span>
+                            </div>
+                            <div className="flex justify-between p-2 rounded-lg bg-muted/50">
+                                <span className="text-muted-foreground">GF shortfall</span>
+                                <span className={cn("font-semibold", customDialog.gfShortfall > 0 ? "text-amber-600 dark:text-amber-400" : "text-green-600")}>
+                                    {customDialog.gfShortfall > 0 ? `₹${customDialog.gfShortfall.toLocaleString()}` : "✓ Compliant"}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                    <div className="grid gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="custom-amount">Top-Up Amount (₹)</Label>
                             <Input
@@ -382,6 +432,7 @@ export default function FundCompliancePage() {
                                 value={customAmount}
                                 onChange={e => setCustomAmount(e.target.value)}
                             />
+                            <p className="text-xs text-muted-foreground">Amount is applied to SF first until compliant, then to GF.</p>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="custom-note">Note (optional)</Label>

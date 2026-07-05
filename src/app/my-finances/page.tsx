@@ -61,16 +61,17 @@ export default async function MyFinancesPage() {
         <Alert className="border-amber-500/50 bg-amber-500/10">
           <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           <AlertTitle className="text-amber-800 dark:text-amber-300 font-semibold">
-            Share & Guaranteed Fund Below Required Level
+            Fund Balance Below Required Level
           </AlertTitle>
-          <AlertDescription className="text-amber-700 dark:text-amber-400 mt-1">
-            Your combined Share Fund + Guaranteed Fund is{' '}
-            <strong>₹{compliance.current.toLocaleString()}</strong>, but the minimum
-            required for your active loan(s) is{' '}
-            <strong>₹{compliance.required.toLocaleString()}</strong> (5% of loan principal).
-            <br />
-            Shortfall: <strong>₹{compliance.shortfall.toLocaleString()}</strong>.
-            Please contact the admin to top up your funds.
+          <AlertDescription className="text-amber-700 dark:text-amber-400 mt-1 space-y-1">
+            <p>Each fund must independently hold <strong>5% of your total active loan principal (₹{totalActivePrincipal.toLocaleString()})</strong> — i.e. at least <strong>₹{compliance.requiredSf.toLocaleString()}</strong> each.</p>
+            {!compliance.isSfCompliant && (
+              <p>• <strong>Share Fund:</strong> ₹{compliance.currentSf.toLocaleString()} held — shortfall of <strong>₹{compliance.sfShortfall.toLocaleString()}</strong></p>
+            )}
+            {!compliance.isGfCompliant && (
+              <p>• <strong>Guaranteed Fund:</strong> ₹{compliance.currentGf.toLocaleString()} held — shortfall of <strong>₹{compliance.gfShortfall.toLocaleString()}</strong></p>
+            )}
+            <p className="pt-1">Please contact the admin to top up your funds.</p>
           </AlertDescription>
         </Alert>
       )}

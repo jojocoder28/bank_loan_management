@@ -4,7 +4,6 @@
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/user";
 import Loan from "@/models/loan";
-import FundTopUp from "@/models/fundTopUp";
 import { computeCompliance, ComplianceResult } from "@/lib/fund-compliance";
 import { logAuditActivity } from "@/lib/audit";
 import { getSession } from "@/lib/session";
@@ -63,11 +62,11 @@ export async function getFundComplianceData(): Promise<ComplianceRow[]> {
         };
     });
 
-    // Sort: non-compliant first, then by shortfall descending
+    // Sort: non-compliant first, then by total shortfall descending
     return rows.sort((a, b) => {
         if (!a.compliance.isCompliant && b.compliance.isCompliant) return -1;
         if (a.compliance.isCompliant && !b.compliance.isCompliant) return 1;
-        return b.compliance.shortfall - a.compliance.shortfall;
+        return b.compliance.totalShortfall - a.compliance.totalShortfall;
     });
 }
 
@@ -87,47 +86,43 @@ export async function topUpUserFunds(
         const member = await User.findById(userId);
         if (!member) return { error: 'Member not found.' };
 
-        const now = new Date();
         const totalAmount = sfAmount + gfAmount;
         if (totalAmount <= 0) return { error: 'Top-up amount must be greater than zero.' };
 
-        // Apply to user balances
+        // 1. Credit SF and GF fund balances so the member becomes compliant
         await User.updateOne(
             { _id: userId },
-            {
-                $inc: {
-                    shareFund: sfAmount,
-                    guaranteedFund: gfAmount,
-                },
-            },
+            { $inc: { shareFund: sfAmount, guaranteedFund: gfAmount } },
         );
 
-        // Record for statement feed
-        await FundTopUp.create({
-            user: userId,
-            sfAmount,
-            gfAmount,
-            totalAmount,
-            type: sfAmount > 0 && gfAmount > 0 ? 'split' : sfAmount > 0 ? 'sf' : 'gf',
-            note: note || 'Admin top-up for SF/GF compliance',
-            addedBy: adminEmail,
-            month: now.getMonth(),
-            year: now.getFullYear(),
-            includedInStatement: false,
-        });
+        // 2. Add the same amount to the member's active loan principal
+        //    (instead of deducting from salary via monthly statement)
+        const activeLoan = await Loan.findOne({ user: userId, status: 'active' });
+        if (activeLoan) {
+            await Loan.updateOne(
+                { _id: activeLoan._id },
+                {
+                    $inc: {
+                        principal: totalAmount,
+                        loanAmount: totalAmount,
+                    },
+                },
+            );
+        }
 
-        // Audit trail
+        // 3. Audit trail
         await logAuditActivity({
             action: 'fund_topup',
             actor: adminEmail,
             targetUserId: userId,
-            details: `SF/GF top-up: SF +₹${sfAmount}, GF +₹${gfAmount} (total ₹${totalAmount}). Note: ${note || 'compliance adjustment'}`,
+            details: `SF/GF compliance top-up: SF +₹${sfAmount}, GF +₹${gfAmount} (total ₹${totalAmount}) added to active loan principal. Loan ID: ${activeLoan?._id ?? 'none'}. Note: ${note || 'compliance adjustment'}`,
         });
 
         revalidatePath('/admin/fund-compliance');
+        revalidatePath('/admin/ledger');
         revalidatePath('/my-finances');
 
-        return { success: `Successfully topped up ₹${totalAmount} for ${member.name}.` };
+        return { success: `Topped up ₹${totalAmount} for ${member.name} — amount added to their active loan.` };
     } catch (err) {
         console.error('topUpUserFunds error:', err);
         return { error: 'An unexpected error occurred.' };
@@ -141,11 +136,30 @@ export async function customTopUpUser(
     amount: number,
     note?: string,
 ): Promise<{ success?: string; error?: string }> {
-    // Split evenly between SF and GF
-    const gfAmount = Math.floor(amount / 2);
-    const sfAmount = amount - gfAmount;
-    return topUpUserFunds(userId, sfAmount, gfAmount, note ?? 'Custom admin top-up');
+    // Allocate to SF first until compliant, then remainder to GF
+    await dbConnect();
+    const member = await User.findById(userId).lean();
+    if (!member) return { error: 'Member not found.' };
+
+    const activeLoans = await Loan.find({ user: userId, status: 'active' }).lean();
+    const totalPrincipal = activeLoans.reduce((s, l) => s + l.principal, 0);
+    const { sfShortfall, gfShortfall } = computeCompliance(
+        member.shareFund ?? 0,
+        member.guaranteedFund ?? 0,
+        totalPrincipal,
+    );
+
+    // Fill SF shortfall first, then GF with the remainder
+    const sfAmount = Math.min(amount, sfShortfall);
+    const gfAmount = Math.min(amount - sfAmount, gfShortfall);
+    // Any excess beyond both shortfalls still goes 50/50
+    const excess = amount - sfAmount - gfAmount;
+    const finalSf = sfAmount + Math.ceil(excess / 2);
+    const finalGf = gfAmount + Math.floor(excess / 2);
+
+    return topUpUserFunds(userId, finalSf, finalGf, note ?? 'Custom admin top-up');
 }
+
 
 // ─── Minimum Top-Up for single user ───────────────────────────────────────────
 
