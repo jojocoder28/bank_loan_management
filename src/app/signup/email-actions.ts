@@ -4,7 +4,8 @@
 // import { Resend } from 'resend';
 
 const fromEmail = 'S&KGPPS Co-op <onboarding@resend.dev>';
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
+  || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:9002');
 
 export async function sendVerificationEmail(email: string, name: string, token: string): Promise<void> {
   const resendApiKey = process.env.RESEND_API_KEY;
