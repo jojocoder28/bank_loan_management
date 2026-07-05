@@ -13,6 +13,8 @@ import { DeactivateUserButton } from "./_components/deactivate-user-button";
 import { UserTableFilters } from "./_components/user-table-filters";
 import { RetireUserButton } from "./_components/retire-user-button";
 import { ActivateUserButton } from "./_components/activate-user-button";
+import { BulkEmailButton } from "./_components/bulk-email-button";
+import { PasswordEmailActions } from "./_components/password-email-actions";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useTransition } from "react";
 import {
@@ -64,6 +66,7 @@ export default function UsersPage() {
         </div>
         <div className="flex items-center gap-2 md:gap-4 flex-wrap w-full md:w-auto">
             <UserTableFilters />
+            <BulkEmailButton />
             <Button asChild variant="default" className="w-full sm:w-auto">
                 <Link href="/admin/users/add-member" className="w-full justify-center">
                     <UserPlus className="mr-2 size-4" />
@@ -139,17 +142,24 @@ export default function UsersPage() {
                         <TableCell className="text-right">
                            <div className="flex justify-end items-center gap-1">
                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                             <Button variant="ghost" size="icon" asChild>
-                                                <Link href={`/admin/users/${(user as any)._id.toString()}`}>
-                                                    <Edit className="size-4" />
-                                                </Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>View/Edit Details</p></TooltipContent>
-                                    </Tooltip>
-                                    {user.status === 'active' && user.role === 'member' && (
+                                     <Tooltip>
+                                         <TooltipTrigger asChild>
+                                              <Button variant="ghost" size="icon" asChild>
+                                                 <Link href={`/admin/users/${(user as any)._id.toString()}`}>
+                                                     <Edit className="size-4" />
+                                                 </Link>
+                                             </Button>
+                                         </TooltipTrigger>
+                                         <TooltipContent><p>View/Edit Details</p></TooltipContent>
+                                     </Tooltip>
+                                     {user.role !== 'admin' && (
+                                         <PasswordEmailActions 
+                                             userId={(user as any)._id.toString()} 
+                                             userEmail={user.email} 
+                                             requiresPasswordChange={user.requiresPasswordChange ?? false}
+                                         />
+                                     )}
+                                     {user.status === 'active' && user.role === 'member' && (
                                         <Tooltip>
                                             <TooltipTrigger asChild><RetireUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
                                             <TooltipContent><p>Retire Member</p></TooltipContent>

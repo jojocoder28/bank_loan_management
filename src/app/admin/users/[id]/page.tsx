@@ -30,6 +30,7 @@ import { ILoan } from "@/models/loan";
 import { RoleManagement } from "./_components/role-management";
 import { CapitalManagement } from "./_components/capital-management";
 import { LoanPaymentModifier } from "./_components/loan-payment-modifier";
+import { ApplyLoanButton } from "./_components/apply-loan-button";
 import { getSession } from "@/lib/session";
 import { UserStatus } from "@/models/user";
 import { cn } from "@/lib/utils";
@@ -137,13 +138,18 @@ export default async function UserDetailsPage({
 
           {/* Active Loans */}
           <Card>
-            <CardHeader className="pb-3 border-b bg-muted/10">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Activity className="size-4 text-primary" /> Active Loans
-              </CardTitle>
-              <CardDescription>
-                All loans currently in active status for this member.
-              </CardDescription>
+            <CardHeader className="pb-3 border-b bg-muted/10 flex flex-row items-center justify-between space-y-0">
+              <div className="space-y-1">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Activity className="size-4 text-primary" /> Active Loans
+                </CardTitle>
+                <CardDescription>
+                  All loans currently in active status for this member.
+                </CardDescription>
+              </div>
+              {user.role === 'member' && (
+                <ApplyLoanButton userId={user._id.toString()} />
+              )}
             </CardHeader>
             <CardContent className="pt-4">
                {activeLoans.length > 0 ? (
