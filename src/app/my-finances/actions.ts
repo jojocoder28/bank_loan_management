@@ -14,6 +14,7 @@ export interface FinancesData {
         role: IUser['role'];
         shareFund: number;
         guaranteedFund: number;
+        thriftFund: number;
     };
     allLoans: ILoan[];
 }
@@ -39,6 +40,7 @@ export async function getMyFinancesData(): Promise<FinancesData | null> {
                 role: user.role,
                 shareFund: user.shareFund || 0,
                 guaranteedFund: user.guaranteedFund || 0,
+                thriftFund: user.thriftFund || 0,
             },
             allLoans: JSON.parse(JSON.stringify(allLoans)),
         };
