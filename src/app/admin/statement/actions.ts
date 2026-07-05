@@ -97,7 +97,7 @@ export async function getPendingMonths(): Promise<PendingMonth[]> {
 export interface DeductionOverrideInput {
     userId: string;
     pauseDeduction: boolean;
-    stopCapital: boolean;
+    stopPrincipal: boolean;
     customThrift?: number;
     customPrincipal?: number;
     customInterest?: number;
@@ -245,7 +245,7 @@ export async function processMonthlyDeductions(
             
             let thriftContribution = monthlyThrift;
             if (override) {
-                if (override.pauseDeduction || override.stopCapital) {
+                if (override.pauseDeduction) {
                     thriftContribution = 0;
                 } else if (override.customThrift !== undefined) {
                     thriftContribution = override.customThrift;
@@ -266,6 +266,11 @@ export async function processMonthlyDeductions(
                 if (override.pauseDeduction) {
                     principalPayment = 0;
                     interestPayment = 0;
+                } else if (override.stopPrincipal) {
+                    principalPayment = 0;
+                    if (override.customInterest !== undefined) {
+                        interestPayment = override.customInterest;
+                    }
                 } else {
                     if (override.customPrincipal !== undefined) {
                         principalPayment = override.customPrincipal;

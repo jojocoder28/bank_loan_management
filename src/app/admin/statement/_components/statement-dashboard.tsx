@@ -80,7 +80,7 @@ export function StatementDashboard({
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<StatementRow | null>(null);
-  const [overrideMode, setOverrideMode] = useState<"default" | "pause" | "stop_capital" | "custom">("default");
+  const [overrideMode, setOverrideMode] = useState<"default" | "pause" | "stop_loan_principal" | "custom">("default");
   
   // Custom mode field values
   const [customThrift, setCustomThrift] = useState<string>("");
@@ -154,15 +154,16 @@ export function StatementDashboard({
       principal = 0;
       interest = 0;
     } else {
-      if (override.stopCapital) {
-        thrift = 0;
-      } else if (override.customThrift !== undefined) {
+      if (override.customThrift !== undefined) {
         thrift = override.customThrift;
       }
 
-      if (override.customPrincipal !== undefined) {
+      if (override.stopPrincipal) {
+        principal = 0;
+      } else if (override.customPrincipal !== undefined) {
         principal = override.customPrincipal;
       }
+
       if (override.customInterest !== undefined) {
         interest = override.customInterest;
       }
@@ -207,9 +208,9 @@ export function StatementDashboard({
       if (existing.pauseDeduction) {
         setOverrideMode("pause");
         setCustomTotal("0");
-      } else if (existing.stopCapital) {
-        setOverrideMode("stop_capital");
-        setCustomTotal((row.loanPrincipalPayment + row.loanInterestPayment).toString());
+      } else if (existing.stopPrincipal) {
+        setOverrideMode("stop_loan_principal");
+        setCustomTotal((row.thriftFundContribution + row.loanInterestPayment).toString());
       } else {
         setOverrideMode("custom");
         const t = existing.customThrift ?? row.thriftFundContribution;
@@ -244,16 +245,16 @@ export function StatementDashboard({
         [editingRow.userId]: {
           userId: editingRow.userId,
           pauseDeduction: true,
-          stopCapital: false,
+          stopPrincipal: false,
         },
       });
-    } else if (overrideMode === "stop_capital") {
+    } else if (overrideMode === "stop_loan_principal") {
       setOverrides({
         ...overrides,
         [editingRow.userId]: {
           userId: editingRow.userId,
           pauseDeduction: false,
-          stopCapital: true,
+          stopPrincipal: true,
         },
       });
     } else {
@@ -267,7 +268,7 @@ export function StatementDashboard({
         [editingRow.userId]: {
           userId: editingRow.userId,
           pauseDeduction: false,
-          stopCapital: false,
+          stopPrincipal: false,
           customThrift: thriftVal,
           customPrincipal: principalVal,
           customInterest: interestVal,
@@ -571,8 +572,8 @@ export function StatementDashboard({
                           {override && (
                             <Badge variant="outline" className="capitalize text-[10px] py-0 px-1.5 h-4 border-primary bg-primary/5">
                               {override.pauseDeduction && "Paused"}
-                              {override.stopCapital && "Capital Stopped"}
-                              {!override.pauseDeduction && !override.stopCapital && "Modified"}
+                              {override.stopPrincipal && "Principal Stopped"}
+                              {!override.pauseDeduction && !override.stopPrincipal && "Modified"}
                             </Badge>
                           )}
                         </div>
@@ -636,8 +637,8 @@ export function StatementDashboard({
                     <Label htmlFor="mode-pause" className="cursor-pointer font-medium text-destructive">Pause All</Label>
                   </div>
                   <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-accent/40 cursor-pointer">
-                    <RadioGroupItem value="stop_capital" id="mode-stop-capital" />
-                    <Label htmlFor="mode-stop-capital" className="cursor-pointer font-medium">Stop Capital (TF)</Label>
+                    <RadioGroupItem value="stop_loan_principal" id="mode-stop-loan-principal" />
+                    <Label htmlFor="mode-stop-loan-principal" className="cursor-pointer font-medium">Stop Loan Principal</Label>
                   </div>
                   <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-accent/40 cursor-pointer">
                     <RadioGroupItem value="custom" id="mode-custom" />
