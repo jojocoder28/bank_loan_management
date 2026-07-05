@@ -229,8 +229,9 @@ export async function applyLoanOnBehalf(
             return { error: 'User already has a pending loan application.' };
         }
 
-        // Calculate required funds (5% of the total loan size: previous outstanding principal + new requested loan amount)
-        const totalTargetAmount = totalExistingPrincipal + loanAmount;
+        // Calculate required funds: 5% of (total existing original loan amount + new requested loan amount)
+        const totalExistingLoanAmount = existingActiveLoans.reduce((sum, loan) => sum + loan.loanAmount, 0);
+        const totalTargetAmount = totalExistingLoanAmount + loanAmount;
         const requiredShare = totalTargetAmount * 0.05;
         const requiredGuaranteed = totalTargetAmount * 0.05;
 
