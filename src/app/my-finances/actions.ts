@@ -53,6 +53,7 @@ export async function getMyFinancesData(): Promise<FinancesData | null> {
 const updatePaymentSchema = z.object({
   loanId: z.string(),
   newMonthlyPayment: z.coerce.number().min(0, "Monthly payment cannot be negative."),
+  requestType: z.enum(['temporary', 'permanent']),
 });
 
 export async function requestPaymentChange(prevState: any, formData: FormData): Promise<{ error: string | null, success: boolean }> {
@@ -64,10 +65,10 @@ export async function requestPaymentChange(prevState: any, formData: FormData): 
     const validatedFields = updatePaymentSchema.safeParse(Object.fromEntries(formData.entries()));
 
     if (!validatedFields.success) {
-        return { error: validatedFields.error.flatten().fieldErrors.newMonthlyPayment?.[0] || "Invalid input.", success: false };
+        return { error: validatedFields.error.flatten().fieldErrors.newMonthlyPayment?.[0] || validatedFields.error.flatten().fieldErrors.requestType?.[0] || "Invalid input.", success: false };
     }
 
-    const { loanId, newMonthlyPayment } = validatedFields.data;
+    const { loanId, newMonthlyPayment, requestType } = validatedFields.data;
 
     try {
         await dbConnect();
@@ -91,6 +92,7 @@ export async function requestPaymentChange(prevState: any, formData: FormData): 
             requestDate: now,
             effectiveMonth: now.getMonth(), // 0-indexed
             effectiveYear: now.getFullYear(),
+            requestType,
         } as any);
 
 

@@ -255,8 +255,11 @@ async function updateModificationStatus(formData: FormData, newStatus: Modificat
             user.guaranteedFund = (user.guaranteedFund ?? 0) + requiredGuaranteed;
             await user.save();
         }
-        // Note: For 'change_payment', we don't change the base `monthlyPrincipalPayment`.
-        // The change is temporary and will be handled by the payment processing/walkthrough logic.
+        if (request.type === 'change_payment') {
+            if (request.requestType === 'permanent') {
+                loan.monthlyPrincipalPayment = request.requestedValue;
+            }
+        }
     }
 
     await loan.save();

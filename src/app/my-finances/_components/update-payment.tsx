@@ -6,13 +6,13 @@ import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requestPaymentChange } from "../actions";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ILoan } from "@/models/loan";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const initialState = {
   error: null,
@@ -36,6 +36,7 @@ function SubmitButton() {
 export function UpdatePaymentForm({ loan }: { loan: ILoan }) {
   const [state, formAction] = useActionState(requestPaymentChange, initialState);
   const [amount, setAmount] = useState(loan.monthlyPrincipalPayment ?? 0);
+  const [reqType, setReqType] = useState<"temporary" | "permanent">("temporary");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,10 +60,11 @@ export function UpdatePaymentForm({ loan }: { loan: ILoan }) {
         <form action={formAction}>
         <CardHeader>
             <CardTitle className="text-xl">Change Monthly Payment</CardTitle>
-            <CardDescription>Request a one-time change to your next monthly principal payment.</CardDescription>
+            <CardDescription>Request a temporary or permanent change to your monthly principal payment.</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 space-y-4">
             <input type="hidden" name="loanId" value={loan._id.toString()} />
+            
             <div className="space-y-2">
                  <Label htmlFor="new-payment">New Monthly Principal</Label>
                  <Input
@@ -75,10 +77,33 @@ export function UpdatePaymentForm({ loan }: { loan: ILoan }) {
                     step="100"
                 />
             </div>
+
+            <div className="space-y-2">
+                 <Label>Request Duration</Label>
+                 <RadioGroup
+                    value={reqType}
+                    onValueChange={(val: any) => setReqType(val)}
+                    name="requestType"
+                    className="grid grid-cols-2 gap-3"
+                 >
+                   <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-accent/40 cursor-pointer">
+                     <RadioGroupItem value="temporary" id="req-temporary" />
+                     <Label htmlFor="req-temporary" className="cursor-pointer font-medium text-xs">For next month only</Label>
+                   </div>
+                   <div className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-accent/40 cursor-pointer">
+                     <RadioGroupItem value="permanent" id="req-permanent" />
+                     <Label htmlFor="req-permanent" className="cursor-pointer font-medium text-xs">Permanent change</Label>
+                   </div>
+                 </RadioGroup>
+            </div>
+
             <Alert variant="default" className="text-xs">
                 <Info className="size-4" />
                 <AlertDescription>
-                    This is a one-time change for your next payment cycle. Your payment amount will revert to the original value afterwards. This request requires admin approval.
+                    {reqType === 'temporary' 
+                      ? "This is a one-time change for your next payment cycle. Your payment amount will revert to the original value afterwards."
+                      : "This is a permanent change to your monthly principal payment amount."
+                    } This request requires admin approval.
                 </AlertDescription>
             </Alert>
         </CardContent>

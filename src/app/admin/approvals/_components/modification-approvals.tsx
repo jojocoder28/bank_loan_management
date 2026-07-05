@@ -17,6 +17,7 @@ import { useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 const ModificationActionButton = ({ loanId, requestId, action, children, variant, onAction, tooltip }: { loanId: string, requestId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (requestId: string) => void, tooltip: string }) => {
     const [isPending, startTransition] = useTransition();
@@ -101,9 +102,21 @@ export function ModificationApprovals({ pendingModifications: initialModificatio
                                     <p className="text-xs text-muted-foreground">{loan.user.email}</p>
                                 </TableCell>
                                 <TableCell>
-                                    <div className="flex items-center gap-2">
-                                    {request.type === 'increase_amount' ? <TrendingUp className="size-4" /> : <HandCoins className="size-4" />}
-                                    <span className="capitalize">{request.type.replace('_', ' ')}</span>
+                                    <div className="flex flex-col gap-1 items-start">
+                                        <div className="flex items-center gap-2">
+                                            {request.type === 'increase_amount' ? <TrendingUp className="size-4" /> : <HandCoins className="size-4" />}
+                                            <span className="capitalize font-medium">{request.type.replace('_', ' ')}</span>
+                                        </div>
+                                        {request.type === 'change_payment' && (
+                                            <span className={cn(
+                                                "text-[10px] px-1.5 py-0.5 rounded-full border capitalize font-semibold",
+                                                request.requestType === 'permanent'
+                                                    ? "text-purple-600 bg-purple-50 border-purple-200 dark:text-purple-400 dark:bg-purple-950/30 dark:border-purple-800"
+                                                    : "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/30 dark:border-blue-800"
+                                            )}>
+                                                {request.requestType || 'temporary'}
+                                            </span>
+                                        )}
                                     </div>
                                 </TableCell>
                                 <TableCell>

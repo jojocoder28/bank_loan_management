@@ -106,6 +106,14 @@ export interface DeductionOverrideInput {
 export async function getMonthlyStatementData(month?: number, year?: number): Promise<StatementRow[]> {
     await dbConnect();
 
+    let targetMonth = month;
+    let targetYear = year;
+    if (targetMonth === undefined || targetYear === undefined) {
+        const pending = await getPendingMonths();
+        targetMonth = pending[0].month;
+        targetYear = pending[0].year;
+    }
+
     const [members, bankSettings] = await Promise.all([
         User.find({ role: 'member', status: 'active' }).sort({ name: 1 }).lean(),
         getBankSettings(),
@@ -136,6 +144,20 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
 
         if (loan) {
             loanPrincipalPayment = loan.monthlyPrincipalPayment;
+            
+            // Check for approved temporary change_payment request for this targetMonth & targetYear
+            const tempChangeRequest = loan.modificationRequests?.find(
+                (req: any) => 
+                    req.type === 'change_payment' && 
+                    req.status === 'approved' && 
+                    req.requestType === 'temporary' && 
+                    req.effectiveMonth === targetMonth && 
+                    req.effectiveYear === targetYear
+            );
+            if (tempChangeRequest) {
+                loanPrincipalPayment = tempChangeRequest.requestedValue;
+            }
+
             loanInterestPayment = Math.round(calculateMonthlyInterest(loan.principal, loan.interestRate));
             loanDetails = {
                 id: loan._id.toString(),

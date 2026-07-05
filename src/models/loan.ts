@@ -66,6 +66,7 @@ const ModificationRequestSchema = new Schema<IModificationRequest>({
     notes: { type: String },
     effectiveMonth: { type: Number },
     effectiveYear: { type: Number },
+    requestType: { type: String, enum: ['temporary', 'permanent'], default: 'temporary' },
 });
 
 // Mongoose Schema for Loans
