@@ -5,6 +5,7 @@ import dbConnect from "@/lib/mongodb";
 import User, { IUser } from "@/models/user";
 import Loan, { ILoan } from "@/models/loan";
 import Bank from "@/models/bank";
+import FundTopUp from "@/models/fundTopUp";
 import { getBankSettings } from "../settings/actions";
 import { calculateAnnualInterest, calculateDividend, calculateMonthlyInterest } from "@/lib/coop-calculations";
 import { revalidatePath } from "next/cache";
@@ -21,6 +22,7 @@ export interface StatementRow {
     thriftFundContribution: number;
     loanPrincipalPayment: number;
     loanInterestPayment: number;
+    sfGfTopUp: number;          // pending SF/GF compliance top-up for this month
     totalDeduction: number;
     loanDetails: {
         id: string;
@@ -33,6 +35,7 @@ export interface StatementSummary {
     totalShare: number;
     totalLoanPrincipal: number;
     totalLoanInterest: number;
+    totalSfGfTopUp: number;
     grandTotal: number;
 }
 
@@ -123,10 +126,23 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
 
     const memberIds = members.map(m => m._id);
 
-    const activeLoans = await Loan.find({
-        user: { $in: memberIds },
-        status: 'active'
-    }).lean();
+    const [activeLoans, pendingTopUps] = await Promise.all([
+        Loan.find({
+            user: { $in: memberIds },
+            status: 'active'
+        }).lean(),
+        FundTopUp.find({
+            user: { $in: memberIds },
+            includedInStatement: false,
+        }).lean(),
+    ]);
+
+    // Build top-up map: userId → total pending top-up amount
+    const topUpMap = new Map<string, number>();
+    for (const tu of pendingTopUps) {
+        const uid = tu.user.toString();
+        topUpMap.set(uid, (topUpMap.get(uid) ?? 0) + tu.totalAmount);
+    }
 
     const loansByUserId = new Map<string, ILoan>();
     for (const loan of activeLoans) {
@@ -143,6 +159,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
         let loanDetails: StatementRow['loanDetails'] = null;
         
         const shareFundContribution = 0;
+        const sfGfTopUp = topUpMap.get(member._id.toString()) ?? 0;
 
         if (loan) {
             loanPrincipalPayment = loan.monthlyPrincipalPayment;
@@ -173,7 +190,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
             };
         }
 
-        const totalDeduction = thriftFundContribution + loanPrincipalPayment + loanInterestPayment + shareFundContribution;
+        const totalDeduction = thriftFundContribution + loanPrincipalPayment + loanInterestPayment + shareFundContribution + sfGfTopUp;
 
         return {
             slNo: slNoCounter++,
@@ -185,6 +202,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
             thriftFundContribution,
             loanPrincipalPayment,
             loanInterestPayment,
+            sfGfTopUp,
             totalDeduction,
             loanDetails,
         };
@@ -201,6 +219,7 @@ export async function getStatementSummary(month?: number, year?: number): Promis
         acc.totalShare += row.shareFundContribution;
         acc.totalLoanPrincipal += row.loanPrincipalPayment;
         acc.totalLoanInterest += row.loanInterestPayment;
+        acc.totalSfGfTopUp += row.sfGfTopUp;
         acc.grandTotal += row.totalDeduction;
         return acc;
     }, {
@@ -208,6 +227,7 @@ export async function getStatementSummary(month?: number, year?: number): Promis
         totalShare: 0,
         totalLoanPrincipal: 0,
         totalLoanInterest: 0,
+        totalSfGfTopUp: 0,
         grandTotal: 0
     });
 
@@ -344,7 +364,13 @@ export async function processMonthlyDeductions(
 
         await Promise.all([...memberUpdatePromises, ...loanUpdatePromises]);
 
-        // 3. Update the last processed date to the middle of the target month
+        // 3. Mark all pending SF/GF top-ups as included in this statement
+        await FundTopUp.updateMany(
+            { includedInStatement: false },
+            { $set: { includedInStatement: true, month: targetMonth, year: targetYear } }
+        );
+
+        // 4. Update the last processed date to the middle of the target month
         const processedDate = new Date(targetYear, targetMonth, 15);
         await Bank.updateOne({ singleton: 'bank-settings' }, { $set: { lastMonthlyProcess: processedDate } });
 

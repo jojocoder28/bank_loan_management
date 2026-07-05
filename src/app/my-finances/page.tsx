@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PiggyBank, ShieldCheck, Handshake, Landmark, Wallet } from 'lucide-react';
+import { PiggyBank, ShieldCheck, Handshake, Landmark, Wallet, AlertTriangle } from 'lucide-react';
 import { getMyFinancesData } from './actions';
 import { redirect } from 'next/navigation';
 import { ILoan } from '@/models/loan';
@@ -24,6 +24,8 @@ import { LoanWalkthrough } from './_components/loan-walkthrough';
 import { UpdatePaymentForm } from './_components/update-payment';
 import { IncreaseLoanForm } from './_components/increase-loan';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { computeCompliance } from '@/lib/fund-compliance';
 
 export default async function MyFinancesPage() {
   const data = await getMyFinancesData();
@@ -44,8 +46,35 @@ export default async function MyFinancesPage() {
   const activeLoans = allLoans.filter(loan => loan.status === 'active');
   const otherLoans = allLoans.filter(loan => loan.status !== 'active');
 
+  // Compute SF/GF compliance
+  const totalActivePrincipal = activeLoans.reduce((s, l) => s + l.principal, 0);
+  const compliance = computeCompliance(
+    user.shareFund || 0,
+    (user as any).guaranteedFund || 0,
+    totalActivePrincipal,
+  );
+
   return (
     <div className="flex flex-col gap-8">
+      {/* SF/GF Compliance Warning */}
+      {totalActivePrincipal > 0 && !compliance.isCompliant && (
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertTitle className="text-amber-800 dark:text-amber-300 font-semibold">
+            Share & Guaranteed Fund Below Required Level
+          </AlertTitle>
+          <AlertDescription className="text-amber-700 dark:text-amber-400 mt-1">
+            Your combined Share Fund + Guaranteed Fund is{' '}
+            <strong>₹{compliance.current.toLocaleString()}</strong>, but the minimum
+            required for your active loan(s) is{' '}
+            <strong>₹{compliance.required.toLocaleString()}</strong> (5% of loan principal).
+            <br />
+            Shortfall: <strong>₹{compliance.shortfall.toLocaleString()}</strong>.
+            Please contact the admin to top up your funds.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Top section with Fund Balances */}
       <Card>
         <CardHeader>
