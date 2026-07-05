@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AppProvider } from '@/components/app-provider';
 import { getSession } from '@/lib/session';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   title: 'S&KGPPS Co-op',
@@ -39,6 +40,7 @@ export default async function RootLayout({
           >
           <AppProvider user={user}>{children}</AppProvider>
           <Toaster />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
