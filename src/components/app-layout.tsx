@@ -18,7 +18,7 @@ export function AppLayout({
 }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/signup";
-  const isPublicPage = pathname.startsWith('/public');
+  const isPublicPage = pathname.startsWith('/public') || pathname === '/';
   const isForcePasswordChangePage = pathname === '/force-password-change';
 
   const [isCollapsed, setIsCollapsed] = React.useState(false);
