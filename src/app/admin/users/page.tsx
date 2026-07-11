@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { getUsers } from "./actions";
 import { UserRole, IUser, UserStatus } from "@/models/user";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { UserPlus, Loader2, Edit } from "lucide-react";
+import { UserPlus, Loader2, Edit, Search, Users } from "lucide-react";
 import { DeactivateUserButton } from "./_components/deactivate-user-button";
 import { UserTableFilters } from "./_components/user-table-filters";
 import { RetireUserButton } from "./_components/retire-user-button";
@@ -31,6 +32,7 @@ export default function UsersPage() {
   const status = searchParams.get("status") as UserStatus | null;
   
   const [users, setUsers] = useState<IUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const fetchUsers = () => {
@@ -39,6 +41,17 @@ export default function UsersPage() {
       setUsers(fetchedUsers);
     });
   };
+
+  const filteredUsers = users.filter((user) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    return (
+      (user.name?.toLowerCase().includes(query)) ||
+      (user.phone?.toLowerCase().includes(query)) ||
+      (user.email?.toLowerCase().includes(query)) ||
+      (user.membershipNumber?.toLowerCase().includes(query))
+    );
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -60,10 +73,13 @@ export default function UsersPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <Card className="border-primary/10 shadow-md">
+      <CardHeader className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b pb-6">
         <div>
-          <CardTitle>User Management</CardTitle>
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Users className="size-5 text-primary" />
+            User Management
+          </CardTitle>
           <CardDescription>View and manage all registered users and members.</CardDescription>
         </div>
         <div className="flex items-center gap-2 md:gap-4 flex-wrap w-full md:w-auto">
@@ -89,7 +105,23 @@ export default function UsersPage() {
             </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
+        {/* Search Bar & Stats row */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, phone, email, or membership #..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-10 w-full"
+            />
+          </div>
+          <div className="text-sm font-medium text-muted-foreground">
+            Showing {filteredUsers.length} of {users.length} registered users
+          </div>
+        </div>
+
         <div className="w-full overflow-x-auto">
             <Table>
             <TableHeader>
@@ -113,14 +145,14 @@ export default function UsersPage() {
                     </div>
                     </TableCell>
                 </TableRow>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={8} className="text-center h-24">
-                    No users found for this filter.
+                    <TableCell colSpan={8} className="text-center h-24 text-muted-foreground text-sm">
+                      No matching users found.
                     </TableCell>
                 </TableRow>
                 ) : (
-                    users.map((user) => (
+                    filteredUsers.map((user) => (
                     <TableRow key={(user as any)._id.toString()}>
                         <TableCell className="font-medium">
                         <Link href={`/admin/users/${(user as any)._id.toString()}`} className="text-primary hover:underline">
