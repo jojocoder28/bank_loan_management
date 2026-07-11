@@ -31,6 +31,7 @@ import { RoleManagement } from "./_components/role-management";
 import { CapitalManagement } from "./_components/capital-management";
 import { LoanPaymentModifier } from "./_components/loan-payment-modifier";
 import { ApplyLoanButton } from "./_components/apply-loan-button";
+import { EditUserDetailsDialog } from "./_components/edit-user-details-dialog";
 import { getSession } from "@/lib/session";
 import { UserStatus } from "@/models/user";
 import { cn } from "@/lib/utils";
@@ -109,14 +110,17 @@ export default async function UserDetailsPage({
               </div>
             </div>
             
-            <div className="w-full md:w-auto min-w-[280px] p-4 bg-muted/20 border border-border/40 rounded-xl">
-              {canEditRole ? (
-                  <RoleManagement userId={user._id.toString()} currentRole={user.role} />
-              ) : (
-                  <div className="text-xs text-muted-foreground text-center">
-                      {user.role === 'admin' ? "Admin roles cannot be changed." : "You cannot change your own role."}
-                  </div>
-              )}
+            <div className="w-full md:w-auto flex flex-col gap-3 min-w-[280px]">
+              <EditUserDetailsDialog user={user} />
+              <div className="p-4 bg-muted/20 border border-border/40 rounded-xl">
+                {canEditRole ? (
+                    <RoleManagement userId={user._id.toString()} currentRole={user.role} />
+                ) : (
+                    <div className="text-xs text-muted-foreground text-center">
+                        {user.role === 'admin' ? "Admin roles cannot be changed." : "You cannot change your own role."}
+                    </div>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>

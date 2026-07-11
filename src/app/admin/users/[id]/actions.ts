@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
 import mongoose from "mongoose";
+import { z } from "zod";
 
 interface UserDetails extends Omit<IUser, 'password'> {
   _id: string;
@@ -196,4 +197,92 @@ export async function updateLoanMonthlyPayment(prevState: any, formData: FormDat
         console.error("Failed to update loan monthly payment:", error);
         return { error: "An unexpected error occurred while updating the loan payment." };
     }
+}
+
+const updateDetailsSchema = z.object({
+  userId: z.string().min(1, "User ID is required."),
+  name: z.string().min(2, "Name must be at least 2 characters."),
+  email: z.string().email("Invalid email address.").optional().or(z.literal('')),
+  phone: z.string().min(10, "Phone number must be at least 10 digits."),
+  membershipNumber: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  age: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().int().min(1, "Age must be positive.").optional()),
+  gender: z.enum(['male', 'female', 'other', '']).optional(),
+  profession: z.string().optional(),
+  workplace: z.string().optional(),
+  workplaceAddress: z.string().optional(),
+  personalAddress: z.string().optional(),
+  nomineeName: z.string().optional(),
+  nomineeRelation: z.string().optional(),
+  nomineeAge: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().int().min(1, "Nominee age must be positive.").optional()),
+});
+
+export async function updateUserDetails(prevState: any, formData: FormData): Promise<{ error?: any; success?: boolean }> {
+  const session = await getSession();
+
+  if (!session || session.role !== 'admin') {
+      return { error: { form: ["Unauthorized."] } };
+  }
+
+  const values = Object.fromEntries(formData.entries());
+  
+  const validatedFields = updateDetailsSchema.safeParse(values);
+  if (!validatedFields.success) {
+      return { error: validatedFields.error.flatten().fieldErrors };
+  }
+
+  const { userId, ...data } = validatedFields.data;
+
+  try {
+      await dbConnect();
+
+      // Check duplicate phone
+      const existingUserByPhone = await User.findOne({ phone: data.phone, _id: { $ne: userId } });
+      if (existingUserByPhone) {
+          return { error: { phone: ["An account with this phone number already exists."] } };
+      }
+
+      // Check duplicate membershipNumber if provided
+      if (data.membershipNumber) {
+          const existingUserByNum = await User.findOne({ membershipNumber: data.membershipNumber, _id: { $ne: userId } });
+          if (existingUserByNum) {
+              return { error: { membershipNumber: ["This membership number is already assigned."] } };
+          }
+      }
+
+      // Check duplicate email if provided
+      if (data.email) {
+          const existingUserByEmail = await User.findOne({ email: data.email.toLowerCase(), _id: { $ne: userId } });
+          if (existingUserByEmail) {
+              return { error: { email: ["An account with this email already exists."] } };
+          }
+      }
+
+      await User.findByIdAndUpdate(userId, {
+          $set: {
+              name: data.name,
+              email: data.email ? data.email.toLowerCase() : null,
+              phone: data.phone,
+              membershipNumber: data.membershipNumber || null,
+              bankAccountNumber: data.bankAccountNumber || null,
+              age: data.age || null,
+              gender: data.gender || null,
+              profession: data.profession || null,
+              workplace: data.workplace || null,
+              workplaceAddress: data.workplaceAddress || null,
+              personalAddress: data.personalAddress || null,
+              nomineeName: data.nomineeName || null,
+              nomineeRelation: data.nomineeRelation || null,
+              nomineeAge: data.nomineeAge || null,
+          }
+      });
+
+      revalidatePath(`/admin/users/${userId}`);
+      revalidatePath('/admin/users');
+
+      return { success: true };
+  } catch (error) {
+      console.error("Failed to update user details:", error);
+      return { error: { form: ["An unexpected database error occurred."] } };
+  }
 }
