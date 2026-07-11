@@ -179,11 +179,10 @@ export function HomeLandingPage({
                 <button
                   key={index}
                   onClick={() => api?.scrollTo(index)}
-                  className={`size-2.5 rounded-full transition-all duration-300 ${
-                    index === current
+                  className={`size-2.5 rounded-full transition-all duration-300 ${index === current
                       ? "bg-primary w-6"
                       : "bg-muted-foreground/30 hover:bg-muted-foreground/60"
-                  }`}
+                    }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
@@ -362,7 +361,7 @@ export function HomeLandingPage({
               <ul className="space-y-2 text-xs text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <Mail className="size-4 shrink-0 text-primary" />
-                  <span>support@skgpps-coop.org</span>
+                  <span>sarikhor94@gmail.com</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
