@@ -12,6 +12,7 @@ import { Resend } from "resend";
 import bcrypt from "bcrypt";
 import { logAuditActivity } from "@/lib/audit";
 import { getSession } from "@/lib/session";
+import nodemailer from "nodemailer";
 
 
 export async function getUsers(status?: UserStatus): Promise<IUser[]> {
@@ -301,10 +302,35 @@ const fromEmail = 'S&KGPPS Co-op <onboarding@resend.dev>';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
   || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:9002');
 
+async function sendGoogleEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+  const smtpEmail = process.env.SMTP_EMAIL;
+  const smtpPassword = process.env.SMTP_PASSWORD;
+  
+  if (!smtpEmail || !smtpPassword) {
+    throw new Error("Google SMTP credentials (SMTP_EMAIL or SMTP_PASSWORD) are not configured in environment variables.");
+  }
+  
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: smtpEmail,
+      pass: smtpPassword,
+    },
+  });
+  
+  await transporter.sendMail({
+    from: `"S&KGPPS Co-op" <${smtpEmail}>`,
+    to,
+    subject,
+    html,
+  });
+}
+
 export async function sendOnboardingEmail(userId: string): Promise<{ error?: string; success?: boolean }> {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
-        return { error: "Resend API key is not configured. Email cannot be sent." };
+    const smtpEmail = process.env.SMTP_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+    if (!smtpEmail || !smtpPassword) {
+        return { error: "Google SMTP credentials (SMTP_EMAIL or SMTP_PASSWORD) are not configured in environment variables. Email cannot be sent." };
     }
 
     try {
@@ -313,12 +339,10 @@ export async function sendOnboardingEmail(userId: string): Promise<{ error?: str
         if (!user) return { error: "User not found." };
         if (!user.email) return { error: "User does not have an email address." };
 
-        const resend = new Resend(resendApiKey);
         const defaultPassword = `password${user.membershipNumber}`;
 
-        await resend.emails.send({
-            from: fromEmail,
-            to: user.email,
+        await sendGoogleEmail({
+            to: user.email!,
             subject: 'S&KGPPS Co-op: Your Account Credentials',
             html: `
                 <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -358,9 +382,10 @@ export async function sendOnboardingEmail(userId: string): Promise<{ error?: str
 }
 
 export async function resetUserPasswordAndEmail(userId: string): Promise<{ error?: string; success?: boolean }> {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
-        return { error: "Resend API key is not configured. Email cannot be sent." };
+    const smtpEmail = process.env.SMTP_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+    if (!smtpEmail || !smtpPassword) {
+        return { error: "Google SMTP credentials (SMTP_EMAIL or SMTP_PASSWORD) are not configured in environment variables. Email cannot be sent." };
     }
 
     try {
@@ -385,11 +410,8 @@ export async function resetUserPasswordAndEmail(userId: string): Promise<{ error
             }
         );
 
-        const resend = new Resend(resendApiKey);
-
-        await resend.emails.send({
-            from: fromEmail,
-            to: user.email,
+        await sendGoogleEmail({
+            to: user.email!,
             subject: 'S&KGPPS Co-op: Password Reset Request',
             html: `
                 <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -428,9 +450,10 @@ export async function resetUserPasswordAndEmail(userId: string): Promise<{ error
 }
 
 export async function sendBulkOnboardingEmails(): Promise<{ error?: string; success?: string }> {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
-        return { error: "Resend API key is not configured. Email cannot be sent." };
+    const smtpEmail = process.env.SMTP_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+    if (!smtpEmail || !smtpPassword) {
+        return { error: "Google SMTP credentials (SMTP_EMAIL or SMTP_PASSWORD) are not configured in environment variables. Email cannot be sent." };
     }
 
     try {
@@ -447,16 +470,14 @@ export async function sendBulkOnboardingEmails(): Promise<{ error?: string; succ
             return { success: "No pending member accounts found that require password onboarding emails." };
         }
 
-        const resend = new Resend(resendApiKey);
         let sentCount = 0;
         let failedCount = 0;
 
         for (const user of users) {
             try {
                 const defaultPassword = `password${user.membershipNumber}`;
-                await resend.emails.send({
-                    from: fromEmail,
-                    to: user.email,
+                await sendGoogleEmail({
+                    to: user.email!,
                     subject: 'Welcome to S&KGPPS Co-op: Your Account Credentials',
                     html: `
                         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
