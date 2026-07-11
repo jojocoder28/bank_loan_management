@@ -185,7 +185,7 @@ Note: The member is required to change their password on first login.`;
         </div>
       </div>
 
-      <form action={formAction}>
+      <form action={formAction} noValidate>
         <Card className="shadow-md">
           <CardContent className="pt-6">
             {state?.error?.form && (
@@ -217,7 +217,7 @@ Note: The member is required to change their password on first login.`;
               </TabsList>
 
               {/* GENERAL INFORMATION TAB */}
-              <TabsContent value="general" className="space-y-4">
+              <TabsContent value="general" forceMount className="space-y-4 data-[state=inactive]:hidden">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
                     <Label htmlFor="name">Full Name <span className="text-destructive">*</span></Label>
@@ -246,7 +246,7 @@ Note: The member is required to change their password on first login.`;
               </TabsContent>
 
               {/* FINANCIAL BALANCES TAB */}
-              <TabsContent value="financials" className="space-y-4">
+              <TabsContent value="financials" forceMount className="space-y-4 data-[state=inactive]:hidden">
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="grid gap-2">
                     <Label htmlFor="shareFund">Share Fund Balance (₹) <span className="text-destructive">*</span></Label>
@@ -277,7 +277,7 @@ Note: The member is required to change their password on first login.`;
               </TabsContent>
 
               {/* PERSONAL DETAILS TAB */}
-              <TabsContent value="personal" className="space-y-4">
+              <TabsContent value="personal" forceMount className="space-y-4 data-[state=inactive]:hidden">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
                     <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
@@ -328,7 +328,7 @@ Note: The member is required to change their password on first login.`;
               </TabsContent>
 
               {/* NOMINEE DETAILS TAB */}
-              <TabsContent value="nominee" className="space-y-4">
+              <TabsContent value="nominee" forceMount className="space-y-4 data-[state=inactive]:hidden">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
                     <Label htmlFor="nomineeName">Nominee Name</Label>
