@@ -352,9 +352,9 @@ export default async function DashboardPage() {
                     <CardContent className="grid gap-4 text-sm md:grid-cols-2">
                         {benefits.map(benefit => (
                             <div key={benefit.title} className="relative group rounded-xl p-[1px] bg-gradient-to-br from-primary/10 via-border/50 to-primary/5 hover:from-primary/40 hover:to-accent/30 transition-all duration-300">
-                              <div className="bg-card/90 rounded-[11px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 h-full">
-                                <p className="font-medium group-hover:text-primary transition-colors">{benefit.title}</p>
-                                <Badge variant="outline" className="w-fit bg-secondary/50 border-primary/20 text-muted-foreground">{benefit.description}</Badge>
+                              <div className="bg-card/90 rounded-[11px] p-5 flex flex-col gap-2 h-full text-left">
+                                <p className="font-bold text-foreground group-hover:text-primary transition-colors">{benefit.title}</p>
+                                <p className="text-xs text-muted-foreground leading-relaxed">{benefit.description}</p>
                               </div>
                             </div>
                         ))}
