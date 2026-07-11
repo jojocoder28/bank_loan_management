@@ -42,7 +42,7 @@ export async function addUser(prevState: any, formData: FormData) {
         // 3. Build the user data object for creation
         const userData: any = {
             name,
-            email: email?.toLowerCase(),
+            email: email ? email.toLowerCase() : undefined,
             phone,
             password, // The pre-save hook will hash this
             role: 'admin', // Hardcode the role to admin

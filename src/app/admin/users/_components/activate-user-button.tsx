@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { UserCheck } from "lucide-react";
 import { activateUser } from "../actions";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function ActivateUserButton({ userId, userName, onStatusChange }: { userId: string, userName: string, onStatusChange: () => void }) {
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -43,11 +44,18 @@ export function ActivateUserButton({ userId, userName, onStatusChange }: { userI
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600">
-          <UserCheck className="size-4" />
-        </Button>
-      </AlertDialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600">
+              <UserCheck className="size-4" />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Reactivate User</p>
+        </TooltipContent>
+      </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Reactivate User?</AlertDialogTitle>

@@ -34,7 +34,10 @@ import {
     Handshake,
     HeartHandshake,
     StepForward,
-    Target
+    Target,
+    HelpCircle,
+    Mail,
+    Users
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
@@ -42,13 +45,24 @@ import { getDashboardData } from './actions';
 import { redirect } from 'next/navigation';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
+import { getBenefits, getBanners } from '@/app/admin/homepage/actions';
+import { DashboardBanners } from './_components/dashboard-banners';
 
-const benefits = [
-    { title: "Annual Durga Puja Dividend", description: "10-12% on Share Fund", icon: <TrendingUp className="size-6 text-primary" /> },
-    { title: "One-Day Picnic", description: "Fully Co-operative Sponsored", icon: <UserCheck className="size-6 text-primary" /> },
-    { title: "Annual Tour Support", description: "Contribution from Profits", icon: <Landmark className="size-6 text-primary" /> },
-    { title: "Yearly Gift", description: "Yearly Gift", icon: <Award className="size-6 text-primary" /> },
-]
+const IconMap: Record<string, React.ComponentType<any>> = {
+  TrendingUp,
+  UserCheck,
+  Landmark,
+  Award,
+  Handshake,
+  PiggyBank,
+  HeartHandshake,
+  Users,
+  ShieldCheck,
+  Mail,
+  HelpCircle,
+};
+
+
 
 const offerings = [
     { title: "Secure & Fair Loans", description: "Access loans at competitive interest rates with transparent terms.", icon: <Handshake className="size-8 text-primary" /> },
@@ -63,9 +77,10 @@ const steps = [
 ]
 
 
-const UserLandingPage = () => {
+const UserLandingPage = ({ benefits, banners }: { benefits: any[], banners: any[] }) => {
     return (
         <div className="flex flex-col gap-12 md:gap-20">
+            <DashboardBanners banners={banners} />
             {/* Hero Section */}
             <section className="text-center">
                 <div className="max-w-3xl mx-auto py-12 md:py-20">
@@ -110,18 +125,25 @@ const UserLandingPage = () => {
                     <div className="space-y-6">
                         <h2 className="text-3xl md:text-4xl font-bold">Exclusive Membership Benefits</h2>
                         <p className="text-muted-foreground text-lg">As a member, you're not just a customer; you're an owner. Enjoy a range of perks designed to reward you and build our community.</p>
-                        <div className="space-y-4 pt-4">
-                            {benefits.map(benefit => (
-                                <div key={benefit.title} className="flex items-start gap-4">
-                                    <div className="bg-primary/10 p-3 rounded-full mt-1">
-                                        {benefit.icon}
+                        <div className="grid sm:grid-cols-2 gap-4 pt-4">
+                            {benefits.map(benefit => {
+                                const BenefitIcon = IconMap[benefit.icon] || HelpCircle;
+                                return (
+                                    <div key={benefit.title} className="relative group rounded-xl p-[1px] bg-gradient-to-br from-primary/10 via-border/50 to-primary/5 hover:from-primary/40 hover:to-accent/30 transition-all duration-300">
+                                      <div className="bg-card rounded-[11px] p-4 space-y-3 h-full flex flex-col justify-between">
+                                        <div className="space-y-3">
+                                            <div className="bg-primary/10 p-2.5 rounded-lg border border-primary/20 text-primary w-fit group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-105 transition-all duration-300 shadow-sm">
+                                                <BenefitIcon className="size-5" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{benefit.title}</h4>
+                                                <p className="text-xs text-muted-foreground leading-normal mt-1">{benefit.description}</p>
+                                            </div>
+                                        </div>
+                                      </div>
                                     </div>
-                                    <div>
-                                        <h4 className="font-semibold text-lg">{benefit.title}</h4>
-                                        <p className="text-sm text-muted-foreground">{benefit.description}</p>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                     <div className="h-[400px] w-full bg-secondary/30 rounded-lg flex items-center justify-center p-4 overflow-hidden relative" data-ai-hint="community people">
@@ -191,9 +213,12 @@ export default async function DashboardPage() {
 
     const { user, activeLoans, loanHistory } = data;
 
+    const benefits = await getBenefits(true);
+    const banners = await getBanners(true);
+
     // If the user is not a member, show the landing page.
     if (user.role === 'user') {
-        return <UserLandingPage />;
+        return <UserLandingPage benefits={benefits} banners={banners} />;
     }
 
 
@@ -210,6 +235,7 @@ export default async function DashboardPage() {
 
     return (
         <div className="flex flex-col gap-8">
+            <DashboardBanners banners={banners} />
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="lg:col-span-2">
                     <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -325,9 +351,11 @@ export default async function DashboardPage() {
                     </CardHeader>
                     <CardContent className="grid gap-4 text-sm md:grid-cols-2">
                         {benefits.map(benefit => (
-                            <div key={benefit.title} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-secondary/50">
-                                <p className="font-medium">{benefit.title}</p>
-                                <Badge variant="outline" className="w-fit">{benefit.description}</Badge>
+                            <div key={benefit.title} className="relative group rounded-xl p-[1px] bg-gradient-to-br from-primary/10 via-border/50 to-primary/5 hover:from-primary/40 hover:to-accent/30 transition-all duration-300">
+                              <div className="bg-card/90 rounded-[11px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 h-full">
+                                <p className="font-medium group-hover:text-primary transition-colors">{benefit.title}</p>
+                                <Badge variant="outline" className="w-fit bg-secondary/50 border-primary/20 text-muted-foreground">{benefit.description}</Badge>
+                              </div>
                             </div>
                         ))}
                     </CardContent>

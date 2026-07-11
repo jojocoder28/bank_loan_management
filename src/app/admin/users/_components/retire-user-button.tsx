@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { UserCheck } from "lucide-react";
 import { retireUser } from "../actions";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function RetireUserButton({ userId, userName, onStatusChange }: { userId: string, userName: string, onStatusChange: () => void }) {
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -50,11 +51,18 @@ export function RetireUserButton({ userId, userName, onStatusChange }: { userId:
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-600">
-          <UserCheck className="size-4" />
-        </Button>
-      </AlertDialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-600">
+              <UserCheck className="size-4" />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Retire Member</p>
+        </TooltipContent>
+      </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Retire Member?</AlertDialogTitle>

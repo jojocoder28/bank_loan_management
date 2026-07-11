@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { UserX } from "lucide-react";
 import { deactivateUser } from "../actions";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function DeactivateUserButton({ userId, userName, onStatusChange }: { userId: string, userName: string, onStatusChange: () => void }) {
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -50,11 +51,18 @@ export function DeactivateUserButton({ userId, userName, onStatusChange }: { use
 
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-          <UserX className="size-4" />
-        </Button>
-      </AlertDialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+              <UserX className="size-4" />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Deactivate User</p>
+        </TooltipContent>
+      </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>

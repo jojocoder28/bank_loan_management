@@ -50,17 +50,17 @@ export function DividendReport({ data }: { data: DividendReportRow[] }) {
                 ].join(',')
             );
             
-            const csvContent = "data:text/csv;charset=utf-8," 
-                + headers.join(',') + "\n"
-                + csvRows.join('\n');
+            const csvContent = [headers.join(','), ...csvRows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             
-            const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            link.setAttribute("href", url);
             link.setAttribute("download", `share_fund_dividend_report.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
 
         } finally {
              setIsDownloading(false);

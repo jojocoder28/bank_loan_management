@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useToast } from "@/hooks/use-toast";
 import { Key, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { sendOnboardingEmail, resetUserPasswordAndEmail } from "../actions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PasswordEmailActionsProps {
   userId: string;
@@ -89,11 +90,18 @@ export function PasswordEmailActions({ userId, userEmail, requiresPasswordChange
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" disabled={isPending}>
-          {isPending ? <Loader2 className="size-4 animate-spin" /> : <Key className="size-4" />}
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" disabled={isPending}>
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Key className="size-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Password & Emails</p>
+        </TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Password & Emails</DropdownMenuLabel>
         <DropdownMenuSeparator />

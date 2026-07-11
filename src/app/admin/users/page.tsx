@@ -162,23 +162,14 @@ export default function UsersPage() {
                                          />
                                      )}
                                      {user.status === 'active' && user.role === 'member' && (
-                                        <Tooltip>
-                                            <TooltipTrigger asChild><RetireUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
-                                            <TooltipContent><p>Retire Member</p></TooltipContent>
-                                        </Tooltip>
-                                    )}
-                                    {user.status === 'active' && user.role !== 'admin' && (
-                                        <Tooltip>
-                                            <TooltipTrigger asChild><DeactivateUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
-                                            <TooltipContent><p>Deactivate User</p></TooltipContent>
-                                        </Tooltip>
-                                    )}
-                                    {(user.status === 'inactive' || user.status === 'retired') && user.role !== 'admin' && (
-                                        <Tooltip>
-                                            <TooltipTrigger asChild><ActivateUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} /></TooltipTrigger>
-                                            <TooltipContent><p>Reactivate User</p></TooltipContent>
-                                        </Tooltip>
-                                    )}
+                                         <RetireUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
+                                     )}
+                                     {user.status === 'active' && user.role !== 'admin' && (
+                                         <DeactivateUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
+                                     )}
+                                     {(user.status === 'inactive' || user.status === 'retired') && user.role !== 'admin' && (
+                                         <ActivateUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
+                                     )}
                                </TooltipProvider>
                            </div>
                         </TableCell>

@@ -22,6 +22,7 @@ import {
     Download,
     ChevronRight,
     ShieldAlert,
+    Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
@@ -53,6 +54,7 @@ const adminNavLinks = [
     { href: "/admin/data-export", label: "Data Export", icon: <Download className="size-5" /> },
     { href: "/admin/audit", label: "AI Auditor", icon: <ShieldCheck className="size-5" /> },
     { href: "/admin/bulk-import", label: "Bulk Import", icon: <UploadCloud className="size-5" /> },
+    { href: "/admin/homepage", label: "Homepage Settings", icon: <Sparkles className="size-5" /> },
     { href: "/admin/settings", label: "Settings", icon: <Settings className="size-5" /> },
 ]
 

@@ -12,10 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { LogIn, AlertTriangle, Eye, EyeOff, Landmark } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { login } from "./actions";
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
+import { Badge } from "@/components/ui/badge";
+import { getBanners } from "@/app/admin/homepage/actions";
 
 
 export default function LoginPage() {
@@ -24,8 +27,42 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Banner State
+  const [banners, setBanners] = useState<any[]>([]);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    async function loadBanners() {
+      try {
+        const activeBanners = await getBanners(true);
+        setBanners(activeBanners);
+      } catch (err) {
+        console.error("Failed to load banners on login page", err);
+      }
+    }
+    loadBanners();
+  }, []);
+
+  useEffect(() => {
+    if (!api) return;
+    setCurrent(api.selectedScrollSnap());
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap());
+    });
+
+    const interval = setInterval(() => {
+      if (api.canScrollNext()) {
+        api.scrollNext();
+      } else {
+        api.scrollTo(0);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [api]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,14 +166,63 @@ export default function LoginPage() {
           </div> */}
         </div>
       </div>
-      <div className="hidden bg-muted lg:flex items-center justify-center flex-col text-center p-8">
-         <Landmark className="size-16 text-primary mb-4" />
-        <h2 className="text-3xl font-bold">
-            Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD
-        </h2>
-         <p className="text-balance text-muted-foreground mt-4 max-w-md">
-            Your trusted financial partner, dedicated to serving the teacher community with integrity and excellence.
-        </p>
+      <div className="hidden bg-muted lg:flex items-center justify-center flex-col p-8 overflow-hidden relative">
+        {banners.length > 0 ? (
+          <div className="w-full max-w-lg mx-auto">
+            <Carousel setApi={setApi} className="w-full">
+              <CarouselContent>
+                {banners.map((banner) => (
+                  <CarouselItem key={banner._id.toString()}>
+                    <div className="flex flex-col items-center justify-center text-center p-6 space-y-6">
+                      <div className="bg-primary/10 p-4 rounded-2xl border border-primary/20 text-primary">
+                        <Landmark className="size-12" />
+                      </div>
+                      {banner.subtitle && (
+                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                          {banner.subtitle}
+                        </Badge>
+                      )}
+                      <h2 className="text-3xl font-bold tracking-tight">
+                        {banner.title}
+                      </h2>
+                      <p className="text-balance text-muted-foreground max-w-md leading-relaxed">
+                        {banner.description}
+                      </p>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+
+            {/* Dots */}
+            {banners.length > 1 && (
+              <div className="flex justify-center gap-1.5 mt-4">
+                {banners.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => api?.scrollTo(index)}
+                    className={`size-2 rounded-full transition-all duration-300 ${
+                      index === current
+                        ? "bg-primary w-4"
+                        : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center max-w-md">
+            <Landmark className="size-16 text-primary mb-4" />
+            <h2 className="text-3xl font-bold">
+                Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD
+            </h2>
+             <p className="text-balance text-muted-foreground mt-4">
+                Your trusted financial partner, dedicated to serving the teacher community with integrity and excellence.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
