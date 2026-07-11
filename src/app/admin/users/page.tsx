@@ -193,7 +193,7 @@ export default function UsersPage() {
                                              requiresPasswordChange={user.requiresPasswordChange ?? false}
                                          />
                                      )}
-                                     {user.status === 'active' && user.role === 'member' && (
+                                     {user.status === 'active' && (user.role === 'member' || user.role === 'board_member') && (
                                          <RetireUserButton userId={(user as any)._id.toString()} userName={user.name} onStatusChange={fetchUsers} />
                                      )}
                                      {user.status === 'active' && user.role !== 'admin' && (
