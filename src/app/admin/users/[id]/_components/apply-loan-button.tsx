@@ -20,8 +20,11 @@ export function ApplyLoanButton({ userId }: ApplyLoanButtonProps) {
   const { toast } = useToast();
   const router = useRouter();
 
+  const now = new Date();
   const [loanAmount, setLoanAmount] = useState("");
   const [monthlyPrincipal, setMonthlyPrincipal] = useState("");
+  const [startMonth, setStartMonth] = useState(now.getMonth().toString());
+  const [startYear, setStartYear] = useState(now.getFullYear().toString());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +51,7 @@ export function ApplyLoanButton({ userId }: ApplyLoanButtonProps) {
 
     startTransition(async () => {
       try {
-        const result = await applyLoanOnBehalf(userId, amount, principal);
+        const result = await applyLoanOnBehalf(userId, amount, principal, Number(startMonth), Number(startYear));
         if (result.error) {
           toast({
             variant: "destructive",
@@ -114,6 +117,41 @@ export function ApplyLoanButton({ userId }: ApplyLoanButtonProps) {
                 required
                 disabled={isPending}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="admin-start-month">Starting Deduction Month</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <select
+                  id="admin-start-month"
+                  value={startMonth}
+                  onChange={(e) => setStartMonth(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
+                  disabled={isPending}
+                >
+                  {Array.from({ length: 12 }).map((_, idx) => (
+                    <option key={idx} value={idx}>
+                      {new Date(2000, idx, 1).toLocaleString('default', { month: 'long' })}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  id="admin-start-year"
+                  value={startYear}
+                  onChange={(e) => setStartYear(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
+                  disabled={isPending}
+                >
+                  {Array.from({ length: 3 }).map((_, idx) => {
+                    const yr = now.getFullYear() + idx;
+                    return (
+                      <option key={yr} value={yr}>
+                        {yr}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
             </div>
           </div>
           <DialogFooter>

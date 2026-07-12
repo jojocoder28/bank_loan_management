@@ -144,7 +144,12 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
         
         const shareFundContribution = 0;
 
-        if (loan) {
+        const isLoanStarted = loan && (
+            loan.startYear === undefined || loan.startMonth === undefined ||
+            (loan.startYear * 12 + loan.startMonth <= targetYear * 12 + targetMonth)
+        );
+
+        if (loan && isLoanStarted) {
             loanPrincipalPayment = loan.monthlyPrincipalPayment;
             
             // Check for approved temporary change_payment request that spans this targetMonth & targetYear
@@ -288,6 +293,13 @@ export async function processMonthlyDeductions(
         // 2. Update Loan Principals and push payments
         const loanUpdatePromises = activeLoans.map(loan => {
             const override = overrides[loan.user.toString()];
+            
+            const isLoanStarted = loan.startYear === undefined || loan.startMonth === undefined ||
+                (loan.startYear * 12 + loan.startMonth <= targetMonth + targetYear * 12);
+
+            if (!isLoanStarted) {
+                return Promise.resolve();
+            }
             
             let principalPayment = loan.monthlyPrincipalPayment;
             let interestPayment = Math.round(calculateMonthlyInterest(loan.principal, loan.interestRate));

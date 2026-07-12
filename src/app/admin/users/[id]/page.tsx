@@ -158,7 +158,7 @@ export default async function UserDetailsPage({
             <CardContent className="pt-4">
                {activeLoans.length > 0 ? (
                   <div className="w-full overflow-x-auto">
-                      <LoanTable loans={activeLoans} statusVariant={loanStatusVariant} showActions={true} />
+                      <LoanTable loans={activeLoans as any} statusVariant={loanStatusVariant} showActions={true} />
                   </div>
                ) : (
                   <p className="text-sm text-muted-foreground py-4 text-center">No active loans.</p>
@@ -179,7 +179,7 @@ export default async function UserDetailsPage({
             <CardContent className="pt-4">
                {pastLoans.length > 0 ? (
                   <div className="w-full overflow-x-auto">
-                   <LoanTable loans={pastLoans} statusVariant={loanStatusVariant} />
+                   <LoanTable loans={pastLoans as any} statusVariant={loanStatusVariant} />
                   </div>
                ) : (
                   <p className="text-sm text-muted-foreground py-4 text-center">No past loans to display.</p>

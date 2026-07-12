@@ -114,8 +114,17 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
     const actor = session?.user?.email || 'Admin';
 
     if (newStatus === 'active') {
+        const startMonthStr = formData.get('startMonth') as string;
+        const startYearStr = formData.get('startYear') as string;
+
+        const now = new Date();
+        const startMonth = startMonthStr !== null && startMonthStr !== '' ? Number(startMonthStr) : (loan.startMonth !== undefined ? loan.startMonth : now.getMonth());
+        const startYear = startYearStr !== null && startYearStr !== '' ? Number(startYearStr) : (loan.startYear !== undefined ? loan.startYear : now.getFullYear());
+
         loan.status = 'active';
-        loan.issueDate = new Date();
+        loan.startMonth = startMonth;
+        loan.startYear = startYear;
+        loan.issueDate = new Date(startYear, startMonth, 1);
 
         // If there was a fund shortfall, update the user's funds now
         if (loan.fundShortfall && (loan.fundShortfall.share > 0 || loan.fundShortfall.guaranteed > 0)) {

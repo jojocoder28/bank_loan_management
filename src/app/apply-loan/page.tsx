@@ -29,7 +29,7 @@ import { numberToWords } from "@/lib/number-to-words";
 import { IBank } from "@/models/bank";
 import { UserRole } from "@/models/user";
 
-const initialState = {
+const initialState: { error: string | null } = {
   error: null,
 };
 
@@ -56,8 +56,11 @@ interface UserData {
 }
 
 export default function ApplyLoanPage() {
+  const nowObj = new Date();
   const [loanAmount, setLoanAmount] = useState(100000);
   const [monthlyPrincipal, setMonthlyPrincipal] = useState(2000);
+  const [startMonth, setStartMonth] = useState(nowObj.getMonth());
+  const [startYear, setStartYear] = useState(nowObj.getFullYear());
   
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -220,6 +223,8 @@ export default function ApplyLoanPage() {
         <CardContent className="grid gap-8">
             <input type="hidden" name="loanAmount" value={loanAmount} />
             <input type="hidden" name="monthlyPrincipal" value={monthlyPrincipal} />
+            <input type="hidden" name="startMonth" value={startMonth} />
+            <input type="hidden" name="startYear" value={startYear} />
             
           <div className="grid md:grid-cols-2 gap-8">
               <div className="grid gap-8">
@@ -270,6 +275,43 @@ export default function ApplyLoanPage() {
                       max={Math.max(minMonthlyPayment, loanAmount)}
                       step={1}
                     />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="start-month">Starting Deduction Month</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <select
+                        id="start-month"
+                        value={startMonth}
+                        onChange={(e) => setStartMonth(Number(e.target.value))}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
+                      >
+                        {Array.from({ length: 12 }).map((_, idx) => (
+                          <option key={idx} value={idx}>
+                            {new Date(2000, idx, 1).toLocaleString('default', { month: 'long' })}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      <select
+                        id="start-year"
+                        value={startYear}
+                        onChange={(e) => setStartYear(Number(e.target.value))}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
+                      >
+                        {Array.from({ length: 3 }).map((_, idx) => {
+                          const yr = nowObj.getFullYear() + idx;
+                          return (
+                            <option key={yr} value={yr}>
+                              {yr}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Calculations & deductions for principal and interest will begin starting this month.
+                    </p>
                   </div>
               </div>
 

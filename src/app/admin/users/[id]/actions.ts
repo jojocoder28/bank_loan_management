@@ -10,12 +10,12 @@ import { getSession } from "@/lib/session";
 import mongoose from "mongoose";
 import { z } from "zod";
 
-interface UserDetails extends Omit<IUser, 'password'> {
+interface UserDetails extends Omit<IUser, 'password' | 'createdAt'> {
   _id: string;
   createdAt: string;
 }
 
-interface LoanDetails extends Omit<ILoan, 'user' | 'payments'> {
+interface LoanDetails extends Omit<ILoan, 'user' | 'payments' | 'issueDate' | 'createdAt' | 'updatedAt'> {
     _id: string;
     issueDate: string;
     createdAt: string;

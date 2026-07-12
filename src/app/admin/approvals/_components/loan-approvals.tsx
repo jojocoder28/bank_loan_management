@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -15,9 +14,19 @@ import { Check, Loader2, X } from "lucide-react";
 import Link from 'next/link';
 import { ILoan } from "@/models/loan";
 import { useToast } from "@/hooks/use-toast";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import React from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface PopulatedLoan extends Omit<ILoan, 'user'> {
     _id: string;
@@ -67,6 +76,111 @@ const ApprovalButton = ({ loanId, action, children, variant, onAction, tooltip }
     )
 }
 
+const ApproveLoanDialog = ({ loan, onAction }: { loan: PopulatedLoan, onAction: (loanId: string) => void }) => {
+    const [open, setOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
+    const { toast } = useToast();
+
+    const now = new Date();
+    const defaultMonth = loan.startMonth !== undefined ? loan.startMonth : now.getMonth();
+    const defaultYear = loan.startYear !== undefined ? loan.startYear : now.getFullYear();
+
+    const [startMonth, setStartMonth] = useState(defaultMonth.toString());
+    const [startYear, setStartYear] = useState(defaultYear.toString());
+
+    const handleApprove = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        
+        startTransition(async () => {
+            const result = await approveLoan(formData);
+            if (result.error) {
+                toast({ variant: 'destructive', title: 'Action Failed', description: result.error });
+            } else {
+                toast({ title: 'Success', description: 'Loan has been approved successfully.' });
+                window.dispatchEvent(new CustomEvent('approvalCountChanged'));
+                onAction(loan._id);
+                setOpen(false);
+            }
+        });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button size="sm" variant="default" className="gap-1 w-full md:w-auto">
+                    <Check className="size-4" />
+                    <span className="hidden md:inline">Approve</span>
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[400px]">
+                <form onSubmit={handleApprove}>
+                    <input type="hidden" name="loanId" value={loan._id} />
+                    <DialogHeader>
+                        <DialogTitle>Approve Loan Application</DialogTitle>
+                        <DialogDescription>
+                            Review or modify the starting deduction month for <strong>{loan.user.name}</strong>'s loan.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="app-start-month">Starting Deduction Month</Label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <select
+                                    id="app-start-month"
+                                    name="startMonth"
+                                    value={startMonth}
+                                    onChange={(e) => setStartMonth(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer text-foreground"
+                                    disabled={isPending}
+                                >
+                                    {Array.from({ length: 12 }).map((_, idx) => (
+                                        <option key={idx} value={idx}>
+                                            {new Date(2000, idx, 1).toLocaleString('default', { month: 'long' })}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    id="app-start-year"
+                                    name="startYear"
+                                    value={startYear}
+                                    onChange={(e) => setStartYear(e.target.value)}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer text-foreground"
+                                    disabled={isPending}
+                                >
+                                    {Array.from({ length: 3 }).map((_, idx) => {
+                                        const yr = now.getFullYear() + idx;
+                                        return (
+                                            <option key={yr} value={yr}>
+                                                {yr}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground text-left">
+                                Calculations and statements for this loan will only process from this month onwards.
+                            </p>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={isPending}>
+                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Confirm Approval
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export function LoanApprovals({ pendingLoans: initialLoans }: { pendingLoans: PopulatedLoan[] }) {
     const [pendingLoans, setPendingLoans] = React.useState(initialLoans);
     
@@ -114,9 +228,7 @@ export function LoanApprovals({ pendingLoans: initialLoans }: { pendingLoans: Po
                             <TableCell suppressHydrationWarning>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
-                                    <ApprovalButton loanId={loan._id} action={approveLoan} variant="default" onAction={handleLoanAction} tooltip="Approve Loan">
-                                        <Check className="size-4" />
-                                    </ApprovalButton>
+                                    <ApproveLoanDialog loan={loan} onAction={handleLoanAction} />
                                     <ApprovalButton loanId={loan._id} action={rejectLoan} variant="destructive" onAction={handleLoanAction} tooltip="Reject Loan">
                                         <X className="size-4" />
                                     </ApprovalButton>

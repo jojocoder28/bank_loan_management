@@ -204,7 +204,9 @@ export async function deleteUser(formData: FormData) {
 export async function applyLoanOnBehalf(
     userId: string,
     loanAmount: number,
-    monthlyPrincipal: number
+    monthlyPrincipal: number,
+    startMonth?: number,
+    startYear?: number
 ): Promise<{ error?: string; success?: boolean }> {
     try {
         await dbConnect();
@@ -262,6 +264,10 @@ export async function applyLoanOnBehalf(
             return { error: `Calculated tenure (${tenureMonths} months) exceeds the maximum allowed tenure of ${bankSettings.maxLoanTenureMonths} months.` };
         }
 
+        const now = new Date();
+        const finalStartMonth = startMonth !== undefined ? startMonth : now.getMonth();
+        const finalStartYear = startYear !== undefined ? startYear : now.getFullYear();
+
         await Loan.create({
             user: user._id,
             loanAmount: finalLoanAmount,
@@ -274,7 +280,9 @@ export async function applyLoanOnBehalf(
             fundShortfall: {
                 share: shareFundShortfall,
                 guaranteed: guaranteedFundShortfall
-            }
+            },
+            startMonth: finalStartMonth,
+            startYear: finalStartYear
         });
 
         const session = await getSession();

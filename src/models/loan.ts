@@ -49,6 +49,8 @@ export interface ILoan extends Document {
         guaranteed: number;
     };
     modificationRequests: IModificationRequest[];
+    startMonth?: number;
+    startYear?: number;
 }
 
 // Mongoose Schema for Payments
@@ -79,6 +81,8 @@ const LoanSchema = new Schema<ILoan>({
     principal: { type: Number, required: true },
     interestRate: { type: Number, required: true }, // e.g., 10 for 10%
     issueDate: { type: Date, required: false },
+    startMonth: { type: Number, required: false },
+    startYear: { type: Number, required: false },
     status: {
         type: String,
         enum: ['pending', 'active', 'paid', 'rejected'],

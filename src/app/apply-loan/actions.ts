@@ -16,6 +16,8 @@ import { getBankSettings } from '../admin/settings/actions';
 const applyLoanSchema = z.object({
   loanAmount: z.coerce.number().min(10000, 'Minimum loan amount is ₹10,000.'),
   monthlyPrincipal: z.coerce.number().min(1, 'Minimum principal payment must be positive.'),
+  startMonth: z.coerce.number().min(0).max(11),
+  startYear: z.coerce.number().min(2000).max(2100),
 });
 
 export async function applyForLoan(prevState: any, formData: FormData) {
@@ -32,7 +34,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     return { error: firstError || 'Invalid input.' };
   }
 
-  const { loanAmount, monthlyPrincipal } = validatedFields.data;
+  const { loanAmount, monthlyPrincipal, startMonth, startYear } = validatedFields.data;
 
   try {
     await dbConnect();
@@ -109,13 +111,15 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       fundShortfall: {
           share: shareFundShortfall,
           guaranteed: guaranteedFundShortfall
-      }
+      },
+      startMonth,
+      startYear
     });
 
     // Record activity to the database audit trail
     await logAuditActivity(
         'LOAN_APPLIED',
-        user.email,
+        user.email || 'Unknown Member',
         user._id,
         `Member applied for a new loan of ₹${finalLoanAmount.toLocaleString()} (chosen monthly principal: ₹${monthlyPrincipal.toLocaleString()}).`,
         { loanAmount: finalLoanAmount, monthlyPrincipal }
