@@ -58,7 +58,7 @@ export async function getPendingMonths(): Promise<PendingMonth[]> {
     } else {
         // Find oldest active loan issueDate or oldest member createdAt
         const oldestLoan = await Loan.findOne({ status: 'active' }).sort({ issueDate: 1 }).lean();
-        const oldestUser = await User.findOne({ role: 'member' }).sort({ createdAt: 1 }).lean();
+        const oldestUser = await User.findOne({ role: { $in: ['member', 'board_member'] } }).sort({ createdAt: 1 }).lean();
         
         const dates = [now];
         if (oldestLoan?.issueDate) dates.push(new Date(oldestLoan.issueDate));
@@ -117,7 +117,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
     }
 
     const [members, bankSettings] = await Promise.all([
-        User.find({ role: 'member', status: 'active' }).sort({ name: 1 }).lean(),
+        User.find({ role: { $in: ['member', 'board_member'] }, status: 'active' }).sort({ name: 1 }).lean(),
         getBankSettings(),
     ]);
 
@@ -261,7 +261,7 @@ export async function processMonthlyDeductions(
     try {
         const [bankSettings, activeMembers, activeLoans] = await Promise.all([
             getBankSettings(),
-            User.find({ role: 'member', status: 'active' }),
+            User.find({ role: { $in: ['member', 'board_member'] }, status: 'active' }),
             Loan.find({ status: 'active' })
         ]);
         
@@ -380,7 +380,7 @@ export async function processAllAnnualDues(): Promise<{ error?: string; success?
         await dbConnect();
         const [bankSettings, activeMembers] = await Promise.all([
             getBankSettings(),
-            User.find({ role: 'member', status: 'active' }),
+            User.find({ role: { $in: ['member', 'board_member'] }, status: 'active' }),
         ]);
 
         // Interest calculation values
@@ -454,7 +454,7 @@ export async function undoLastMonthlyProcess(): Promise<{ error?: string; succes
     try {
         const [bankSettings, activeMembers, allLoans] = await Promise.all([
             getBankSettings(),
-            User.find({ role: 'member', status: 'active' }),
+            User.find({ role: { $in: ['member', 'board_member'] }, status: 'active' }),
             Loan.find({ status: { $in: ['active', 'paid'] } })
         ]);
 
