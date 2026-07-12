@@ -37,11 +37,12 @@ import {
     Target,
     HelpCircle,
     Mail,
-    Users
+    Users,
+    Phone
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
-import { getDashboardData } from './actions';
+import { getDashboardData, getBoardMembers } from './actions';
 import { redirect } from 'next/navigation';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
@@ -215,6 +216,7 @@ export default async function DashboardPage() {
 
     const benefits = await getBenefits(true);
     const banners = await getBanners(true);
+    const boardMembers = await getBoardMembers();
 
     // If the user is not a member, show the landing page.
     if (user.role === 'user') {
@@ -409,6 +411,90 @@ export default async function DashboardPage() {
                     </Button>
                 </CardFooter>
             </Card>
+
+            {/* Board Members Directory Section */}
+            {boardMembers.length > 0 && (
+                <Card className="border-primary/10 shadow-md">
+                    <CardHeader className="flex flex-row items-center gap-4 border-b pb-4">
+                        <div className="bg-primary/10 p-3 rounded-full">
+                            <Users className="size-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-xl font-bold">Board Members Directory</CardTitle>
+                            <CardDescription>
+                                Contact details of the active cooperative society governing board.
+                            </CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                            {boardMembers.map((member) => (
+                                <div 
+                                    key={member._id} 
+                                    className="relative group rounded-2xl p-[1px] bg-gradient-to-br from-primary/5 via-border/50 to-primary/5 hover:from-primary/20 hover:to-accent/20 transition-all duration-300 shadow-sm"
+                                >
+                                    <div className="bg-card rounded-[15px] p-5 flex flex-col items-center text-center h-full space-y-4">
+                                        {/* Avatar / Photo */}
+                                        <div className="relative h-20 w-20 rounded-full border-2 border-primary/20 overflow-hidden shadow-inner group-hover:scale-105 transition-transform duration-300">
+                                            {member.photoUrl ? (
+                                                <Image 
+                                                    src={member.photoUrl} 
+                                                    alt={member.name} 
+                                                    fill 
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="h-full w-full bg-primary/10 text-primary font-bold flex items-center justify-center text-2xl uppercase">
+                                                    {member.name?.[0] || 'B'}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Name & Role */}
+                                        <div className="space-y-1">
+                                            <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors">
+                                                {member.name}
+                                            </h3>
+                                            <Badge variant="secondary" className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider">
+                                                Board Member
+                                            </Badge>
+                                        </div>
+
+                                        <Separator className="w-full" />
+
+                                        {/* Contact Info */}
+                                        <div className="w-full space-y-2 text-sm text-left">
+                                            {member.phone && (
+                                                <a 
+                                                    href={`tel:${member.phone}`} 
+                                                    className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors truncate"
+                                                >
+                                                    <Phone className="size-4 shrink-0 text-muted-foreground/75" />
+                                                    <span className="truncate">{member.phone}</span>
+                                                </a>
+                                            )}
+                                            {member.email && (
+                                                <a 
+                                                    href={`mailto:${member.email}`} 
+                                                    className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors truncate"
+                                                >
+                                                    <Mail className="size-4 shrink-0 text-muted-foreground/75" />
+                                                    <span className="truncate">{member.email}</span>
+                                                </a>
+                                            )}
+                                            {!member.phone && !member.email && (
+                                                <span className="text-xs text-muted-foreground italic block text-center">
+                                                    No contact details provided
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
         </div>
     );

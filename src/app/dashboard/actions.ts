@@ -56,3 +56,29 @@ export async function getDashboardData(): Promise<DashboardData | null> {
         return null;
     }
 }
+
+export interface BoardMemberInfo {
+    _id: string;
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    photoUrl?: string | null;
+}
+
+export async function getBoardMembers(): Promise<BoardMemberInfo[]> {
+    try {
+        await dbConnect();
+        const boardMembers = await User.find({ role: 'board_member', status: 'active' })
+            .select('name email phone photoUrl')
+            .sort({ name: 1 })
+            .lean();
+            
+        return JSON.parse(JSON.stringify(boardMembers.map(bm => ({
+            ...bm,
+            _id: bm._id.toString()
+        }))));
+    } catch (error) {
+        console.error("Failed to fetch board members:", error);
+        return [];
+    }
+}
