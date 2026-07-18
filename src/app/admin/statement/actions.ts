@@ -254,7 +254,7 @@ async function checkLastProcessed(key: 'monthly' | 'annual_all'): Promise<{ canP
 
         const lastProcessed = bank?.lastAnnualAllProcess;
         const lastProcessedYear = lastProcessed ? lastProcessed.getFullYear() : 0;
-        if (now.getFullYear() <= 2026 || lastProcessedYear === now.getFullYear()) {
+        if (lastProcessedYear === now.getFullYear()) {
              return { canProcess: false, message: `All annual dues (including dividends) have already been processed for the year ${now.getFullYear()}.` };
         }
     }
