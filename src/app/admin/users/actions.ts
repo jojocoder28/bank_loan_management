@@ -13,6 +13,7 @@ import bcrypt from "bcrypt";
 import { logAuditActivity } from "@/lib/audit";
 import { getSession } from "@/lib/session";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 
 export async function getUsers(status?: UserStatus): Promise<IUser[]> {
@@ -234,32 +235,15 @@ export async function applyLoanOnBehalf(
             return { error: 'User already has a pending loan application.' };
         }
 
-        // Calculate required funds: 5% of (total existing loan principal left + new requested loan amount)
-        const totalTargetAmount = totalExistingPrincipal + loanAmount;
-        const requiredShare = totalTargetAmount * 0.05;
-        const requiredGuaranteed = totalTargetAmount * 0.05;
-
-        const userShareFund = user.shareFund || 0;
-        const userGuaranteedFund = user.guaranteedFund || 0;
-        
-        const shareFundShortfall = Math.max(0, requiredShare - userShareFund);
-        const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userGuaranteedFund);
-        const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
-
-        const finalLoanAmount = loanAmount + totalShortfall;
-
-        // Verify that the final total outstanding principal (including the top-up) does not exceed max loan limit
-        if ((totalExistingPrincipal + finalLoanAmount) > bankSettings.maxLoanAmount) {
+        // Verify that the requested loan amount does not exceed max loan limit
+        if ((totalExistingPrincipal + loanAmount) > bankSettings.maxLoanAmount) {
              return { 
-                 error: `The requested amount (including the automatic fund top-up of ₹${totalShortfall.toLocaleString()}) would result in a total loan balance of ₹${(totalExistingPrincipal + finalLoanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
+                 error: `The requested amount would result in a total loan balance of ₹${(totalExistingPrincipal + loanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
              };
         }
         const interestRate = bankSettings.loanInterestRate;
-        const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
+        const tenureMonths = Math.ceil(loanAmount / monthlyPrincipal);
         
-        if (tenureMonths === Infinity) {
-            return { error: 'Monthly payment is too low to cover interest.' };
-        }
         if (tenureMonths > bankSettings.maxLoanTenureMonths) {
             return { error: `Calculated tenure (${tenureMonths} months) exceeds the maximum allowed tenure of ${bankSettings.maxLoanTenureMonths} months.` };
         }
@@ -270,16 +254,16 @@ export async function applyLoanOnBehalf(
 
         await Loan.create({
             user: user._id,
-            loanAmount: finalLoanAmount,
-            principal: finalLoanAmount,
+            loanAmount: loanAmount,
+            principal: loanAmount,
             interestRate,
             status: 'pending',
             payments: [],
             monthlyPrincipalPayment: monthlyPrincipal,
             loanTenureMonths: tenureMonths,
             fundShortfall: {
-                share: shareFundShortfall,
-                guaranteed: guaranteedFundShortfall
+                share: 0,
+                guaranteed: 0
             },
             startMonth: finalStartMonth,
             startYear: finalStartYear
@@ -291,8 +275,8 @@ export async function applyLoanOnBehalf(
             'LOAN_APPLIED_ON_BEHALF',
             actor,
             user._id,
-            `Admin applied for a loan of ₹${finalLoanAmount.toLocaleString()} on behalf of member ${user.name} (monthly principal: ₹${monthlyPrincipal.toLocaleString()}).`,
-            { loanAmount: finalLoanAmount, monthlyPrincipal }
+            `Admin applied for a loan of ₹${loanAmount.toLocaleString()} on behalf of member ${user.name} (monthly principal: ₹${monthlyPrincipal.toLocaleString()}).`,
+            { loanAmount: loanAmount, monthlyPrincipal }
         );
 
         revalidatePath(`/admin/users/${userId}`);
@@ -529,5 +513,67 @@ export async function sendBulkOnboardingEmails(): Promise<{ error?: string; succ
     } catch (e: any) {
         console.error("Error in bulk onboarding emails:", e);
         return { error: e.message || "Failed to process bulk onboarding emails." };
+    }
+}
+
+export async function sendPasswordResetEmail(userId: string): Promise<{ error?: string; success?: boolean }> {
+    const session = await getSession();
+    if (!session || session.role !== 'admin') {
+        return { error: "Unauthorized." };
+    }
+
+    const smtpEmail = process.env.SMTP_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+    if (!smtpEmail || !smtpPassword) {
+        return { error: "Google SMTP credentials (SMTP_EMAIL or SMTP_PASSWORD) are not configured in environment variables. Email cannot be sent." };
+    }
+
+    try {
+        await dbConnect();
+        const user = await User.findById(userId);
+        if (!user) return { error: "User not found." };
+        if (!user.email) return { error: "User does not have an email address." };
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour expiration
+        await user.save();
+
+        const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+
+        await sendGoogleEmail({
+            to: user.email!,
+            subject: 'S&KGPPS Co-op: Reset Your Password',
+            html: `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #007bff; text-align: center;">Password Reset Request</h2>
+                    <p>Dear <strong>${user.name}</strong>,</p>
+                    <p>An administrator has generated a link for you to reset your password for your S&KGPPS Co-op account.</p>
+                    <p>Please click the button below to choose a new password. This link is valid for 1 hour:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetLink}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+                    </div>
+                    <p>If you did not request a password reset, you can safely ignore this email.</p>
+                    <p style="font-size: 0.9em; color: #666;">If you have any questions, please contact an administrator.</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                    <p style="font-size: 0.8em; color: #999; text-align: center;">This is an automated system email. Please do not reply directly to this message.</p>
+                </div>
+            `
+        });
+
+        const actor = session?.email || 'Admin';
+        await logAuditActivity(
+            'PASSWORD_RESET_LINK_SENT',
+            actor,
+            user._id,
+            `Sent password reset email to member ${user.name} (${user.email}).`,
+            { userId: user._id }
+        );
+
+        return { success: true };
+    } catch (e: any) {
+        console.error("Error sending password reset email:", e);
+        return { error: e.message || "Failed to send password reset email." };
     }
 }

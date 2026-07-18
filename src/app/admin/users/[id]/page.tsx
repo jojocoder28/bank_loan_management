@@ -29,9 +29,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ILoan } from "@/models/loan";
 import { RoleManagement } from "./_components/role-management";
 import { CapitalManagement } from "./_components/capital-management";
-import { LoanPaymentModifier } from "./_components/loan-payment-modifier";
+import { LoanDetailsModifier } from "./_components/loan-payment-modifier";
 import { ApplyLoanButton } from "./_components/apply-loan-button";
 import { EditUserDetailsDialog } from "./_components/edit-user-details-dialog";
+import { SendResetPasswordButton } from "./_components/send-reset-password-button";
 import { getSession } from "@/lib/session";
 import { UserStatus } from "@/models/user";
 import { cn } from "@/lib/utils";
@@ -80,6 +81,13 @@ export default async function UserDetailsPage({
         </div>
       </div>
   )
+
+  const formatAgeDisplay = (age: number | null | undefined, dob: string | Date | null | undefined) => {
+    if (dob) {
+      return `${age} (DOB: ${new Date(dob).toLocaleDateString()})`;
+    }
+    return age ? `${age} (DOB not set)` : "N/A";
+  }
   
   const canEditRole = session?.id !== user._id && user.role !== 'admin';
 
@@ -112,6 +120,7 @@ export default async function UserDetailsPage({
             
             <div className="w-full md:w-auto flex flex-col gap-3 min-w-[280px]">
               <EditUserDetailsDialog user={user} />
+              <SendResetPasswordButton userId={user._id.toString()} userEmail={user.email} />
               <div className="p-4 bg-muted/20 border border-border/40 rounded-xl">
                 {canEditRole ? (
                     <RoleManagement userId={user._id.toString()} currentRole={user.role} />
@@ -199,7 +208,7 @@ export default async function UserDetailsPage({
             </CardHeader>
             <CardContent className="pt-4 grid grid-cols-2 gap-y-4 gap-x-3">
                <InfoField icon={<User className="size-4"/>} label="Gender" value={user.gender} className="capitalize" />
-               <InfoField icon={<Calendar className="size-4"/>} label="Age" value={user.age} />
+               <InfoField icon={<Calendar className="size-4"/>} label="Age" value={formatAgeDisplay(user.age, user.dob)} />
                <InfoField icon={<Phone className="size-4"/>} label="Phone" value={user.phone} className="col-span-2" />
                <InfoField icon={<ClipboardList className="size-4"/>} label="Membership #" value={user.membershipNumber} className="col-span-2" />
                <InfoField icon={<Banknote className="size-4"/>} label="Bank Account" value={user.bankAccountNumber} className="col-span-2" />
@@ -231,7 +240,7 @@ export default async function UserDetailsPage({
             <CardContent className="pt-4 grid grid-cols-2 gap-y-4 gap-x-3">
                <InfoField icon={<User className="size-4"/>} label="Nominee Name" value={user.nomineeName} className="col-span-2" />
                <InfoField icon={<Shield className="size-4"/>} label="Relation" value={user.nomineeRelation} />
-               <InfoField icon={<Calendar className="size-4"/>} label="Nominee Age" value={user.nomineeAge} />
+               <InfoField icon={<Calendar className="size-4"/>} label="Nominee Age" value={formatAgeDisplay(user.nomineeAge, user.nomineeDob)} />
             </CardContent>
           </Card>
         </div>
@@ -267,10 +276,11 @@ const LoanTable = ({ loans, statusVariant, showActions = false }: { loans: ILoan
                     </TableCell>
                     {showActions && (
                         <TableCell className="text-right">
-                            <LoanPaymentModifier 
+                            <LoanDetailsModifier 
                                 loanId={loan._id.toString()} 
+                                loanAmount={loan.loanAmount}
+                                principal={loan.principal}
                                 monthlyPrincipalPayment={loan.monthlyPrincipalPayment ?? 0} 
-                                maxLimit={loan.principal}
                             />
                         </TableCell>
                     )}

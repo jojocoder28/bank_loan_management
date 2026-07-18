@@ -10,6 +10,7 @@ import { calculateRequiredFunds } from "@/lib/coop-calculations";
 import { getBankSettings } from "../settings/actions";
 import { logAuditActivity } from "@/lib/audit";
 import { getSession } from "@/lib/session";
+import { calculateAge } from "@/lib/calculations";
 
 interface PopulatedLoan extends Omit<ILoan, 'user'> {
     _id: string;
@@ -19,7 +20,11 @@ interface PopulatedLoan extends Omit<ILoan, 'user'> {
         email: string;
         shareFund: number;
         guaranteedFund: number;
-    }
+    };
+    calculatedShortfall?: {
+        share: number;
+        guaranteed: number;
+    };
 }
 
 export interface PopulatedModificationLoan extends Omit<ILoan, 'user' | 'modificationRequests'> {
@@ -42,7 +47,30 @@ export async function getPendingLoans(): Promise<PopulatedLoan[]> {
         .sort({ createdAt: 'asc' })
         .lean();
 
-    return JSON.parse(JSON.stringify(loans));
+    const populatedLoans = await Promise.all(loans.map(async (loan) => {
+        if (!loan.user) return loan;
+        // Find existing active loans for the user
+        const existingActiveLoans = await Loan.find({ user: loan.user._id, status: 'active' });
+        const totalExistingPrincipal = existingActiveLoans.reduce((sum, activeL) => sum + activeL.principal, 0);
+
+        // Required Share / Guaranteed funds based on (total existing active principal + requested loan amount)
+        const totalTargetAmount = totalExistingPrincipal + loan.loanAmount;
+        const requiredShare = totalTargetAmount * 0.05;
+        const requiredGuaranteed = totalTargetAmount * 0.05;
+
+        const shareShortfall = Math.max(0, requiredShare - (loan.user.shareFund || 0));
+        const guaranteedShortfall = Math.max(0, requiredGuaranteed - (loan.user.guaranteedFund || 0));
+
+        return {
+            ...loan,
+            calculatedShortfall: {
+                share: shareShortfall,
+                guaranteed: guaranteedShortfall
+            }
+        };
+    }));
+
+    return JSON.parse(JSON.stringify(populatedLoans));
 }
 
 export async function getPendingMemberships(): Promise<IUser[]> {
@@ -116,23 +144,52 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
     if (newStatus === 'active') {
         const startMonthStr = formData.get('startMonth') as string;
         const startYearStr = formData.get('startYear') as string;
+        const loanAmountStr = formData.get('loanAmount') as string;
+        const shareFundTopUpStr = formData.get('shareFundTopUp') as string;
+        const guaranteedFundTopUpStr = formData.get('guaranteedFundTopUp') as string;
+        const monthlyPrincipalPaymentStr = formData.get('monthlyPrincipalPayment') as string;
 
         const now = new Date();
         const startMonth = startMonthStr !== null && startMonthStr !== '' ? Number(startMonthStr) : (loan.startMonth !== undefined ? loan.startMonth : now.getMonth());
         const startYear = startYearStr !== null && startYearStr !== '' ? Number(startYearStr) : (loan.startYear !== undefined ? loan.startYear : now.getFullYear());
 
+        const requestedAmount = Number(loanAmountStr || loan.loanAmount);
+        const shareFundTopUp = Number(shareFundTopUpStr || 0);
+        const guaranteedFundTopUp = Number(guaranteedFundTopUpStr || 0);
+        const monthlyPrincipalPayment = Number(monthlyPrincipalPaymentStr || loan.monthlyPrincipalPayment);
+
+        const totalShortfall = shareFundTopUp + guaranteedFundTopUp;
+        const finalLoanAmount = requestedAmount + totalShortfall;
+
+        const tenureMonths = Math.ceil(finalLoanAmount / monthlyPrincipalPayment);
+
+        // Verify that the final total outstanding principal does not exceed max loan limit
+        const existingActiveLoans = await Loan.find({ user: loan.user, status: 'active', _id: { $ne: loan._id } });
+        const totalExistingPrincipal = existingActiveLoans.reduce((sum, activeL) => sum + activeL.principal, 0);
+        const bankSettings = await getBankSettings();
+        
+        if (bankSettings && (totalExistingPrincipal + finalLoanAmount) > bankSettings.maxLoanAmount) {
+            return { error: `The approved amount of ₹${finalLoanAmount.toLocaleString()} would bring the member's total outstanding principal to ₹${(totalExistingPrincipal + finalLoanAmount).toLocaleString()}, exceeding the maximum limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` };
+        }
+
         loan.status = 'active';
+        loan.loanAmount = finalLoanAmount;
+        loan.principal = finalLoanAmount;
+        loan.monthlyPrincipalPayment = monthlyPrincipalPayment;
+        loan.loanTenureMonths = tenureMonths;
         loan.startMonth = startMonth;
         loan.startYear = startYear;
         loan.issueDate = new Date(startYear, startMonth, 1);
+        loan.fundShortfall = {
+            share: shareFundTopUp,
+            guaranteed: guaranteedFundTopUp
+        };
 
         // If there was a fund shortfall, update the user's funds now
-        if (loan.fundShortfall && (loan.fundShortfall.share > 0 || loan.fundShortfall.guaranteed > 0)) {
-            if (userToUpdate) {
-                userToUpdate.shareFund = (userToUpdate.shareFund || 0) + (loan.fundShortfall.share || 0);
-                userToUpdate.guaranteedFund = (userToUpdate.guaranteedFund || 0) + (loan.fundShortfall.guaranteed || 0);
-                await userToUpdate.save();
-            }
+        if (userToUpdate) {
+            userToUpdate.shareFund = (userToUpdate.shareFund || 0) + shareFundTopUp;
+            userToUpdate.guaranteedFund = (userToUpdate.guaranteedFund || 0) + guaranteedFundTopUp;
+            await userToUpdate.save();
         }
 
         await logAuditActivity(
@@ -370,6 +427,9 @@ export async function approveProfileModification(formData: FormData) {
 
     // Apply changes
     Object.assign(user, request.requestedChanges);
+    if ((request.requestedChanges as any).nomineeDob) {
+        user.nomineeAge = calculateAge((request.requestedChanges as any).nomineeDob) as any;
+    }
     await user.save();
 
     request.status = 'approved';

@@ -16,6 +16,7 @@ import { ILoan } from "@/models/loan";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition, useState } from "react";
 import React from "react";
+import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
@@ -36,7 +37,11 @@ interface PopulatedLoan extends Omit<ILoan, 'user'> {
         email: string;
         shareFund: number;
         guaranteedFund: number;
-    }
+    };
+    calculatedShortfall?: {
+        share: number;
+        guaranteed: number;
+    };
 }
 
 const ApprovalButton = ({ loanId, action, children, variant, onAction, tooltip }: { loanId: string, action: (formData: FormData) => Promise<any>, children: React.ReactNode, variant: "default" | "destructive", onAction: (loanId: string) => void, tooltip: string }) => {
@@ -87,6 +92,13 @@ const ApproveLoanDialog = ({ loan, onAction }: { loan: PopulatedLoan, onAction: 
 
     const [startMonth, setStartMonth] = useState(defaultMonth.toString());
     const [startYear, setStartYear] = useState(defaultYear.toString());
+    const [loanAmount, setLoanAmount] = useState(loan.loanAmount);
+    const [shareFundTopUp, setShareFundTopUp] = useState(loan.calculatedShortfall?.share || 0);
+    const [guaranteedFundTopUp, setGuaranteedFundTopUp] = useState(loan.calculatedShortfall?.guaranteed || 0);
+    const [monthlyPrincipalPayment, setMonthlyPrincipalPayment] = useState(loan.monthlyPrincipalPayment || 0);
+
+    const approvedPrincipal = Number(loanAmount) + Number(shareFundTopUp) + Number(guaranteedFundTopUp);
+    const approvedTenure = monthlyPrincipalPayment > 0 ? Math.ceil(approvedPrincipal / Number(monthlyPrincipalPayment)) : 0;
 
     const handleApprove = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -113,17 +125,75 @@ const ApproveLoanDialog = ({ loan, onAction }: { loan: PopulatedLoan, onAction: 
                     <span className="hidden md:inline">Approve</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[400px]">
+            <DialogContent className="sm:max-w-[450px]">
                 <form onSubmit={handleApprove}>
                     <input type="hidden" name="loanId" value={loan._id} />
                     <DialogHeader>
                         <DialogTitle>Approve Loan Application</DialogTitle>
                         <DialogDescription>
-                            Review or modify the starting deduction month for <strong>{loan.user.name}</strong>'s loan.
+                            Review or modify the loan parameters and starting deduction date for <strong>{loan.user.name}</strong>.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
+                        <div className="grid gap-1">
+                            <Label htmlFor="app-loan-amount">Requested Loan Amount (₹)</Label>
+                            <Input
+                                id="app-loan-amount"
+                                name="loanAmount"
+                                type="number"
+                                value={loanAmount}
+                                onChange={(e) => setLoanAmount(Number(e.target.value))}
+                                required
+                                disabled={isPending}
+                            />
+                        </div>
+
+                        <div className="grid gap-1">
+                            <Label htmlFor="app-share-topup" className="flex justify-between">
+                                <span>Share Fund Top-Up (₹)</span>
+                                <span className="text-[10px] text-muted-foreground">Min suggested: ₹{(loan.calculatedShortfall?.share || 0).toLocaleString()}</span>
+                            </Label>
+                            <Input
+                                id="app-share-topup"
+                                name="shareFundTopUp"
+                                type="number"
+                                value={shareFundTopUp}
+                                onChange={(e) => setShareFundTopUp(Number(e.target.value))}
+                                required
+                                disabled={isPending}
+                            />
+                        </div>
+
+                        <div className="grid gap-1">
+                            <Label htmlFor="app-guaranteed-topup" className="flex justify-between">
+                                <span>Guaranteed Fund Top-Up (₹)</span>
+                                <span className="text-[10px] text-muted-foreground">Min suggested: ₹{(loan.calculatedShortfall?.guaranteed || 0).toLocaleString()}</span>
+                            </Label>
+                            <Input
+                                id="app-guaranteed-topup"
+                                name="guaranteedFundTopUp"
+                                type="number"
+                                value={guaranteedFundTopUp}
+                                onChange={(e) => setGuaranteedFundTopUp(Number(e.target.value))}
+                                required
+                                disabled={isPending}
+                            />
+                        </div>
+
+                        <div className="grid gap-1">
+                            <Label htmlFor="app-monthly-payment">Monthly Principal Payment (₹)</Label>
+                            <Input
+                                id="app-monthly-payment"
+                                name="monthlyPrincipalPayment"
+                                type="number"
+                                value={monthlyPrincipalPayment}
+                                onChange={(e) => setMonthlyPrincipalPayment(Number(e.target.value))}
+                                required
+                                disabled={isPending}
+                            />
+                        </div>
+
                         <div className="grid gap-2">
                             <Label htmlFor="app-start-month">Starting Deduction Month</Label>
                             <div className="grid grid-cols-2 gap-4">
@@ -160,13 +230,21 @@ const ApproveLoanDialog = ({ loan, onAction }: { loan: PopulatedLoan, onAction: 
                                     })}
                                 </select>
                             </div>
-                            <p className="text-[10px] text-muted-foreground text-left">
-                                Calculations and statements for this loan will only process from this month onwards.
+                        </div>
+
+                        <div className="p-3 bg-secondary/50 rounded-md border text-sm space-y-1.5 mt-2">
+                            <p className="flex justify-between">
+                                <span className="text-muted-foreground">Approved Principal:</span> 
+                                <span className="font-semibold text-foreground">₹{approvedPrincipal.toLocaleString()}</span>
+                            </p>
+                            <p className="flex justify-between">
+                                <span className="text-muted-foreground">Approved Tenure (calculated):</span> 
+                                <span className="font-semibold text-foreground">{approvedTenure} months</span>
                             </p>
                         </div>
                     </div>
 
-                    <DialogFooter>
+                    <DialogFooter className="border-t pt-4">
                         <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
                             Cancel
                         </Button>

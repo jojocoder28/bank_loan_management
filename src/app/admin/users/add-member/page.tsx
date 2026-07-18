@@ -285,9 +285,9 @@ Note: The member is required to change their password on first login.`;
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="age">Age</Label>
-                    <Input id="age" name="age" type="number" placeholder="E.g. 35" min="18" max="100" />
-                    {state?.error?.age && <p className="text-xs text-destructive">{state.error.age[0]}</p>}
+                    <Label htmlFor="dob">Date of Birth</Label>
+                    <Input id="dob" name="dob" type="date" />
+                    {state?.error?.dob && <p className="text-xs text-destructive">{state.error.dob[0]}</p>}
                   </div>
 
                   <div className="grid gap-2">
@@ -341,9 +341,9 @@ Note: The member is required to change their password on first login.`;
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="nomineeAge">Nominee Age</Label>
-                    <Input id="nomineeAge" name="nomineeAge" type="number" placeholder="E.g. 30" min="1" max="100" />
-                    {state?.error?.nomineeAge && <p className="text-xs text-destructive">{state.error.nomineeAge[0]}</p>}
+                    <Label htmlFor="nomineeDob">Nominee's Date of Birth</Label>
+                    <Input id="nomineeDob" name="nomineeDob" type="date" />
+                    {state?.error?.nomineeDob && <p className="text-xs text-destructive">{state.error.nomineeDob[0]}</p>}
                   </div>
                 </div>
               </TabsContent>

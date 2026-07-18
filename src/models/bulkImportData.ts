@@ -10,6 +10,7 @@ export interface IBulkImportData extends Document {
   joinDate: Date;
   personalAddress: string;
   age: number;
+  dob?: Date | null;
   gender: string;
   profession: string;
   workplace: string;
@@ -18,6 +19,7 @@ export interface IBulkImportData extends Document {
   nomineeName: string;
   nomineeRelation: string;
   nomineeAge: number;
+  nomineeDob?: Date | null;
   isExported: boolean;
   createdAt: Date;
 }
@@ -31,6 +33,7 @@ const BulkImportDataSchema = new Schema<IBulkImportData>({
   joinDate: { type: Date, required: true },
   personalAddress: { type: String },
   age: { type: Number },
+  dob: { type: Date, default: null },
   gender: { type: String },
   profession: { type: String },
   workplace: { type: String },
@@ -39,6 +42,7 @@ const BulkImportDataSchema = new Schema<IBulkImportData>({
   nomineeName: { type: String },
   nomineeRelation: { type: String },
   nomineeAge: { type: Number },
+  nomineeDob: { type: Date, default: null },
   isExported: { type: Boolean, default: false }, // To track if it has been included in a download
 }, { timestamps: true });
 

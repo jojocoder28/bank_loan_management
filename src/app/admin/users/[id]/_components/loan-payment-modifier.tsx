@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Edit2, DollarSign } from "lucide-react";
-import { updateLoanMonthlyPayment } from "../actions";
+import { Loader2, Edit2 } from "lucide-react";
+import { updateLoanDetails } from "../actions";
 import { useToast } from "@/hooks/use-toast";
 
 const initialState = {
@@ -25,12 +25,18 @@ function SubmitButton() {
     )
 }
 
-export function LoanPaymentModifier({ loanId, monthlyPrincipalPayment, maxLimit }: {
+export function LoanDetailsModifier({ 
+    loanId, 
+    loanAmount,
+    principal,
+    monthlyPrincipalPayment 
+}: {
     loanId: string;
+    loanAmount: number;
+    principal: number;
     monthlyPrincipalPayment: number;
-    maxLimit: number;
 }) {
-  const [state, formAction] = useActionState(updateLoanMonthlyPayment, initialState);
+  const [state, formAction] = useActionState(updateLoanDetails, initialState);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
@@ -43,8 +49,8 @@ export function LoanPaymentModifier({ loanId, monthlyPrincipalPayment, maxLimit 
       });
     } else if (state?.success) {
       toast({
-        title: "Payment Updated",
-        description: "The monthly principal payment has been successfully updated.",
+        title: "Loan Updated",
+        description: "The loan details have been successfully updated.",
       });
       setOpen(false);
     }
@@ -55,36 +61,53 @@ export function LoanPaymentModifier({ loanId, monthlyPrincipalPayment, maxLimit 
       <DialogTrigger asChild>
         <Button size="icon" variant="ghost" className="size-8">
           <Edit2 className="size-4" />
-          <span className="sr-only">Edit Monthly Payment</span>
+          <span className="sr-only">Edit Loan Details</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Modify Monthly Payment</DialogTitle>
+          <DialogTitle>Modify Loan Details</DialogTitle>
           <DialogDescription>
-            Change the monthly principal deduction amount directly. This is useful for resolving errors or missed payments.
+            Change the loan amount, outstanding principal, or monthly deduction payment directly. Use this to fix errors or adjustments.
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="grid gap-4 py-4">
           <input type="hidden" name="loanId" value={loanId} />
           
           <div className="grid gap-2">
-            <Label htmlFor="monthlyPrincipalPayment" className="flex items-center gap-2">
-              <DollarSign className="size-4 text-primary" /> Monthly Payment Amount (₹)
-            </Label>
+            <Label htmlFor="loanAmount">Original Loan Amount (₹)</Label>
+            <Input
+              id="loanAmount"
+              name="loanAmount"
+              type="number"
+              defaultValue={loanAmount}
+              min="0"
+              required
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="principal">Outstanding Principal (₹)</Label>
+            <Input
+              id="principal"
+              name="principal"
+              type="number"
+              defaultValue={principal}
+              min="0"
+              required
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="monthlyPrincipalPayment">Monthly Payment Amount (₹)</Label>
             <Input
               id="monthlyPrincipalPayment"
               name="monthlyPrincipalPayment"
               type="number"
               defaultValue={monthlyPrincipalPayment}
               min="0"
-              max={maxLimit}
-              step="1"
               required
             />
-            <p className="text-[11px] text-muted-foreground">
-              Maximum allowed: ₹{maxLimit.toLocaleString()} (remaining loan principal)
-            </p>
           </div>
 
           <DialogFooter className="mt-4">

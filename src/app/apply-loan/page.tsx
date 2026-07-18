@@ -173,7 +173,7 @@ export default function ApplyLoanPage() {
   const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userData.guaranteedFund);
   const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
   
-  const totalProposedLoanDebt = userData.activeLoanPrincipal + loanAmount + totalShortfall;
+  const totalProposedLoanDebt = userData.activeLoanPrincipal + loanAmount;
   const isExceedingLimit = totalProposedLoanDebt > userData.bankSettings.maxLoanAmount;
   
   const minMonthlyPayment = Math.ceil(loanAmount / userData.bankSettings.maxLoanTenureMonths);
@@ -350,7 +350,7 @@ export default function ApplyLoanPage() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Maximum Loan Limit Exceeded</AlertTitle>
                     <AlertDescription>
-                        The requested loan of <strong>₹{loanAmount.toLocaleString()}</strong> plus the required fund top-up of <strong>₹{totalShortfall.toLocaleString()}</strong> would bring your total outstanding loan balance to <strong>₹{totalProposedLoanDebt.toLocaleString()}</strong>. This exceeds the maximum bank limit of <strong>₹{userData.bankSettings.maxLoanAmount.toLocaleString()}</strong>. Please reduce your requested amount.
+                        The requested loan of <strong>₹{loanAmount.toLocaleString()}</strong> would bring your total outstanding loan balance to <strong>₹{totalProposedLoanDebt.toLocaleString()}</strong>. This exceeds the maximum bank limit of <strong>₹{userData.bankSettings.maxLoanAmount.toLocaleString()}</strong>. Please reduce your requested amount.
                     </AlertDescription>
                 </Alert>
             )}
@@ -358,10 +358,10 @@ export default function ApplyLoanPage() {
             {!isExceedingLimit && totalShortfall > 0 && (
                  <Alert variant="default" className="bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400">
                     <Info className="h-4 w-4 text-amber-600" />
-                    <AlertTitle>Automatic Fund Top-Up</AlertTitle>
+                    <AlertTitle>Recommended Fund Top-Up</AlertTitle>
                     <AlertDescription>
-                        You have a total fund shortfall of <strong>₹{totalShortfall.toLocaleString()}</strong>.
-                        This amount will be added to your total loan, and your Share and Guaranteed funds will be topped up automatically upon approval. Your final loan amount will be <strong>₹{(loanAmount + totalShortfall).toLocaleString()}</strong>.
+                        Your current funds have a total shortfall of <strong>₹{totalShortfall.toLocaleString()}</strong>.
+                        This shortfall does not prevent application. The administrator will review and can top up your Share and Guaranteed funds by adding it to your loan principal during approval.
                     </AlertDescription>
                 </Alert>
             )}

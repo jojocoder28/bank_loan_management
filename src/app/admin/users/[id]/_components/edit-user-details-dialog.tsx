@@ -141,9 +141,9 @@ export function EditUserDetailsDialog({ user }: { user: any }) {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-age">Age</Label>
-                  <Input id="edit-age" name="age" type="number" defaultValue={user.age || ""} min="18" max="100" />
-                  {state?.error?.age && <p className="text-xs text-destructive">{state.error.age[0]}</p>}
+                  <Label htmlFor="edit-dob">Date of Birth</Label>
+                  <Input id="edit-dob" name="dob" type="date" defaultValue={user.dob ? new Date(user.dob).toISOString().split('T')[0] : ""} />
+                  {state?.error?.dob && <p className="text-xs text-destructive">{state.error.dob[0]}</p>}
                 </div>
 
                 <div className="grid gap-2">
@@ -198,9 +198,9 @@ export function EditUserDetailsDialog({ user }: { user: any }) {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-nomineeAge">Nominee Age</Label>
-                  <Input id="edit-nomineeAge" name="nomineeAge" type="number" defaultValue={user.nomineeAge || ""} min="1" max="100" />
-                  {state?.error?.nomineeAge && <p className="text-xs text-destructive">{state.error.nomineeAge[0]}</p>}
+                  <Label htmlFor="edit-nomineeDob">Nominee's Date of Birth</Label>
+                  <Input id="edit-nomineeDob" name="nomineeDob" type="date" defaultValue={user.nomineeDob ? new Date(user.nomineeDob).toISOString().split('T')[0] : ""} />
+                  {state?.error?.nomineeDob && <p className="text-xs text-destructive">{state.error.nomineeDob[0]}</p>}
                 </div>
               </div>
             </TabsContent>

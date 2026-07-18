@@ -5,6 +5,7 @@ import { z } from 'zod';
 import dbConnect from '@/lib/mongodb';
 import BulkImportData from '@/models/bulkImportData';
 import { revalidatePath } from 'next/cache';
+import { calculateAge } from '@/lib/calculations';
 
 const applicationSchema = z.object({
   fullName: z.string().min(1, 'Full name is required.'),
@@ -16,7 +17,7 @@ const applicationSchema = z.object({
   joinYear: z.coerce.number().min(1950).max(new Date().getFullYear()),
 
   personalAddress: z.string().min(1, 'Personal address is required.'),
-  age: z.coerce.number().min(18, 'You must be at least 18 years old.'),
+  dob: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
   gender: z.enum(['male', 'female', 'other']),
   workplace: z.string().min(1, 'Workplace is required.'),
   profession: z.string().min(1, 'Profession is required.'),
@@ -24,7 +25,7 @@ const applicationSchema = z.object({
   bankAccountNumber: z.string().min(1, 'Bank account number is required.'),
   nomineeName: z.string().min(1, 'Nominee name is required.'),
   nomineeRelation: z.string().min(1, 'Nominee relation is required.'),
-  nomineeAge: z.coerce.number().min(1, 'Nominee age is required.'),
+  nomineeDob: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
 });
 
 
@@ -47,8 +48,17 @@ export async function submitPublicData(prevState: any, formData: FormData) {
             return { error: { form: "The selected joining date is invalid." } };
         }
 
+        const dobDate = restOfData.dob ? new Date(restOfData.dob) : null;
+        const nomineeDobDate = restOfData.nomineeDob ? new Date(restOfData.nomineeDob) : null;
+        const calculatedAge = dobDate ? calculateAge(dobDate) : null;
+        const calculatedNomineeAge = nomineeDobDate ? calculateAge(nomineeDobDate) : null;
+
         await BulkImportData.create({
             ...restOfData,
+            age: calculatedAge,
+            dob: dobDate,
+            nomineeAge: calculatedNomineeAge,
+            nomineeDob: nomineeDobDate,
             joinDate,
         });
 

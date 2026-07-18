@@ -5,6 +5,7 @@ import User from "@/models/user";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
+import { calculateAge } from "@/lib/calculations";
 
 const addMemberSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -19,11 +20,11 @@ const addMemberSchema = z.object({
   profession: z.string().optional(),
   workplaceAddress: z.string().optional(),
   personalAddress: z.string().optional(),
-  age: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().int().min(1, "Age must be positive.").optional()),
+  dob: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
   gender: z.enum(['male', 'female', 'other', '']).optional(),
   nomineeName: z.string().optional(),
   nomineeRelation: z.string().optional(),
-  nomineeAge: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().int().min(1, "Nominee age must be positive.").optional()),
+  nomineeDob: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
 });
 
 export async function addMember(prevState: any, formData: FormData) {
@@ -68,6 +69,11 @@ export async function addMember(prevState: any, formData: FormData) {
       // 5. Generate default password: password + membershipNumber
       const defaultPassword = 'password' + String(data.membershipNumber).trim();
 
+      const dobDate = data.dob ? new Date(data.dob) : null;
+      const nomineeDobDate = data.nomineeDob ? new Date(data.nomineeDob) : null;
+      const calculatedAge = dobDate ? calculateAge(dobDate) : null;
+      const calculatedNomineeAge = nomineeDobDate ? calculateAge(nomineeDobDate) : null;
+
       // 6. Build the user object for creation
       const userData: any = {
           name: data.name,
@@ -88,11 +94,13 @@ export async function addMember(prevState: any, formData: FormData) {
           profession: data.profession,
           workplaceAddress: data.workplaceAddress,
           personalAddress: data.personalAddress,
-          age: data.age,
+          age: calculatedAge,
+          dob: dobDate,
           gender: data.gender || undefined,
           nomineeName: data.nomineeName,
           nomineeRelation: data.nomineeRelation,
-          nomineeAge: data.nomineeAge,
+          nomineeAge: calculatedNomineeAge,
+          nomineeDob: nomineeDobDate,
       };
 
       await User.create(userData);

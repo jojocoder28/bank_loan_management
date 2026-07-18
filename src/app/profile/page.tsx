@@ -50,6 +50,13 @@ export default async function ProfilePage() {
       </div>
   )
 
+  const formatAgeDisplay = (age: number | null | undefined, dob: string | Date | null | undefined) => {
+    if (dob) {
+      return `${age} (DOB: ${new Date(dob).toLocaleDateString()})`;
+    }
+    return age ? `${age} (DOB not set)` : "N/A";
+  }
+
   return (
     <div className="flex justify-center">
         <Card className="w-full max-w-3xl">
@@ -71,7 +78,7 @@ export default async function ProfilePage() {
             <h3 className="font-semibold text-lg">Personal Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-2">
                  <InfoField icon={<User className="size-4"/>} label="Gender" value={user.gender} />
-                 <InfoField icon={<Calendar className="size-4"/>} label="Age" value={user.age} />
+                 <InfoField icon={<Calendar className="size-4"/>} label="Age" value={formatAgeDisplay(user.age, user.dob)} />
                  <InfoField icon={<Phone className="size-4"/>} label="Phone" value={user.phone} />
                  <InfoField icon={<ClipboardList className="size-4"/>} label="Membership #" value={user.membershipNumber} />
                  <InfoField icon={<MapPin className="size-4"/>} label="Address" value={user.personalAddress} />
@@ -89,7 +96,7 @@ export default async function ProfilePage() {
              <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-2">
                  <InfoField icon={<User className="size-4"/>} label="Nominee Name" value={user.nomineeName} />
                  <InfoField icon={<Shield className="size-4"/>} label="Relation" value={user.nomineeRelation} />
-                 <InfoField icon={<Calendar className="size-4"/>} label="Nominee Age" value={user.nomineeAge} />
+                 <InfoField icon={<Calendar className="size-4"/>} label="Nominee Age" value={formatAgeDisplay(user.nomineeAge, user.nomineeDob)} />
              </div>
           </CardContent>
         </Card>

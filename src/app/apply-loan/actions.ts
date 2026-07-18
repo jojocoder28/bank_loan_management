@@ -63,25 +63,10 @@ export async function applyForLoan(prevState: any, formData: FormData) {
         return { error: 'You already have a loan application pending approval. Please wait for it to be processed.' };
     }
 
-    // Calculate required funds: 5% of (total existing loan principal left + new requested loan amount)
-    const totalTargetAmount = totalExistingPrincipal + loanAmount;
-    const requiredShare = totalTargetAmount * 0.05;
-    const requiredGuaranteed = totalTargetAmount * 0.05;
-
-    const userShareFund = user.shareFund || 0;
-    const userGuaranteedFund = user.guaranteedFund || 0;
-    
-    const shareFundShortfall = Math.max(0, requiredShare - userShareFund);
-    const guaranteedFundShortfall = Math.max(0, requiredGuaranteed - userGuaranteedFund);
-    const totalShortfall = shareFundShortfall + guaranteedFundShortfall;
-
-    // The actual loan amount to be disbursed, including any shortfall
-    const finalLoanAmount = loanAmount + totalShortfall;
-
-    // Verify that the final total outstanding principal (including the top-up) does not exceed max loan limit
-    if ((totalExistingPrincipal + finalLoanAmount) > bankSettings.maxLoanAmount) {
+    // Verify that the requested loan amount does not exceed max loan limit
+    if ((totalExistingPrincipal + loanAmount) > bankSettings.maxLoanAmount) {
          return { 
-             error: `The requested amount (including the automatic fund top-up of ₹${totalShortfall.toLocaleString()}) would result in a total loan balance of ₹${(totalExistingPrincipal + finalLoanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
+             error: `The requested amount would result in a total loan balance of ₹${(totalExistingPrincipal + loanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
          };
     }
     
@@ -90,10 +75,7 @@ export async function applyForLoan(prevState: any, formData: FormData) {
     }
     
     const interestRate = bankSettings.loanInterestRate;
-    const tenureMonths = calculateLoanTenure(finalLoanAmount, interestRate, monthlyPrincipal);
-    if (tenureMonths === Infinity) {
-        return { error: 'Monthly payment is too low to cover interest. Please choose a higher amount.'};
-    }
+    const tenureMonths = Math.ceil(loanAmount / monthlyPrincipal);
     
      if (tenureMonths > bankSettings.maxLoanTenureMonths) {
         return { error: `The calculated loan tenure of ${tenureMonths} months exceeds the maximum allowed tenure of ${bankSettings.maxLoanTenureMonths} months. Please increase your monthly payment.`};
@@ -101,16 +83,16 @@ export async function applyForLoan(prevState: any, formData: FormData) {
 
     await Loan.create({
       user: user._id,
-      loanAmount: finalLoanAmount,
-      principal: finalLoanAmount, 
+      loanAmount: loanAmount,
+      principal: loanAmount, 
       interestRate,
       status: 'pending',
       payments: [],
       monthlyPrincipalPayment: monthlyPrincipal,
       loanTenureMonths: tenureMonths,
       fundShortfall: {
-          share: shareFundShortfall,
-          guaranteed: guaranteedFundShortfall
+          share: 0,
+          guaranteed: 0
       },
       startMonth,
       startYear
@@ -121,8 +103,8 @@ export async function applyForLoan(prevState: any, formData: FormData) {
         'LOAN_APPLIED',
         user.email || 'Unknown Member',
         user._id,
-        `Member applied for a new loan of ₹${finalLoanAmount.toLocaleString()} (chosen monthly principal: ₹${monthlyPrincipal.toLocaleString()}).`,
-        { loanAmount: finalLoanAmount, monthlyPrincipal }
+        `Member applied for a new loan of ₹${loanAmount.toLocaleString()} (chosen monthly principal: ₹${monthlyPrincipal.toLocaleString()}).`,
+        { loanAmount: loanAmount, monthlyPrincipal }
     );
 
   } catch (error: any) {

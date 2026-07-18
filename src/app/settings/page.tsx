@@ -206,11 +206,11 @@ export default function SettingsPage() {
                                     <Input id="personalAddress" name="personalAddress" defaultValue={pendingModification?.requestedChanges?.personalAddress || user.personalAddress} required />
                                     {state?.error?.personalAddress && <p className="text-sm text-destructive">{state.error.personalAddress[0]}</p>}
                                 </div>
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="age">Age</Label>
-                                    <Input id="age" name="age" type="number" defaultValue={user.age} required />
-                                    {state?.error?.age && <p className="text-sm text-destructive">{state.error.age[0]}</p>}
-                                </div>
+                                 <div className="grid gap-1.5">
+                                     <Label htmlFor="dob">Date of Birth</Label>
+                                     <Input id="dob" name="dob" type="date" defaultValue={user.dob ? new Date(user.dob).toISOString().split('T')[0] : ''} required />
+                                     {state?.error?.dob && <p className="text-sm text-destructive">{state.error.dob[0]}</p>}
+                                 </div>
                                 <div className="grid gap-1.5">
                                     <Label htmlFor="gender">Gender</Label>
                                     <Select name="gender" defaultValue={user.gender} required>
@@ -274,10 +274,10 @@ export default function SettingsPage() {
                                     {state?.error?.nomineeRelation && <p className="text-sm text-destructive">{state.error.nomineeRelation[0]}</p>}
                                 </div>
                                  <div className="grid gap-1.5">
-                                    <Label htmlFor="nomineeAge" className="flex items-center gap-2">Nominee's Age {pendingModification?.requestedChanges?.nomineeAge && <Badge variant="secondary" className="text-[10px]">Pending Change</Badge>}</Label>
-                                    <Input id="nomineeAge" name="nomineeAge" type="number" defaultValue={pendingModification?.requestedChanges?.nomineeAge || user.nomineeAge} required />
-                                    {state?.error?.nomineeAge && <p className="text-sm text-destructive">{state.error.nomineeAge[0]}</p>}
-                                </div>
+                                     <Label htmlFor="nomineeDob" className="flex items-center gap-2">Nominee's Date of Birth {pendingModification?.requestedChanges?.nomineeDob && <Badge variant="secondary" className="text-[10px]">Pending Change</Badge>}</Label>
+                                     <Input id="nomineeDob" name="nomineeDob" type="date" defaultValue={pendingModification?.requestedChanges?.nomineeDob ? new Date(pendingModification.requestedChanges.nomineeDob).toISOString().split('T')[0] : (user.nomineeDob ? new Date(user.nomineeDob).toISOString().split('T')[0] : '')} required />
+                                     {state?.error?.nomineeDob && <p className="text-sm text-destructive">{state.error.nomineeDob[0]}</p>}
+                                 </div>
                             </div>
                         </AccordionContent>
                     </AccordionItem>

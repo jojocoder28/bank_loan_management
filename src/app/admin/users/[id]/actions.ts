@@ -9,6 +9,8 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
 import mongoose from "mongoose";
 import { z } from "zod";
+import { calculateAge } from "@/lib/calculations";
+import { logAuditActivity } from "@/lib/audit";
 
 interface UserDetails extends Omit<IUser, 'password' | 'createdAt'> {
   _id: string;
@@ -37,10 +39,14 @@ export async function getUserDetails(id: string): Promise<{ user: UserDetails; l
 
         // Sanitize user data
         const { password, ...userWithoutPassword } = user;
+        const calculatedAge = user.dob ? calculateAge(user.dob) : (user.age || null);
+        const calculatedNomineeAge = user.nomineeDob ? calculateAge(user.nomineeDob) : (user.nomineeAge || null);
 
         return {
             user: JSON.parse(JSON.stringify({
                 ...userWithoutPassword,
+                age: calculatedAge,
+                nomineeAge: calculatedNomineeAge,
                 _id: user._id.toString()
             })),
             loans: JSON.parse(JSON.stringify(loans.map(loan => ({
@@ -151,8 +157,10 @@ export async function updateUserCapital(prevState: any, formData: FormData): Pro
     }
 }
 
-export async function updateLoanMonthlyPayment(prevState: any, formData: FormData): Promise<{error?: string; success?: boolean}> {
+export async function updateLoanDetails(prevState: any, formData: FormData): Promise<{error?: string; success?: boolean}> {
     const loanId = formData.get('loanId') as string;
+    const loanAmount = Number(formData.get('loanAmount'));
+    const principal = Number(formData.get('principal'));
     const monthlyPrincipalPayment = Number(formData.get('monthlyPrincipalPayment'));
 
     const session = await getSession();
@@ -163,6 +171,14 @@ export async function updateLoanMonthlyPayment(prevState: any, formData: FormDat
 
     if (!loanId) {
         return { error: "Missing loan ID." };
+    }
+
+    if (isNaN(loanAmount) || loanAmount < 0) {
+        return { error: "Loan Amount must be a positive number." };
+    }
+
+    if (isNaN(principal) || principal < 0) {
+        return { error: "Outstanding Principal must be a positive number." };
     }
 
     if (isNaN(monthlyPrincipalPayment) || monthlyPrincipalPayment < 0) {
@@ -176,26 +192,38 @@ export async function updateLoanMonthlyPayment(prevState: any, formData: FormDat
             return { error: "Loan not found." };
         }
 
-        if (monthlyPrincipalPayment > loan.principal) {
-            return { error: `Monthly payment cannot exceed the remaining principal of ₹${loan.principal.toLocaleString()}.` };
-        }
+        const tenureMonths = monthlyPrincipalPayment > 0 ? Math.ceil(principal / monthlyPrincipalPayment) : loan.loanTenureMonths;
 
         await Loan.findByIdAndUpdate(loanId, {
             $set: {
-                monthlyPrincipalPayment
+                loanAmount,
+                principal,
+                monthlyPrincipalPayment,
+                loanTenureMonths: tenureMonths
             }
         });
 
-        revalidatePath(`/admin/users/${loan.user.toString()}`);
+        // Record activity to the database audit trail
+        const userToUpdate = await User.findById(loan.user as any);
+        const actor = session?.email || 'Admin';
+        await logAuditActivity(
+            'LOAN_MODIFIED_BY_ADMIN',
+            actor,
+            loan.user as any,
+            `Admin modified loan details for ${userToUpdate?.name || 'N/A'}. New Amount: ₹${loanAmount.toLocaleString()}, New Principal: ₹${principal.toLocaleString()}, New Monthly Payment: ₹${monthlyPrincipalPayment.toLocaleString()}.`,
+            { loanId, loanAmount, principal, monthlyPrincipalPayment }
+        );
+
+        revalidatePath(`/admin/users/${(loan.user as any).toString()}`);
         revalidatePath('/admin/users');
         revalidatePath('/admin/ledger');
         revalidatePath('/admin/statement');
         revalidatePath('/my-finances');
 
         return { success: true };
-    } catch (error) {
-        console.error("Failed to update loan monthly payment:", error);
-        return { error: "An unexpected error occurred while updating the loan payment." };
+    } catch (error: any) {
+        console.error("Failed to update loan details:", error);
+        return { error: error.message || "Failed to update loan details." };
     }
 }
 
@@ -206,7 +234,7 @@ const updateDetailsSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 digits."),
   membershipNumber: z.string().optional(),
   bankAccountNumber: z.string().optional(),
-  age: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().int().min(1, "Age must be positive.").optional()),
+  dob: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
   gender: z.enum(['male', 'female', 'other', '']).optional(),
   profession: z.string().optional(),
   workplace: z.string().optional(),
@@ -214,7 +242,7 @@ const updateDetailsSchema = z.object({
   personalAddress: z.string().optional(),
   nomineeName: z.string().optional(),
   nomineeRelation: z.string().optional(),
-  nomineeAge: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().int().min(1, "Nominee age must be positive.").optional()),
+  nomineeDob: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
 });
 
 export async function updateUserDetails(prevState: any, formData: FormData): Promise<{ error?: any; success?: boolean }> {
@@ -258,6 +286,11 @@ export async function updateUserDetails(prevState: any, formData: FormData): Pro
           }
       }
 
+      const dobDate = data.dob ? new Date(data.dob) : null;
+      const nomineeDobDate = data.nomineeDob ? new Date(data.nomineeDob) : null;
+      const calculatedAge = dobDate ? calculateAge(dobDate) : null;
+      const calculatedNomineeAge = nomineeDobDate ? calculateAge(nomineeDobDate) : null;
+
       await User.findByIdAndUpdate(userId, {
           $set: {
               name: data.name,
@@ -265,7 +298,8 @@ export async function updateUserDetails(prevState: any, formData: FormData): Pro
               phone: data.phone,
               membershipNumber: data.membershipNumber || null,
               bankAccountNumber: data.bankAccountNumber || null,
-              age: data.age || null,
+              age: calculatedAge,
+              dob: dobDate,
               gender: data.gender || null,
               profession: data.profession || null,
               workplace: data.workplace || null,
@@ -273,7 +307,8 @@ export async function updateUserDetails(prevState: any, formData: FormData): Pro
               personalAddress: data.personalAddress || null,
               nomineeName: data.nomineeName || null,
               nomineeRelation: data.nomineeRelation || null,
-              nomineeAge: data.nomineeAge || null,
+              nomineeAge: calculatedNomineeAge,
+              nomineeDob: nomineeDobDate,
           }
       });
 

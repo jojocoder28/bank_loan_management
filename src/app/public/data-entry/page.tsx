@@ -148,10 +148,10 @@ export default function PublicDataEntryPage() {
                                     }
                                 </div>
                                  <div className="grid gap-2">
-                                    <Label htmlFor="age">Age</Label>
-                                    <Input id="age" name="age" type="number" placeholder="e.g. 35" required />
-                                    {state?.error?.age && <p className="text-sm text-destructive">{state.error.age[0]}</p>}
-                                </div>
+                                     <Label htmlFor="dob">Date of Birth</Label>
+                                     <Input id="dob" name="dob" type="date" required />
+                                     {state?.error?.dob && <p className="text-sm text-destructive">{state.error.dob[0]}</p>}
+                                 </div>
                                  <div className="grid gap-2">
                                     <Label htmlFor="gender">Gender</Label>
                                     <select name="gender" id="gender" required className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
@@ -210,11 +210,11 @@ export default function PublicDataEntryPage() {
                                     <Input id="nomineeRelation" name="nomineeRelation" placeholder="e.g. Spouse" required />
                                     {state?.error?.nomineeRelation && <p className="text-sm text-destructive">{state.error.nomineeRelation[0]}</p>}
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="nomineeAge">Nominee's Age</Label>
-                                    <Input id="nomineeAge" name="nomineeAge" type="number" placeholder="e.g. 32" required />
-                                    {state?.error?.nomineeAge && <p className="text-sm text-destructive">{state.error.nomineeAge[0]}</p>}
-                                </div>
+                                 <div className="grid gap-2">
+                                     <Label htmlFor="nomineeDob">Nominee's Date of Birth</Label>
+                                     <Input id="nomineeDob" name="nomineeDob" type="date" required />
+                                     {state?.error?.nomineeDob && <p className="text-sm text-destructive">{state.error.nomineeDob[0]}</p>}
+                                 </div>
                             </div>
                         </div>
                     </CardContent>

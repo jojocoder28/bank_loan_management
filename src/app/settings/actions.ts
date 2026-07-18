@@ -7,6 +7,7 @@ import User, { IUser } from "@/models/user";
 import ProfileModificationRequest from "@/models/profileModification";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { calculateAge } from "@/lib/calculations";
 import { v2 as cloudinary } from 'cloudinary';
 import { config } from 'dotenv';
 
@@ -36,7 +37,7 @@ const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Invalid email address.").optional().or(z.literal('')),
   personalAddress: z.string().min(1, 'Personal address is required.'),
-  age: z.coerce.number().min(18, 'You must be at least 18 years old.'),
+  dob: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
   gender: z.enum(['male', 'female', 'other']),
   workplace: z.string().min(1, 'Workplace is required.'),
   profession: z.string().min(1, 'Profession is required.'),
@@ -44,7 +45,7 @@ const profileSchema = z.object({
   bankAccountNumber: z.string().min(1, 'Bank account number is required.'),
   nomineeName: z.string().min(1, 'Nominee name is required.'),
   nomineeRelation: z.string().min(1, 'Nominee relation is required.'),
-  nomineeAge: z.coerce.number().min(1, 'Nominee age is required.'),
+  nomineeDob: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
   photo: z.any().optional(),
 });
 
@@ -107,8 +108,13 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
     // Build an update object with only the validated fields
     const updateData: Partial<IUser> = { ...profileData };
     
+    if (profileData.dob) {
+        updateData.dob = new Date(profileData.dob);
+        updateData.age = calculateAge(updateData.dob) as any;
+    }
+
     // Intercept restricted fields for admin approval
-    const restrictedFields = ['personalAddress', 'workplaceAddress', 'nomineeName', 'nomineeRelation', 'nomineeAge'] as const;
+    const restrictedFields = ['personalAddress', 'workplaceAddress', 'nomineeName', 'nomineeRelation', 'nomineeDob'] as const;
     const requestedChanges: any = {};
     let hasRestrictedChanges = false;
     
@@ -131,7 +137,7 @@ export async function updateUserProfile(prevState: any, formData: FormData) {
                    'requestedChanges.workplaceAddress': requestedChanges.workplaceAddress,
                    'requestedChanges.nomineeName': requestedChanges.nomineeName,
                    'requestedChanges.nomineeRelation': requestedChanges.nomineeRelation,
-                   'requestedChanges.nomineeAge': requestedChanges.nomineeAge,
+                   'requestedChanges.nomineeDob': requestedChanges.nomineeDob,
                }
             },
             { upsert: true, new: true, setDefaultsOnInsert: true }

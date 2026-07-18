@@ -19,6 +19,10 @@ export interface IUser extends Document {
   isVerified?: boolean;
   requiresPasswordChange?: boolean;
 
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 
   // New Fields
   photoUrl?: string;
@@ -30,6 +34,7 @@ export interface IUser extends Document {
   // phone?: string;
   bankAccountNumber?: string;
   age?: number;
+  dob?: Date | null;
   gender?: Gender;
 
   // Fund Balances
@@ -41,6 +46,7 @@ export interface IUser extends Document {
   nomineeName?: string;
   nomineeRelation?: string;
   nomineeAge?: number;
+  nomineeDob?: Date | null;
   
   comparePassword(password: string): Promise<boolean>;
 }
@@ -66,6 +72,11 @@ const UserSchema = new Schema<IUser>({
   isVerified: { type: Boolean, default: true },
   requiresPasswordChange: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
+
+  verificationToken: { type: String },
+  verificationTokenExpires: { type: Date },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   
   // New Fields
   photoUrl: { type: String },
@@ -77,6 +88,7 @@ const UserSchema = new Schema<IUser>({
   // phone: { type: String },
   bankAccountNumber: { type: String },
   age: { type: Number },
+  dob: { type: Date, default: null },
   gender: { type: String, enum: ['male', 'female', 'other', ''] },
 
   // Fund Balances
@@ -88,6 +100,7 @@ const UserSchema = new Schema<IUser>({
   nomineeName: { type: String },
   nomineeRelation: { type: String },
   nomineeAge: { type: Number },
+  nomineeDob: { type: Date, default: null },
 });
 
 // Pre-save hook to hash password before saving

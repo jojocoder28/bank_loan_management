@@ -64,7 +64,15 @@ export function ProfileApprovals({ pendingRequests: initialRequests }: { pending
     }
 
     const formatKey = (key: string) => {
+        if (key === 'nomineeDob') return "Nominee's Date of Birth";
         return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    }
+
+    const formatValue = (key: string, value: any) => {
+        if (key === 'nomineeDob' && value) {
+            return new Date(value).toLocaleDateString();
+        }
+        return String(value);
     }
 
     return (
@@ -91,7 +99,7 @@ export function ProfileApprovals({ pendingRequests: initialRequests }: { pending
                                 <ul className="list-disc pl-4 text-sm space-y-1">
                                     {Object.entries(request.requestedChanges).map(([key, value]) => (
                                         <li key={key}>
-                                            <span className="font-semibold">{formatKey(key)}:</span> {String(value)}
+                                            <span className="font-semibold">{formatKey(key)}:</span> {formatValue(key, value)}
                                         </li>
                                     ))}
                                 </ul>
