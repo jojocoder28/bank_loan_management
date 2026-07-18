@@ -5,6 +5,7 @@ import dbConnect from "@/lib/mongodb";
 import User, { IUser } from "@/models/user";
 import Loan, { ILoan } from "@/models/loan";
 import Bank from "@/models/bank";
+import FundTopUp from "@/models/fundTopUp";
 import { getBankSettings } from "../settings/actions";
 import { calculateAnnualInterest, calculateDividend, calculateMonthlyInterest } from "@/lib/coop-calculations";
 import { revalidatePath } from "next/cache";
@@ -502,9 +503,11 @@ export async function getAnnualDuesPreviewData(
     targetYear: number
 ): Promise<AnnualDuesPreviewRow[]> {
     await dbConnect();
-    const [bankSettings, activeMembers] = await Promise.all([
+    const [bankSettings, activeMembers, bank, topups] = await Promise.all([
         getBankSettings(),
         User.find({ role: { $in: ['member', 'board_member'] }, status: 'active' }).sort({ name: 1 }).lean(),
+        Bank.findOne({ singleton: 'bank-settings' }).lean(),
+        FundTopUp.find({ year: { $gte: targetYear } }).lean(),
     ]);
 
     if (!bankSettings) {
@@ -512,20 +515,53 @@ export async function getAnnualDuesPreviewData(
     }
 
     const monthlyThrift = bankSettings.monthlyThriftContribution;
-    const tfRateDecimal = tfRate / 100;
-    const thriftInterestAmount = Math.round(78 * monthlyThrift * (tfRateDecimal / 12));
+
+    // Calculate how many monthly statement cycles have been processed AFTER March of targetYear
+    // March of targetYear = month 2 (0-indexed), year = targetYear
+    const marchValue = targetYear * 12 + 2; // March (0-indexed month 2)
+    let monthsProcessedAfterMarch = 0;
+    if (bank?.lastMonthlyProcess) {
+        const lastProcessed = new Date(bank.lastMonthlyProcess);
+        const lastProcessedValue = lastProcessed.getFullYear() * 12 + lastProcessed.getMonth();
+        if (lastProcessedValue > marchValue) {
+            monthsProcessedAfterMarch = lastProcessedValue - marchValue;
+        }
+    }
 
     const previewRows: AnnualDuesPreviewRow[] = activeMembers.map(member => {
-        const gfBalance = member.guaranteedFund || 0;
+        const memberId = member._id.toString();
+
+        // --- Guaranteed Fund as of March ---
+        // GF only changes via FundTopUp entries, so subtract post-March GF top-ups
+        const postMarchGfTopups = topups.filter(t =>
+            t.user.toString() === memberId &&
+            (t.year * 12 + t.month) > marchValue
+        );
+        const postMarchGfSum = postMarchGfTopups.reduce((sum, t) => sum + (t.gfAmount || 0), 0);
+        const gfBalance = Math.max(0, (member.guaranteedFund || 0) - postMarchGfSum);
         const gfInterest = Math.round(calculateAnnualInterest(gfBalance, gfRate));
 
+        // --- Thrift Fund as of March ---
+        // TF changes each month via monthly contributions + top-ups after March
+        const postMarchTfTopups = topups.filter(t =>
+            t.user.toString() === memberId &&
+            (t.year * 12 + t.month) > marchValue
+        );
+        const postMarchTfTopupSum = postMarchTfTopups.reduce((sum, t) => sum + ((t.sfAmount === 0 && t.gfAmount === 0) ? t.totalAmount : 0), 0);
+        const tfContributionsAfterMarch = monthsProcessedAfterMarch * monthlyThrift;
+        const tfBalance = Math.max(0, (member.thriftFund || 0) - tfContributionsAfterMarch - postMarchTfTopupSum);
+
+        // TF interest: formula is 78 * monthlyContrib * (rate/12) — uses the March TF value indirectly
+        const tfRateDecimal = tfRate / 100;
+        const thriftInterestAmount = Math.round(78 * monthlyThrift * (tfRateDecimal / 12));
+
         return {
-            memberId: member._id.toString(),
+            memberId,
             name: member.name,
             membershipNumber: member.membershipNumber || 'N/A',
             gfBalance,
             gfInterest,
-            tfBalance: member.thriftFund || 0,
+            tfBalance,
             tfInterest: thriftInterestAmount,
         };
     });

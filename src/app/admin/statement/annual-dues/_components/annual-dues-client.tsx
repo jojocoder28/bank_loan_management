@@ -234,7 +234,7 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                             Calculate Yearly Interest
                         </CardTitle>
                         <CardDescription>
-                            Enter rates to calculate annual interest. The year 2026 allows off-season execution.
+                            Enter rates to calculate annual interest. GF and TF balances are automatically computed as of March of the selected year by subtracting post-March contributions and top-ups.
                         </CardDescription>
                     </CardHeader>
                     <form onSubmit={handleGeneratePreview}>
@@ -307,7 +307,7 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                         <div>
                             <h3 className="font-bold text-lg">Yearly Interest Preview (March {year})</h3>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                GF Rate: {gfRate}% | TF Rate: {tfRate}% | Excludes Share Fund dividends (calculated separately).
+                                GF Rate: {gfRate}% | TF Rate: {tfRate}% | Balances are auto-recovered as of March {year}. Excludes Share Fund dividends (calculated separately in the Dividend section).
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -340,9 +340,9 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                                     <TableHead>Sl. No</TableHead>
                                     <TableHead>Member Name</TableHead>
                                     <TableHead>Membership #</TableHead>
-                                    <TableHead className="text-right">GF Balance (₹)</TableHead>
+                                    <TableHead className="text-right">GF Balance (March ₹)</TableHead>
                                     <TableHead className="text-right w-[150px]">GF Interest (₹)</TableHead>
-                                    <TableHead className="text-right">TF Balance (₹)</TableHead>
+                                    <TableHead className="text-right">TF Balance (March ₹)</TableHead>
                                     <TableHead className="text-right w-[150px]">TF Interest (₹)</TableHead>
                                     <TableHead className="text-right">Total Interest (₹)</TableHead>
                                 </TableRow>
