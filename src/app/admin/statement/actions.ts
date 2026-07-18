@@ -493,8 +493,13 @@ export interface AnnualDuesPreviewRow {
     membershipNumber: string;
     gfBalance: number;
     gfInterest: number;
-    tfBalance: number;
-    tfInterest: number;
+    // TF breakdown fields
+    tfBalance: number;            // March TF balance (estimate)
+    tfOpeningBalance: number;     // March TF minus this year's 12 contributions
+    tfYearlyContribution: number; // 12 × monthly (this year's contribution portion)
+    tfInterestOnOpening: number;  // tfOpeningBalance × rate
+    tfInterestOnNew: number;      // 12 × monthly × rate
+    tfInterest: number;           // total = tfInterestOnOpening + tfInterestOnNew
 }
 
 export async function getAnnualDuesPreviewData(
@@ -515,9 +520,9 @@ export async function getAnnualDuesPreviewData(
     }
 
     const monthlyThrift = bankSettings.monthlyThriftContribution;
+    const tfRateDecimal = tfRate / 100;
 
     // Calculate how many monthly statement cycles have been processed AFTER March of targetYear
-    // March of targetYear = month 2 (0-indexed), year = targetYear
     const marchValue = targetYear * 12 + 2; // March (0-indexed month 2)
     let monthsProcessedAfterMarch = 0;
     if (bank?.lastMonthlyProcess) {
@@ -543,9 +548,8 @@ export async function getAnnualDuesPreviewData(
 
         // --- Thrift Fund as of March (ESTIMATE) ---
         // TF changes each month via monthly contributions + manual top-ups.
-        // We subtract (monthsProcessedAfterMarch × standardMonthly) as a best-effort estimate.
-        // WARNING: This estimate is INACCURATE for members who had paused deductions,
-        // custom thrift amounts, or skipped months — admin should manually verify and correct.
+        // Best-effort: subtract post-March monthly cycles and top-ups from current balance.
+        // WARNING: Inaccurate for members with paused/custom/skipped contributions — admin should verify.
         const postMarchTfTopups = topups.filter(t =>
             t.user.toString() === memberId &&
             (t.year * 12 + t.month) > marchValue
@@ -554,9 +558,18 @@ export async function getAnnualDuesPreviewData(
         const tfContributionsAfterMarch = monthsProcessedAfterMarch * monthlyThrift;
         const tfBalance = Math.max(0, (member.thriftFund || 0) - tfContributionsAfterMarch - postMarchTfTopupSum);
 
-        // TF interest: formula is 78 * monthlyContrib * (rate/12) — uses the March TF value indirectly
-        const tfRateDecimal = tfRate / 100;
-        const thriftInterestAmount = Math.round(78 * monthlyThrift * (tfRateDecimal / 12));
+        // --- TF Interest Formula ---
+        // The March TF balance = opening balance (before this year) + 12 monthly contributions of this year.
+        // Step 1: opening balance = marchTf - (12 × monthly)
+        // Step 2: interestOnOpening = openingBalance × rate  (full year interest on existing balance)
+        // Step 3: interestOnNew = 12 × monthly × rate        (full year interest on this year's contributions)
+        // Total TF interest = interestOnOpening + interestOnNew = tfBalance × rate
+        const yearlyContribution = 12 * monthlyThrift;
+        const tfOpeningBalance = Math.max(0, tfBalance - yearlyContribution);
+        const tfInterestOnOpening = Math.round(tfOpeningBalance * tfRateDecimal);
+        // 78 = 1+2+...+12: prorated sum-of-digits formula for monthly deposits through the year
+        const tfInterestOnNew = Math.round(78 * monthlyThrift * (tfRateDecimal / 12));
+        const tfInterest = tfInterestOnOpening + tfInterestOnNew;
 
         return {
             memberId,
@@ -565,7 +578,11 @@ export async function getAnnualDuesPreviewData(
             gfBalance,
             gfInterest,
             tfBalance,
-            tfInterest: thriftInterestAmount,
+            tfOpeningBalance,
+            tfYearlyContribution: yearlyContribution,
+            tfInterestOnOpening,
+            tfInterestOnNew,
+            tfInterest,
         };
     });
 
