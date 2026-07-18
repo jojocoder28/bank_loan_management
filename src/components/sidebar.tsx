@@ -25,6 +25,7 @@ import {
     Layers,
     Cog,
     DatabaseZap,
+    Handshake,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
@@ -64,6 +65,7 @@ const adminNavGroups = [
       { href: "/admin/statement", label: "Monthly Statement", icon: FileText },
       { href: "/admin/dividend", label: "Dividends", icon: Gift },
       { href: "/admin/fund-compliance", label: "Fund Compliance", icon: ShieldAlert },
+      { href: "/admin/settlements", label: "Settlements", icon: Handshake },
     ],
   },
   {
