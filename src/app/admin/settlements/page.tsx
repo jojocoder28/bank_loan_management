@@ -36,7 +36,7 @@ import {
     CheckCircle2, Loader2, RefreshCw, Handshake, AlertTriangle, Info, Edit,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getSettlements, settleMemberAccount, updateSettlementAmounts } from "../users/actions";
+import { getSettlements, settleMemberAccount, updateSettlementAmounts, cancelSettlement } from "../users/actions";
 
 interface SettlementUser {
     _id: string;
@@ -50,6 +50,9 @@ interface SettlementRow {
     _id: string;
     user: SettlementUser;
     type: 'deactivation' | 'retirement';
+    shareFund: number;
+    guaranteedFund: number;
+    thriftFund: number;
     totalFunds: number;
     totalOutstandingLoan: number;
     settlementBalance: number;
@@ -69,6 +72,9 @@ export default function SettlementsPage() {
 
     // Confirm settlement dialog state
     const [confirmDialog, setConfirmDialog] = useState<SettlementRow | null>(null);
+
+    // Revert/Cancel settlement dialog state
+    const [revertDialog, setRevertDialog] = useState<SettlementRow | null>(null);
 
     // Edit amounts dialog state
     const [editDialog, setEditDialog] = useState<SettlementRow | null>(null);
@@ -115,6 +121,28 @@ export default function SettlementsPage() {
                 toast({
                     variant: "destructive",
                     title: "Settlement Failed",
+                    description: res.error || "An error occurred.",
+                });
+            }
+        });
+    };
+
+    const handleRevert = () => {
+        if (!revertDialog) return;
+        
+        startTransition(async () => {
+            const res = await cancelSettlement(revertDialog._id);
+            if (res.success) {
+                toast({
+                    title: "Settlement Reverted",
+                    description: `Successfully reactivated member ${revertDialog.user.name} and restored their fund balances.`,
+                });
+                setRevertDialog(null);
+                loadData();
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Reversion Failed",
                     description: res.error || "An error occurred.",
                 });
             }
@@ -261,6 +289,9 @@ export default function SettlementsPage() {
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             <div className="flex justify-end gap-2">
+                                                                <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => setRevertDialog(row)}>
+                                                                    Revert
+                                                                </Button>
                                                                 <Button size="sm" variant="outline" onClick={() => handleOpenEdit(row)}>
                                                                     Edit
                                                                 </Button>
@@ -419,6 +450,56 @@ export default function SettlementsPage() {
                     </DialogContent>
                 </Dialog>
             )}
+
+            {/* --- REVERT/CANCEL SETTLEMENT DIALOG --- */}
+            <AlertDialog open={revertDialog !== null} onOpenChange={(open) => !open && setRevertDialog(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="size-5" />
+                            Revert Settlement & Reactivate Member?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-3 mt-2 text-foreground/90">
+                            <p>
+                                Are you sure you want to revert the deactivation/retirement for <strong>{revertDialog?.user?.name}</strong>?
+                            </p>
+                            <p>
+                                This will change their status back to <strong>Active</strong> and restore their original fund balances:
+                            </p>
+                            <div className="p-3.5 bg-muted rounded-lg space-y-1.5 text-xs text-muted-foreground">
+                                <div className="flex justify-between">
+                                    <span>Share Fund:</span>
+                                    <span className="font-semibold text-foreground">₹{revertDialog?.shareFund.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Guaranteed Fund:</span>
+                                    <span className="font-semibold text-foreground">₹{revertDialog?.guaranteedFund.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Thrift Fund:</span>
+                                    <span className="font-semibold text-foreground">₹{revertDialog?.thriftFund.toLocaleString()}</span>
+                                </div>
+                                <div className="border-t pt-1.5 flex justify-between font-bold text-sm text-foreground">
+                                    <span>Total Restored Funds:</span>
+                                    <span className="text-green-600 font-bold">₹{revertDialog?.totalFunds.toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground italic">
+                                The pending settlement record will be deleted, and the member will be fully reactivated with their original funds.
+                            </p>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setRevertDialog(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Button variant="destructive" onClick={handleRevert} disabled={isPending}>
+                                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Revert & Reactivate
+                            </Button>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {/* --- CONFIRM SETTLEMENT DIALOG --- */}
             <AlertDialog open={confirmDialog !== null} onOpenChange={(open) => !open && setConfirmDialog(null)}>
