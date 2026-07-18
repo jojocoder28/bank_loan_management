@@ -222,13 +222,14 @@ export function FinancialCharts({ user, allLoans }: FinancialChartsProps) {
                 <Tooltip
                   formatter={(value) => [formatCurrency(value), undefined]}
                   contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    border: "1px solid rgba(0,0,0,0.06)",
+                    backgroundColor: "hsl(var(--card))",
+                    borderColor: "hsl(var(--border))",
                     borderRadius: "12px",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                    color: "hsl(var(--card-foreground))",
                   }}
-                  itemStyle={{ fontSize: "12px" }}
-                  labelStyle={{ fontSize: "12px", fontWeight: "bold" }}
+                  itemStyle={{ fontSize: "12px", color: "hsl(var(--card-foreground))" }}
+                  labelStyle={{ fontSize: "12px", fontWeight: "bold", color: "hsl(var(--card-foreground))" }}
                 />
                 <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
                 <Area name="Applied Principal" type="monotone" dataKey="Applied" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#appliedColor)" />
@@ -323,7 +324,17 @@ export function FinancialCharts({ user, allLoans }: FinancialChartsProps) {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [formatCurrency(value), undefined]} />
+                  <Tooltip 
+                    formatter={(value) => [formatCurrency(value), undefined]} 
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      borderRadius: "8px",
+                      border: "1px solid hsl(var(--border))",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      color: "hsl(var(--card-foreground))",
+                    }}
+                    itemStyle={{ fontSize: "12px", color: "hsl(var(--card-foreground))" }}
+                  />
                   <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: "10px" }} />
                 </PieChart>
               </ResponsiveContainer>

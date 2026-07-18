@@ -48,6 +48,7 @@ import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { getBenefits, getBanners } from '@/app/admin/homepage/actions';
 import { DashboardBanners } from './_components/dashboard-banners';
+import { UserDashboardCharts } from './_components/user-dashboard-charts';
 
 const IconMap: Record<string, React.ComponentType<any>> = {
   TrendingUp,
@@ -223,11 +224,6 @@ export default async function DashboardPage() {
         return <UserLandingPage benefits={benefits} banners={banners} />;
     }
 
-
-    const totalLoanAmount = activeLoans.reduce((sum, loan) => sum + loan.loanAmount, 0);
-    const totalPrincipalLeft = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
-    const loanProgress = totalLoanAmount > 0 ? ((totalLoanAmount - totalPrincipalLeft) / totalLoanAmount) * 100 : 0;
-
     const loanStatusVariant: { [key: string]: "default" | "secondary" | "outline" | "destructive" } = {
         active: 'default',
         paid: 'secondary',
@@ -236,91 +232,39 @@ export default async function DashboardPage() {
     }
 
     return (
-        <div className="flex flex-col gap-8">
-            <DashboardBanners banners={banners} />
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="lg:col-span-2">
-                    <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-primary/10 p-3 rounded-full">
-                                <Landmark className="size-6 text-primary" />
-                            </div>
-                            <div>
-                                <CardTitle>Active Loans Overview</CardTitle>
-                                <CardDescription>
-                                    {activeLoans.length > 0 ? `You have ${activeLoans.length} active loan(s).` : 'You have no active loans.'}
-                                </CardDescription>
-                            </div>
-                        </div>
-                        <Button asChild className="w-full sm:w-auto">
-                            <Link href="/apply-loan" className="w-full justify-center">Apply for New Loan <ArrowRight className="ml-2" /></Link>
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="grid gap-6">
-                        {activeLoans.length > 0 ? (
-                            <div>
-                                <div className='grid grid-cols-3 gap-2 sm:gap-4 text-center pb-6'>
-                                    <div>
-                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Total Loan Amount</p>
-                                        <p className="text-xs sm:text-2xl font-bold">₹{totalLoanAmount.toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Total Principal Left</p>
-                                        <p className="text-xs sm:text-2xl font-bold">₹{totalPrincipalLeft.toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Active Loans</p>
-                                        <p className="text-xs sm:text-2xl font-bold">{activeLoans.length}</p>
-                                    </div>
-                                </div>
-                                <Progress value={loanProgress} aria-label={`${loanProgress.toFixed(0)}% of total loans paid`} />
-                                <p className="text-right text-sm text-muted-foreground pt-2">{loanProgress.toFixed(2)}% Paid</p>
-                            </div>
-                        ) : (
-                            <div className="text-center text-muted-foreground py-8">
-                                <p>No active loan data to display. Apply for a new loan to get started.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                    <CardFooter>
-                        <Button variant="link" asChild>
-                            <Link href="/my-finances">Manage Loans & View Details &rarr;</Link>
-                        </Button>
-                    </CardFooter>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Your Funds</CardTitle>
-                        <CardDescription>Current balance of your funds.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-full"><PiggyBank className="size-5 text-primary" /></div>
-                                <p className="font-medium">Share Fund</p>
-                            </div>
-                            <p className="font-bold text-lg">₹{user.shareFund.toLocaleString()}</p>
-                        </div>
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-green-500/10 rounded-full"><ShieldCheck className="size-5 text-green-500" /></div>
-                                <p className="font-medium">Guaranteed Fund</p>
-                            </div>
-                            <p className="font-bold text-lg">₹{user.guaranteedFund.toLocaleString()}</p>
-                        </div>
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-purple-500/10 rounded-full"><Wallet className="size-5 text-purple-500" /></div>
-                                <p className="font-medium">Thrift Fund</p>
-                            </div>
-                            <p className="font-bold text-lg">₹{(user.thriftFund ?? 0).toLocaleString()}</p>
-                        </div>
-                    </CardContent>
-                </Card>
+        <div className="flex flex-col gap-8 pb-12">
+            {/* Hero Section with Backdrop */}
+            <div className="relative -mx-4 sm:-mx-8 -mt-8 pt-8 pb-12 px-4 sm:px-8 overflow-hidden bg-primary/5 border-b">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/5" />
+              <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-50" />
+              <div className="absolute bottom-0 -left-12 w-64 h-64 bg-accent/10 rounded-full blur-2xl opacity-50" />
+              
+              <div className="relative z-10 max-w-4xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                <div>
+                  <h1 className="text-3xl font-extrabold tracking-tight" style={{ fontFamily: "Sora, sans-serif" }}>
+                    Welcome back, {user.name}
+                  </h1>
+                  <p className="text-muted-foreground mt-2 max-w-2xl text-lg">
+                    Here is an overview of your active loans, funds, and membership benefits.
+                  </p>
+                </div>
+                <Button asChild size="lg" className="shrink-0 w-full sm:w-auto">
+                    <Link href="/apply-loan">Apply for New Loan <ArrowRight className="ml-2 size-4" /></Link>
+                </Button>
+              </div>
             </div>
 
+            <DashboardBanners banners={banners} />
+
+            {/* Main Interactive Charts Section */}
+            <UserDashboardCharts 
+                user={user} 
+                activeLoans={activeLoans} 
+                loanHistory={loanHistory} 
+            />
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <Card className="lg:col-span-1">
+                <Card className="lg:col-span-1 glass-card">
                     <CardHeader className="flex flex-row items-center gap-4">
                         <div className="bg-primary/10 p-3 rounded-full">
                             <UserCheck className="size-6 text-primary" />
@@ -341,7 +285,7 @@ export default async function DashboardPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="lg:col-span-2">
+                <Card className="lg:col-span-2 glass-card">
                     <CardHeader className="flex flex-row items-center gap-4">
                         <div className="bg-primary/10 p-3 rounded-full">
                             <Award className="size-6 text-primary" />
@@ -364,7 +308,7 @@ export default async function DashboardPage() {
                 </Card>
             </div>
 
-            <Card>
+            <Card className="glass-card">
                 <CardHeader>
                     <CardTitle>Recent Loan History</CardTitle>
                     <CardDescription>
@@ -385,7 +329,7 @@ export default async function DashboardPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {loanHistory.map(loan => (
-                                        <TableRow key={loan._id.toString()}>
+                                        <TableRow key={String(loan._id)}>
                                             <TableCell suppressHydrationWarning>{new Date(loan.createdAt).toLocaleDateString()}</TableCell>
                                             <TableCell>₹{loan.loanAmount.toLocaleString()}</TableCell>
                                             <TableCell>
@@ -414,7 +358,7 @@ export default async function DashboardPage() {
 
             {/* Board Members Directory Section */}
             {boardMembers.length > 0 && (
-                <Card className="border-primary/10 shadow-md">
+                <Card className="border-primary/10 shadow-md glass-card">
                     <CardHeader className="flex flex-row items-center gap-4 border-b pb-4">
                         <div className="bg-primary/10 p-3 rounded-full">
                             <Users className="size-6 text-primary" />
