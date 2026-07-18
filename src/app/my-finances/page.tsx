@@ -26,6 +26,7 @@ import { IncreaseLoanForm } from './_components/increase-loan';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { computeCompliance } from '@/lib/fund-compliance';
+import { FinancialCharts } from './_components/financial-charts';
 
 export default async function MyFinancesPage() {
   const data = await getMyFinancesData();
@@ -55,7 +56,7 @@ export default async function MyFinancesPage() {
   );
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 animate-fade-in">
       {/* SF/GF Compliance Warning */}
       {totalActivePrincipal > 0 && !compliance.isCompliant && (
         <Alert className="border-amber-500/50 bg-amber-500/10">
@@ -76,38 +77,8 @@ export default async function MyFinancesPage() {
         </Alert>
       )}
 
-      {/* Top section with Fund Balances */}
-      <Card>
-        <CardHeader>
-            <CardTitle>My Financial Statement</CardTitle>
-            <CardDescription>
-              A complete overview of your funds and loan history.
-            </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-3">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-full"><PiggyBank className="size-5 text-primary" /></div>
-                <p className="font-medium">Share Fund</p>
-              </div>
-              <p className="font-bold text-lg">₹{(user.shareFund || 0).toLocaleString()}</p>
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-full"><Wallet className="size-5 text-primary" /></div>
-                <p className="font-medium">Thrift Fund</p>
-              </div>
-              <p className="font-bold text-lg">₹{(user.thriftFund || 0).toLocaleString()}</p>
-            </div>
-             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-              <div className="flex items-center gap-3">
-                 <div className="p-2 bg-green-500/10 rounded-full"><ShieldCheck className="size-5 text-green-500" /></div>
-                <p className="font-medium">Guaranteed Fund</p>
-              </div>
-              <p className="font-bold text-lg">₹{(user.guaranteedFund || 0).toLocaleString()}</p>
-            </div>
-        </CardContent>
-      </Card>
+      {/* Advanced Charting & Financial Visualizations */}
+      <FinancialCharts user={user} allLoans={allLoans} />
       
       {/* Active Loans Section */}
       <Card>
