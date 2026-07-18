@@ -98,12 +98,12 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                     row.totalDeduction,
                 ]);
                 
-                const pageTotal = body.reduce((acc, row) => {
-                    acc[5] += row[5] as number;
-                    acc[6] += row[6] as number;
-                    acc[7] += row[7] as number;
-                    acc[8] += row[8] as number;
-                    acc[9] += row[9] as number;
+                const pageTotal = body.reduce((acc: number[], row) => {
+                    acc[5] += Number(row[5]) || 0;
+                    acc[6] += Number(row[6]) || 0;
+                    acc[7] += Number(row[7]) || 0;
+                    acc[8] += Number(row[8]) || 0;
+                    acc[9] += Number(row[9]) || 0;
                     return acc;
                 }, [0,0,0,0,0,0,0,0,0,0]);
                 
