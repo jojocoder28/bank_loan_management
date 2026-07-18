@@ -8,13 +8,22 @@ import {
 import { DividendReport } from "./_components/dividend-report";
 import { Gift } from "lucide-react";
 import { getBankSettings } from "../settings/actions";
+import dbConnect from "@/lib/mongodb";
+import Bank from "@/models/bank";
 
 export const dynamic = 'force-dynamic';
 
 export default async function DividendReportPage() {
-  const bankSettings = await getBankSettings();
+  await dbConnect();
+  const [bankSettings, bank] = await Promise.all([
+    getBankSettings(),
+    Bank.findOne({ singleton: 'bank-settings' }).lean(),
+  ]);
   const defaultRate = bankSettings?.shareFundDividendRate ?? 12;
   const currentYear = new Date().getFullYear();
+  const lastDividendProcess = bank?.lastDividendProcess
+    ? (bank.lastDividendProcess as Date).toISOString()
+    : null;
 
   return (
     <Card>
@@ -28,7 +37,7 @@ export default async function DividendReportPage() {
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <DividendReport defaultRate={defaultRate} defaultYear={currentYear} />
+            <DividendReport defaultRate={defaultRate} defaultYear={currentYear} lastDividendProcess={lastDividendProcess} />
         </CardContent>
     </Card>
   );
