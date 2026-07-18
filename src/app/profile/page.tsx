@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { getProfileData } from "./actions";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   User,
   Mail,
@@ -58,20 +60,32 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="flex justify-center">
-        <Card className="w-full max-w-3xl">
-          <CardHeader className="flex-row items-center gap-4">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={user.photoUrl ?? undefined} />
-              <AvatarFallback className="text-3xl">{user.name?.[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-3xl">{user.name}</CardTitle>
-              <CardDescription className="text-base">{user.email}</CardDescription>
-              <Badge variant={roleVariant[user.role] || "outline"} className="mt-2 capitalize text-sm">
-                {user.role.replace("_", " ")}
-              </Badge>
+    <div className="flex justify-center animate-fade-in">
+        <Card className="w-full max-w-3xl glass-card">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-24 w-24 ring-4 ring-primary/10">
+                <AvatarImage src={user.photoUrl ?? undefined} alt={user.name ?? "User"} />
+                <AvatarFallback className="text-3xl font-bold bg-primary/10 text-primary">
+                  {user.name?.[0]?.toUpperCase() ?? "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <CardTitle className="text-3xl font-extrabold tracking-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
+                  {user.name}
+                </CardTitle>
+                <CardDescription className="text-base text-muted-foreground">{user.email}</CardDescription>
+                <Badge variant={roleVariant[user.role] || "outline"} className="mt-2 capitalize text-xs font-semibold px-2.5 py-0.5">
+                  {user.role.replace("_", " ")}
+                </Badge>
+              </div>
             </div>
+            <Button asChild variant="outline" className="rounded-xl flex items-center gap-2 border-border/60 hover:border-primary/30 transition-all font-semibold shrink-0">
+              <Link href="/settings">
+                <User className="size-4" />
+                Edit Profile
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent className="grid gap-6">
             <Separator />
