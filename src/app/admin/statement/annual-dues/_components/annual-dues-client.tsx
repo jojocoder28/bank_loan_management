@@ -405,6 +405,22 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                             </TableFooter>
                         </Table>
                     </div>
+
+                    <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2.5 text-xs text-amber-700 dark:text-amber-400">
+                        <AlertTriangle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                            <p className="font-bold">Note on Thrift Fund (TF) Balances</p>
+                            <p>
+                                The <strong>TF Balance (March)</strong> shown is an <em>estimate</em> calculated by subtracting
+                                {" "}post-March monthly contributions from the current balance. This estimate may be <strong>inaccurate</strong> for members who had
+                                {" "}<strong>paused deductions</strong>, <strong>custom contribution amounts</strong>, or <strong>skipped months</strong>.
+                            </p>
+                            <p>
+                                Please verify and manually correct any TF balances that appear wrong before approving.
+                                The input fields in the table above allow you to adjust individual amounts.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             )}
 

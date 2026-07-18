@@ -541,8 +541,11 @@ export async function getAnnualDuesPreviewData(
         const gfBalance = Math.max(0, (member.guaranteedFund || 0) - postMarchGfSum);
         const gfInterest = Math.round(calculateAnnualInterest(gfBalance, gfRate));
 
-        // --- Thrift Fund as of March ---
-        // TF changes each month via monthly contributions + top-ups after March
+        // --- Thrift Fund as of March (ESTIMATE) ---
+        // TF changes each month via monthly contributions + manual top-ups.
+        // We subtract (monthsProcessedAfterMarch × standardMonthly) as a best-effort estimate.
+        // WARNING: This estimate is INACCURATE for members who had paused deductions,
+        // custom thrift amounts, or skipped months — admin should manually verify and correct.
         const postMarchTfTopups = topups.filter(t =>
             t.user.toString() === memberId &&
             (t.year * 12 + t.month) > marchValue
