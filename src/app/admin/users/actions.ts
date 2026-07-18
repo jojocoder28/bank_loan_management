@@ -4,6 +4,7 @@
 import dbConnect from "@/lib/mongodb";
 import Loan from "@/models/loan";
 import User, { IUser, UserStatus } from "@/models/user";
+import Settlement from "@/models/settlement";
 import { revalidatePath } from "next/cache";
 import { getBankSettings } from "../settings/actions";
 import { calculateAnnualInterest, calculateDividend, calculateRequiredFunds } from "@/lib/coop-calculations";
@@ -64,18 +65,15 @@ export async function deactivateUser(formData: FormData): Promise<{error?: strin
 
         await user.save();
 
-        // Settle active loans
-        for (const loan of activeLoans) {
-            loan.payments.push({
-                amount: loan.principal,
-                date: new Date(),
-                type: 'principal',
-                notes: 'Settled upon deactivation'
-            } as any);
-            loan.principal = 0;
-            loan.status = 'paid';
-            await loan.save();
-        }
+        // Create a pending Settlement record
+        await Settlement.create({
+            user: userId,
+            type: 'deactivation',
+            totalFunds,
+            totalOutstandingLoan,
+            settlementBalance,
+            status: 'pending'
+        });
 
         const session = await getSession() as any;
         const actor = session?.email || 'Admin';
@@ -83,18 +81,19 @@ export async function deactivateUser(formData: FormData): Promise<{error?: strin
             'USER_DEACTIVATED',
             actor,
             userId,
-            `Deactivated user ${user.name}. Total funds ₹${totalFunds.toLocaleString()} offset against loan ₹${totalOutstandingLoan.toLocaleString()}. Settlement balance: ₹${settlementBalance.toLocaleString()}.`,
+            `Deactivated user ${user.name}. Total funds ₹${totalFunds.toLocaleString()} offset against loan ₹${totalOutstandingLoan.toLocaleString()}. Settlement balance: ₹${settlementBalance.toLocaleString()}. A pending settlement record has been created for manual tracking.`,
             { totalFunds, totalOutstandingLoan, settlementBalance }
         );
 
         revalidatePath("/admin/users");
         revalidatePath(`/admin/users/${userId}`);
+        revalidatePath("/admin/settlements");
 
         let message = `User ${user.name} has been deactivated. Total funds: ₹${totalFunds.toLocaleString()}. Outstanding loan: ₹${totalOutstandingLoan.toLocaleString()}. `;
         if (settlementBalance >= 0) {
-            message += `Admin will give the user ₹${settlementBalance.toLocaleString()}.`;
+            message += `Admin will give the user ₹${settlementBalance.toLocaleString()}. Please complete this manually in the Settlements section.`;
         } else {
-            message += `User will give the admin ₹${Math.abs(settlementBalance).toLocaleString()}.`;
+            message += `User will give the admin ₹${Math.abs(settlementBalance).toLocaleString()}. Please complete this manually in the Settlements section.`;
         }
 
         return { success: true, message };
@@ -176,18 +175,15 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
 
         await user.save();
 
-        // Settle active loans
-        for (const loan of activeLoans) {
-            loan.payments.push({
-                amount: loan.principal,
-                date: new Date(),
-                type: 'principal',
-                notes: 'Settled upon retirement'
-            } as any);
-            loan.principal = 0;
-            loan.status = 'paid';
-            await loan.save();
-        }
+        // Create a pending Settlement record
+        await Settlement.create({
+            user: userId,
+            type: 'retirement',
+            totalFunds,
+            totalOutstandingLoan,
+            settlementBalance,
+            status: 'pending'
+        });
 
         const session = await getSession() as any;
         const actor = session?.email || 'Admin';
@@ -195,18 +191,19 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
             'USER_RETIRED',
             actor,
             userId,
-            `Retired user ${user.name}. Total funds ₹${totalFunds.toLocaleString()} (including pro-rated interest/dividends) offset against loan ₹${totalOutstandingLoan.toLocaleString()}. Settlement balance: ₹${settlementBalance.toLocaleString()}.`,
+            `Retired user ${user.name}. Total funds ₹${totalFunds.toLocaleString()} (including pro-rated interest/dividends) offset against loan ₹${totalOutstandingLoan.toLocaleString()}. Settlement balance: ₹${settlementBalance.toLocaleString()}. A pending settlement record has been created for manual tracking.`,
             { totalFunds, totalOutstandingLoan, settlementBalance }
         );
         
         revalidatePath("/admin/users");
         revalidatePath(`/admin/users/${userId}`);
+        revalidatePath("/admin/settlements");
 
         let message = `User ${user.name} has been retired. Total funds: ₹${totalFunds.toLocaleString()}. Outstanding loan: ₹${totalOutstandingLoan.toLocaleString()}. `;
         if (settlementBalance >= 0) {
-            message += `Admin will give the user ₹${settlementBalance.toLocaleString()}.`;
+            message += `Admin will give the user ₹${settlementBalance.toLocaleString()}. Please complete this manually in the Settlements section.`;
         } else {
-            message += `User will give the admin ₹${Math.abs(settlementBalance).toLocaleString()}.`;
+            message += `User will give the admin ₹${Math.abs(settlementBalance).toLocaleString()}. Please complete this manually in the Settlements section.`;
         }
 
         return { success: true, message };
@@ -652,5 +649,145 @@ export async function sendPasswordResetEmail(userId: string): Promise<{ error?: 
     } catch (e: any) {
         console.error("Error sending password reset email:", e);
         return { error: e.message || "Failed to send password reset email." };
+    }
+}
+
+export async function getSettlements(status?: 'pending' | 'settled'): Promise<any[]> {
+    await dbConnect();
+    const query: any = {};
+    if (status) {
+        query.status = status;
+    }
+    const settlements = await Settlement.find(query)
+        .populate('user', 'name membershipNumber bankAccountNumber status')
+        .sort({ createdAt: -1 })
+        .lean();
+
+    return JSON.parse(JSON.stringify(settlements));
+}
+
+export async function settleMemberAccount(settlementId: string): Promise<{ error?: string, success?: boolean }> {
+    try {
+        await dbConnect();
+        const settlement = await Settlement.findById(settlementId);
+        if (!settlement) {
+            return { error: 'Settlement record not found.' };
+        }
+
+        if (settlement.status === 'settled') {
+            return { error: 'This settlement has already been completed.' };
+        }
+
+        const session = await getSession() as any;
+        const actor = session?.email || 'Admin';
+
+        // Settle active loans of this user
+        const activeLoans = await Loan.find({ user: settlement.user.toString(), status: 'active' });
+        for (const loan of activeLoans) {
+            loan.payments.push({
+                amount: loan.principal,
+                date: new Date(),
+                type: 'principal',
+                notes: `Settled manually via Settlements page (${settlement.type})`
+            } as any);
+            loan.principal = 0;
+            loan.status = 'paid';
+            await loan.save();
+        }
+
+        // Update settlement status
+        settlement.status = 'settled';
+        settlement.settledAt = new Date();
+        settlement.settledBy = actor;
+        await settlement.save();
+
+        await logAuditActivity(
+            'USER_SETTLEMENT_COMPLETED',
+            actor,
+            settlement.user.toString(),
+            `Completed settlement for user. Settle type: ${settlement.type}. Funds: ₹${settlement.totalFunds.toLocaleString()} offset against loans: ₹${settlement.totalOutstandingLoan.toLocaleString()}. Net balance settled: ₹${settlement.settlementBalance.toLocaleString()}.`,
+            { settlementId, type: settlement.type }
+        );
+
+        revalidatePath("/admin/settlements");
+        revalidatePath("/admin/users");
+        revalidatePath(`/admin/users/${settlement.user.toString()}`);
+
+        return { success: true };
+    } catch (e: any) {
+        console.error("Error settling member account:", e);
+        return { error: e.message || 'An error occurred during settlement.' };
+    }
+}
+
+export async function updateSettlementAmounts(
+    settlementId: string,
+    newTotalFunds: number,
+    newTotalOutstandingLoan: number
+): Promise<{ error?: string, success?: boolean }> {
+    try {
+        await dbConnect();
+        const settlement = await Settlement.findById(settlementId);
+        if (!settlement) {
+            return { error: 'Settlement record not found.' };
+        }
+
+        if (settlement.status === 'settled') {
+            return { error: 'Cannot edit a completed settlement.' };
+        }
+
+        const oldOutstandingLoan = settlement.totalOutstandingLoan;
+
+        // Update values in settlement record
+        settlement.totalFunds = newTotalFunds;
+        settlement.totalOutstandingLoan = newTotalOutstandingLoan;
+        settlement.settlementBalance = newTotalFunds - newTotalOutstandingLoan;
+
+        await settlement.save();
+
+        // Also update the active loans of the user to match newTotalOutstandingLoan
+        const activeLoans = await Loan.find({ user: settlement.user.toString(), status: 'active' });
+        
+        if (activeLoans.length > 0) {
+            if (activeLoans.length === 1) {
+                // If there is exactly one active loan, update its principal directly
+                activeLoans[0].principal = newTotalOutstandingLoan;
+                await activeLoans[0].save();
+            } else {
+                // If there are multiple active loans, distribute them
+                if (oldOutstandingLoan > 0) {
+                    const ratio = newTotalOutstandingLoan / oldOutstandingLoan;
+                    for (const loan of activeLoans) {
+                        loan.principal = Math.round(loan.principal * ratio);
+                        await loan.save();
+                    }
+                } else {
+                    const splitAmount = Math.round(newTotalOutstandingLoan / activeLoans.length);
+                    for (const loan of activeLoans) {
+                        loan.principal = splitAmount;
+                        await loan.save();
+                    }
+                }
+            }
+        }
+
+        const session = await getSession() as any;
+        const actor = session?.email || 'Admin';
+        await logAuditActivity(
+            'USER_SETTLEMENT_UPDATED',
+            actor,
+            settlement.user.toString(),
+            `Updated settlement amounts. Total Funds: ₹${newTotalFunds.toLocaleString()} (was ₹${newTotalFunds.toLocaleString()}), Outstanding Loan: ₹${newTotalOutstandingLoan.toLocaleString()} (was ₹${oldOutstandingLoan.toLocaleString()}).`,
+            { settlementId, newTotalFunds, newTotalOutstandingLoan }
+        );
+
+        revalidatePath("/admin/settlements");
+        revalidatePath("/admin/users");
+        revalidatePath(`/admin/users/${settlement.user.toString()}`);
+
+        return { success: true };
+    } catch (e: any) {
+        console.error("Error updating settlement amounts:", e);
+        return { error: e.message || 'An error occurred.' };
     }
 }
