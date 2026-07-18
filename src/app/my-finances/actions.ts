@@ -15,6 +15,7 @@ export interface FinancesData {
         shareFund: number;
         guaranteedFund: number;
         thriftFund: number;
+        dividendFund: number;
     };
     allLoans: ILoan[];
 }
@@ -41,6 +42,7 @@ export async function getMyFinancesData(): Promise<FinancesData | null> {
                 shareFund: user.shareFund || 0,
                 guaranteedFund: user.guaranteedFund || 0,
                 thriftFund: user.thriftFund || 0,
+                dividendFund: user.dividendFund || 0,
             },
             allLoans: JSON.parse(JSON.stringify(allLoans)),
         };

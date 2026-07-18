@@ -140,12 +140,13 @@ export default async function UserDetailsPage({
         {/* Left Column (Coop & Loan Details - Spans 2 columns) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           {/* Capital Balances */}
-          {user.role === 'member' && (
+          {(user.role === 'member' || user.role === 'board_member') && (
             <CapitalManagement 
                 userId={user._id.toString()} 
                 shareFund={user.shareFund ?? 0}
                 thriftFund={user.thriftFund ?? 0}
                 guaranteedFund={user.guaranteedFund ?? 0}
+                dividendFund={user.dividendFund ?? 0}
             />
           )}
 
@@ -160,7 +161,7 @@ export default async function UserDetailsPage({
                   All loans currently in active status for this member.
                 </CardDescription>
               </div>
-              {user.role === 'member' && (
+              {(user.role === 'member' || user.role === 'board_member') && (
                 <ApplyLoanButton userId={user._id.toString()} />
               )}
             </CardHeader>

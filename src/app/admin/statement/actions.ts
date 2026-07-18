@@ -26,6 +26,7 @@ export interface StatementRow {
         id: string;
         outstandingPrincipal: number;
     } | null;
+    dividendFund?: number;
 }
 
 export interface StatementSummary {
@@ -206,6 +207,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
             loanInterestPayment,
             totalDeduction,
             loanDetails,
+            dividendFund: member.dividendFund || 0,
         };
     });
 
@@ -251,8 +253,9 @@ async function checkLastProcessed(key: 'monthly' | 'annual_all'): Promise<{ canP
         }
 
         const lastProcessed = bank?.lastAnnualAllProcess;
-        if (lastProcessed && lastProcessed.getFullYear() === now.getFullYear()) {
-            return { canProcess: false, message: `All annual dues have already been processed for ${now.getFullYear()}.` };
+        const lastProcessedYear = lastProcessed ? lastProcessed.getFullYear() : 0;
+        if (lastProcessedYear === now.getFullYear()) {
+             return { canProcess: false, message: `All annual dues (including dividends) have already been processed for the year ${now.getFullYear()}.` };
         }
     }
     
@@ -499,7 +502,6 @@ export async function processAllAnnualDues(): Promise<{ error?: string; success?
         const monthlyThrift = bankSettings.monthlyThriftContribution;
         const tfInterestRate = bankSettings.thriftFundInterestRate / 100;
         const gfInterestRate = bankSettings.guaranteedFundInterestRate;
-        const sfDividendRate = bankSettings.shareFundDividendRate;
 
         // Formula for TF: 78 * MonthlyContribution * (InterestRate / 12)
         const thriftInterestAmount = 78 * monthlyThrift * (tfInterestRate / 12);
@@ -514,16 +516,10 @@ export async function processAllAnnualDues(): Promise<{ error?: string; success?
             const gfInterestAmount = calculateAnnualInterest(currentGF, gfInterestRate);
             const newGF = currentGF + gfInterestAmount;
             
-            // 3. Share Fund Update (Dividend)
-            const currentSF = member.shareFund || 0;
-            const sfDividendAmount = calculateDividend(currentSF, sfDividendRate);
-            const newSF = currentSF + sfDividendAmount;
-
             return User.updateOne({ _id: member._id }, { 
                 $set: { 
                     thriftFund: newThriftFund,
-                    guaranteedFund: newGF,
-                    shareFund: newSF
+                    guaranteedFund: newGF
                 } 
             });
         });
