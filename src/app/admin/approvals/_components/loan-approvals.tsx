@@ -96,6 +96,7 @@ const ApproveLoanDialog = ({ loan, onAction }: { loan: PopulatedLoan, onAction: 
     const [shareFundTopUp, setShareFundTopUp] = useState(loan.calculatedShortfall?.share || 0);
     const [guaranteedFundTopUp, setGuaranteedFundTopUp] = useState(loan.calculatedShortfall?.guaranteed || 0);
     const [monthlyPrincipalPayment, setMonthlyPrincipalPayment] = useState(loan.monthlyPrincipalPayment || 0);
+    const [allowExceeding, setAllowExceeding] = useState(false);
 
     const approvedPrincipal = Number(loanAmount) + Number(shareFundTopUp) + Number(guaranteedFundTopUp);
     const approvedTenure = monthlyPrincipalPayment > 0 ? Math.ceil(approvedPrincipal / Number(monthlyPrincipalPayment)) : 0;
@@ -113,6 +114,7 @@ const ApproveLoanDialog = ({ loan, onAction }: { loan: PopulatedLoan, onAction: 
                 window.dispatchEvent(new CustomEvent('approvalCountChanged'));
                 onAction(loan._id);
                 setOpen(false);
+                setAllowExceeding(false);
             }
         });
     };
@@ -241,6 +243,21 @@ const ApproveLoanDialog = ({ loan, onAction }: { loan: PopulatedLoan, onAction: 
                                 <span className="text-muted-foreground">Approved Tenure (calculated):</span> 
                                 <span className="font-semibold text-foreground">{approvedTenure} months</span>
                             </p>
+                        </div>
+
+                        <div className="flex items-center space-x-2 pt-2">
+                            <input type="hidden" name="allowExceeding" value={allowExceeding ? "true" : "false"} />
+                            <input
+                                type="checkbox"
+                                id="allow-exceeding-limit-approve"
+                                checked={allowExceeding}
+                                onChange={(e) => setAllowExceeding(e.target.checked)}
+                                className="rounded border-input text-primary focus:ring-ring cursor-pointer"
+                                disabled={isPending}
+                             />
+                             <Label htmlFor="allow-exceeding-limit-approve" className="text-sm font-medium cursor-pointer">
+                                 Allow exceeding maximum loan limit
+                             </Label>
                         </div>
                     </div>
 

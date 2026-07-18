@@ -281,7 +281,8 @@ export async function applyLoanOnBehalf(
     loanAmount: number,
     monthlyPrincipal: number,
     startMonth?: number,
-    startYear?: number
+    startYear?: number,
+    allowExceeding?: boolean
 ): Promise<{ error?: string; success?: boolean }> {
     try {
         await dbConnect();
@@ -311,9 +312,11 @@ export async function applyLoanOnBehalf(
 
         // Verify that the requested loan amount does not exceed max loan limit
         if ((totalExistingPrincipal + loanAmount) > bankSettings.maxLoanAmount) {
-             return { 
-                 error: `The requested amount would result in a total loan balance of ₹${(totalExistingPrincipal + loanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
-             };
+             if (!allowExceeding) {
+                  return { 
+                      error: `The requested amount would result in a total loan balance of ₹${(totalExistingPrincipal + loanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
+                  };
+             }
         }
         const interestRate = bankSettings.loanInterestRate;
         const tenureMonths = Math.ceil(loanAmount / monthlyPrincipal);
