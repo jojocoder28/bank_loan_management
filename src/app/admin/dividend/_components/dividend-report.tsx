@@ -31,15 +31,23 @@ import {
 interface DividendReportProps {
     defaultRate: number;
     defaultYear: number;
+    /** ISO date string of the last dividend process run, or null */
+    lastDividendProcess: string | null;
 }
 
-export function DividendReport({ defaultRate, defaultYear }: DividendReportProps) {
+export function DividendReport({ defaultRate, defaultYear, lastDividendProcess }: DividendReportProps) {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
+
+    // Derive which year dividends were last processed
+    const lastProcessedYear = lastDividendProcess ? new Date(lastDividendProcess).getFullYear() : null;
 
     // Setup input state
     const [rate, setRate] = useState(defaultRate.toString());
     const [year, setYear] = useState(defaultYear.toString());
+
+    // Track locally if this session just processed a year
+    const [sessionProcessedYear, setSessionProcessedYear] = useState<number | null>(null);
 
     // Preview table state
     const [previewRows, setPreviewRows] = useState<DividendReportRow[] | null>(null);
@@ -140,12 +148,14 @@ export function DividendReport({ defaultRate, defaultYear }: DividendReportProps
                     setEditedAmounts({});
                     setSearchQuery("");
                     setShowConfirm(false);
+                    setSessionProcessedYear(Number(year)); // Lock the screen
                 } else {
                     toast({
                         variant: "destructive",
                         title: "Application Failed",
                         description: res.error || "Failed to apply dividends."
                     });
+                    setShowConfirm(false);
                 }
             } catch (err: any) {
                 toast({
@@ -156,6 +166,10 @@ export function DividendReport({ defaultRate, defaultYear }: DividendReportProps
             }
         });
     };
+
+    // Determine if the currently selected year is already processed
+    const numYear = Number(year);
+    const isAlreadyProcessed = numYear === lastProcessedYear || numYear === sessionProcessedYear;
 
     // Download CSV of preview
     const downloadPreviewCSV = () => {
@@ -199,8 +213,43 @@ export function DividendReport({ defaultRate, defaultYear }: DividendReportProps
 
     return (
         <div className="space-y-6">
-            {/* --- INITIAL CALCULATION FORM --- */}
-            {previewRows === null && (
+            {/* --- ALREADY PROCESSED STATE --- */}
+            {isAlreadyProcessed && previewRows === null && (
+                <div className="max-w-xl mx-auto flex flex-col items-center justify-center gap-4 p-8 border border-green-500/30 bg-green-500/10 rounded-xl text-center">
+                    <div className="size-14 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <Check className="size-8 text-green-600" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-green-700 dark:text-green-400">Dividends Already Processed</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Annual share fund dividends for <strong>March {numYear}</strong> have already been applied.
+                            {lastDividendProcess && (
+                                <> Processed on: <strong>{new Date(lastDividendProcess).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</strong>.</>
+                            )}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                            To process dividends for a different year, change the year selection below.
+                        </p>
+                    </div>
+                    <form onSubmit={(e) => { e.preventDefault(); }} className="flex items-center gap-3 mt-2">
+                        <label className="text-sm font-medium" htmlFor="year-switch">Change Year:</label>
+                        <select
+                            id="year-switch"
+                            value={year}
+                            onChange={(e) => setYear(e.target.value)}
+                            className="flex h-9 rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                        >
+                            {Array.from({ length: 6 }).map((_, idx) => {
+                                const yr = new Date().getFullYear() - 3 + idx;
+                                return <option key={yr} value={yr}>March {yr}</option>;
+                            })}
+                        </select>
+                    </form>
+                </div>
+            )}
+
+            {/* --- INITIAL CALCULATION FORM (only when not already processed) --- */}
+            {!isAlreadyProcessed && previewRows === null && (
                 <Card className="max-w-xl mx-auto">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">

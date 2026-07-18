@@ -31,9 +31,9 @@ export async function getDividendReportData(dividendRate: number, targetYear: nu
     const reportData: DividendReportRow[] = members.map(member => {
         // Calculate share fund balance as of March of targetYear (subtracting post-March top-ups)
         let shareFundAsOfMarch = member.shareFund || 0;
-        
-        const userTopupsAfterMarch = topups.filter(t => 
-            t.user.toString() === member._id.toString() && 
+
+        const userTopupsAfterMarch = topups.filter(t =>
+            t.user.toString() === member._id.toString() &&
             (t.year * 12 + t.month) > (targetYear * 12 + 2) // month 2 is March (0-indexed)
         );
 

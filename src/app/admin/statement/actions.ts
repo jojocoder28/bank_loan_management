@@ -5,6 +5,7 @@ import dbConnect from "@/lib/mongodb";
 import User, { IUser } from "@/models/user";
 import Loan, { ILoan } from "@/models/loan";
 import Bank from "@/models/bank";
+import FundTopUp from "@/models/fundTopUp";
 import { getBankSettings } from "../settings/actions";
 import { calculateAnnualInterest, calculateDividend, calculateMonthlyInterest } from "@/lib/coop-calculations";
 import { revalidatePath } from "next/cache";
@@ -248,14 +249,15 @@ async function checkLastProcessed(key: 'monthly' | 'annual_all'): Promise<{ canP
     }
     
     if (key === 'annual_all') {
-        if (now.getMonth() !== 2) { // 2 corresponds to March (0-indexed)
+        // Bypass March check ONLY for the year 2026
+        if (now.getMonth() !== 2 && now.getFullYear() !== 2026) {
              return { canProcess: false, message: "Annual dues can only be processed in the month of March." };
         }
 
         const lastProcessed = bank?.lastAnnualAllProcess;
         const lastProcessedYear = lastProcessed ? lastProcessed.getFullYear() : 0;
-        if (lastProcessedYear === now.getFullYear()) {
-             return { canProcess: false, message: `All annual dues (including dividends) have already been processed for the year ${now.getFullYear()}.` };
+        if (now.getFullYear() !== 2026 && lastProcessedYear === now.getFullYear()) {
+             return { canProcess: false, message: `All annual dues have already been processed for the year ${now.getFullYear()}.` };
         }
     }
     
@@ -485,6 +487,151 @@ export async function processMonthlyDeductions(
 }
 
 
+export interface AnnualDuesPreviewRow {
+    memberId: string;
+    name: string;
+    membershipNumber: string;
+    gfBalance: number;
+    gfInterest: number;
+    tfBalance: number;
+    tfInterest: number;
+}
+
+export async function getAnnualDuesPreviewData(
+    gfRate: number,
+    tfRate: number,
+    targetYear: number
+): Promise<AnnualDuesPreviewRow[]> {
+    await dbConnect();
+    const [bankSettings, activeMembers, bank, topups] = await Promise.all([
+        getBankSettings(),
+        User.find({ role: { $in: ['member', 'board_member'] }, status: 'active' }).sort({ name: 1 }).lean(),
+        Bank.findOne({ singleton: 'bank-settings' }).lean(),
+        FundTopUp.find({ year: { $gte: targetYear } }).lean(),
+    ]);
+
+    if (!bankSettings) {
+        throw new Error('Bank settings are not configured.');
+    }
+
+    const monthlyThrift = bankSettings.monthlyThriftContribution;
+
+    // Calculate how many monthly statement cycles have been processed AFTER March of targetYear
+    // March of targetYear = month 2 (0-indexed), year = targetYear
+    const marchValue = targetYear * 12 + 2; // March (0-indexed month 2)
+    let monthsProcessedAfterMarch = 0;
+    if (bank?.lastMonthlyProcess) {
+        const lastProcessed = new Date(bank.lastMonthlyProcess);
+        const lastProcessedValue = lastProcessed.getFullYear() * 12 + lastProcessed.getMonth();
+        if (lastProcessedValue > marchValue) {
+            monthsProcessedAfterMarch = lastProcessedValue - marchValue;
+        }
+    }
+
+    const previewRows: AnnualDuesPreviewRow[] = activeMembers.map(member => {
+        const memberId = member._id.toString();
+
+        // --- Guaranteed Fund as of March ---
+        // GF only changes via FundTopUp entries, so subtract post-March GF top-ups
+        const postMarchGfTopups = topups.filter(t =>
+            t.user.toString() === memberId &&
+            (t.year * 12 + t.month) > marchValue
+        );
+        const postMarchGfSum = postMarchGfTopups.reduce((sum, t) => sum + (t.gfAmount || 0), 0);
+        const gfBalance = Math.max(0, (member.guaranteedFund || 0) - postMarchGfSum);
+        const gfInterest = Math.round(calculateAnnualInterest(gfBalance, gfRate));
+
+        // --- Thrift Fund as of March (ESTIMATE) ---
+        // TF changes each month via monthly contributions + manual top-ups.
+        // We subtract (monthsProcessedAfterMarch × standardMonthly) as a best-effort estimate.
+        // WARNING: This estimate is INACCURATE for members who had paused deductions,
+        // custom thrift amounts, or skipped months — admin should manually verify and correct.
+        const postMarchTfTopups = topups.filter(t =>
+            t.user.toString() === memberId &&
+            (t.year * 12 + t.month) > marchValue
+        );
+        const postMarchTfTopupSum = postMarchTfTopups.reduce((sum, t) => sum + ((t.sfAmount === 0 && t.gfAmount === 0) ? t.totalAmount : 0), 0);
+        const tfContributionsAfterMarch = monthsProcessedAfterMarch * monthlyThrift;
+        const tfBalance = Math.max(0, (member.thriftFund || 0) - tfContributionsAfterMarch - postMarchTfTopupSum);
+
+        // TF interest: formula is 78 * monthlyContrib * (rate/12) — uses the March TF value indirectly
+        const tfRateDecimal = tfRate / 100;
+        const thriftInterestAmount = Math.round(78 * monthlyThrift * (tfRateDecimal / 12));
+
+        return {
+            memberId,
+            name: member.name,
+            membershipNumber: member.membershipNumber || 'N/A',
+            gfBalance,
+            gfInterest,
+            tfBalance,
+            tfInterest: thriftInterestAmount,
+        };
+    });
+
+    return previewRows;
+}
+
+export async function applyAnnualDues(
+    targetYear: number,
+    gfRate: number,
+    tfRate: number,
+    finalizedDues: Array<{ memberId: string; gfInterest: number; tfInterest: number }>
+): Promise<{ error?: string; success?: boolean }> {
+    try {
+        await dbConnect();
+        
+        if (targetYear !== 2026) {
+            const { canProcess, message } = await checkLastProcessed('annual_all');
+            if (!canProcess) {
+                return { error: message };
+            }
+        }
+
+        const bank = await Bank.findOne({ singleton: 'bank-settings' });
+        if (!bank) {
+            return { error: 'Bank settings not found.' };
+        }
+
+        const updatePromises = finalizedDues.map(async (item) => {
+            const user = await User.findById(item.memberId);
+            if (user) {
+                user.guaranteedFund = (user.guaranteedFund || 0) + item.gfInterest;
+                user.thriftFund = (user.thriftFund || 0) + item.tfInterest;
+                await user.save();
+            }
+        });
+
+        await Promise.all(updatePromises);
+
+        bank.lastAnnualAllProcess = new Date();
+        await bank.save();
+
+        const session = await getSession() as any;
+        const actor = session?.email || 'Admin';
+        const totalGfInterest = finalizedDues.reduce((sum, item) => sum + item.gfInterest, 0);
+        const totalTfInterest = finalizedDues.reduce((sum, item) => sum + item.tfInterest, 0);
+        const totalInterest = totalGfInterest + totalTfInterest;
+
+        await logAuditActivity(
+            'ANNUAL_DUES_PROCESSED',
+            actor,
+            undefined,
+            `Processed annual dues for year ${targetYear} (GF Interest: ${gfRate}%, TF Interest: ${tfRate}%). Total distributed: ₹${totalInterest.toLocaleString()}.`,
+            { gfRate, tfRate, totalGfInterest, totalTfInterest, count: finalizedDues.length, year: targetYear }
+        );
+
+        revalidatePath('/admin/statement');
+        revalidatePath('/admin/ledger');
+        revalidatePath('/my-finances');
+
+        return { success: true };
+    } catch (e: any) {
+        console.error("Error applying annual dues:", e);
+        return { error: e.message || 'An error occurred.' };
+    }
+}
+
 export async function processAllAnnualDues(): Promise<{ error?: string; success?: string }> {
      const { canProcess, message } = await checkLastProcessed('annual_all');
     if (!canProcess) {
@@ -498,20 +645,20 @@ export async function processAllAnnualDues(): Promise<{ error?: string; success?
             User.find({ role: { $in: ['member', 'board_member'] }, status: 'active' }),
         ]);
 
-        // Interest calculation values
+        if (!bankSettings) {
+            return { error: 'Bank settings are not configured.' };
+        }
+
+        const gfInterestRate = bankSettings.guaranteedFundInterestRate;
         const monthlyThrift = bankSettings.monthlyThriftContribution;
         const tfInterestRate = bankSettings.thriftFundInterestRate / 100;
-        const gfInterestRate = bankSettings.guaranteedFundInterestRate;
 
-        // Formula for TF: 78 * MonthlyContribution * (InterestRate / 12)
         const thriftInterestAmount = 78 * monthlyThrift * (tfInterestRate / 12);
 
         const memberUpdatePromises = activeMembers.map(member => {
-            // 1. Thrift Fund Update
             const currentThrift = member.thriftFund || 0;
             const newThriftFund = currentThrift + thriftInterestAmount;
 
-            // 2. Guaranteed Fund Update
             const currentGF = member.guaranteedFund || 0;
             const gfInterestAmount = calculateAnnualInterest(currentGF, gfInterestRate);
             const newGF = currentGF + gfInterestAmount;
