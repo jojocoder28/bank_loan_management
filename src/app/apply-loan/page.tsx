@@ -142,7 +142,7 @@ export default function ApplyLoanPage() {
       )
   }
 
-  if (userData.role !== 'member') {
+  if (userData.role !== 'member' && userData.role !== 'board_member') {
     return (
       <div className="flex justify-center items-start pt-8">
         <Card className="w-full max-w-lg text-center">

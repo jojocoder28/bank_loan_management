@@ -50,8 +50,8 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       return { error: 'Bank settings are not configured. Please contact an administrator.' };
     }
 
-    if (user.role !== 'member') {
-        return { error: 'You must be a member to apply for a loan.' };
+    if (user.role !== 'member' && user.role !== 'board_member') {
+        return { error: 'You must be a member or a board member to apply for a loan.' };
     }
 
     // Check for existing active loans

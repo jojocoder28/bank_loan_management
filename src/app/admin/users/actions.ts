@@ -222,8 +222,8 @@ export async function applyLoanOnBehalf(
         if (!bankSettings) {
             return { error: 'Bank settings are not configured.' };
         }
-        if (user.role !== 'member') {
-            return { error: 'User must be a member to have a loan.' };
+        if (user.role !== 'member' && user.role !== 'board_member') {
+            return { error: 'User must be a member or board member to have a loan.' };
         }
 
         // Check for existing active loans

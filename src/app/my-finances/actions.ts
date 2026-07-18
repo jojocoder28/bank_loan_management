@@ -61,7 +61,7 @@ const updatePaymentSchema = z.object({
 
 export async function requestPaymentChange(prevState: any, formData: FormData): Promise<{ error: string | null, success: boolean }> {
     const session = await getSession();
-    if (!session || session.role !== 'member') {
+    if (!session || (session.role !== 'member' && session.role !== 'board_member')) {
         return { error: 'Unauthorized.', success: false };
     }
 
@@ -119,7 +119,7 @@ const increaseLoanSchema = z.object({
 
 export async function requestLoanIncrease(prevState: any, formData: FormData): Promise<{ error: string | null; success: boolean }> {
     const session = await getSession();
-    if (!session || session.role !== 'member') {
+    if (!session || (session.role !== 'member' && session.role !== 'board_member')) {
         return { error: 'Unauthorized.', success: false };
     }
 
