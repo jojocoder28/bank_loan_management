@@ -112,6 +112,7 @@ export async function updateUserCapital(prevState: any, formData: FormData): Pro
     const shareFund = Number(formData.get('shareFund'));
     const thriftFund = Number(formData.get('thriftFund'));
     const guaranteedFund = Number(formData.get('guaranteedFund'));
+    const dividendFund = Number(formData.get('dividendFund'));
 
     const session = await getSession();
 
@@ -125,7 +126,8 @@ export async function updateUserCapital(prevState: any, formData: FormData): Pro
 
     if (isNaN(shareFund) || shareFund < 0 ||
         isNaN(thriftFund) || thriftFund < 0 ||
-        isNaN(guaranteedFund) || guaranteedFund < 0) {
+        isNaN(guaranteedFund) || guaranteedFund < 0 ||
+        isNaN(dividendFund) || dividendFund < 0) {
         return { error: "Capital/fund values must be non-negative numbers." };
     }
 
@@ -140,7 +142,8 @@ export async function updateUserCapital(prevState: any, formData: FormData): Pro
             $set: {
                 shareFund,
                 thriftFund,
-                guaranteedFund
+                guaranteedFund,
+                dividendFund
             }
         });
 

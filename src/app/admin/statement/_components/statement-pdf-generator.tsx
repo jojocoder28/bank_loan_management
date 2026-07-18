@@ -134,6 +134,57 @@ export function StatementPDFGenerator({ data, summary, month, year }: { data: St
                 });
             }
 
+            // --- 3. Separate Dividend Fund List ---
+            const divRecordsPerPage = 42;
+            const divNumPages = Math.ceil(data.length / divRecordsPerPage);
+
+            for (let i = 0; i < divNumPages; i++) {
+                const start = i * divRecordsPerPage;
+                const end = start + divRecordsPerPage;
+                const pageData = data.slice(start, end);
+
+                doc.addPage();
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.text(subHeader, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.text(`Dividend Fund Report for ${month}, ${year} (Page ${i + 1})`, doc.internal.pageSize.getWidth() / 2, 40, { align: "center" });
+
+                const body = pageData.map(row => [
+                    row.slNo,
+                    row.name,
+                    row.bankAccountNumber,
+                    row.membershipNumber,
+                    (row.dividendFund || 0).toLocaleString(),
+                ]);
+
+                const pageTotal = pageData.reduce((acc, row) => acc + (row.dividendFund || 0), 0);
+                const footer = [['', 'Page Total', '', '', pageTotal.toLocaleString()]];
+
+                doc.autoTable({
+                    startY: 50,
+                    head: [['Sl. No', 'Name', 'S.B. A/C No', 'Membership No', 'Dividend Fund Balance']],
+                    body: body,
+                    foot: footer,
+                    theme: 'grid',
+                    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8 },
+                    footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
+                    styles: { fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], fillColor: [255, 255, 255] },
+                    margin: { horizontal: 'auto' },
+                    columnStyles: {
+                        0: { halign: 'center', cellWidth: 15 },
+                        1: { cellWidth: 50 },
+                        2: { halign: 'center', cellWidth: 35 },
+                        3: { halign: 'center', cellWidth: 35 },
+                        4: { halign: 'right', fontStyle: 'bold', cellWidth: 45 },
+                    }
+                });
+            }
+
             doc.save(`monthly_statement_${month}_${year}.pdf`);
 
         } finally {

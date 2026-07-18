@@ -146,6 +146,7 @@ export default async function UserDetailsPage({
                 shareFund={user.shareFund ?? 0}
                 thriftFund={user.thriftFund ?? 0}
                 guaranteedFund={user.guaranteedFund ?? 0}
+                dividendFund={user.dividendFund ?? 0}
             />
           )}
 

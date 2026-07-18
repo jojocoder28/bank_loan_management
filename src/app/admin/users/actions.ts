@@ -57,13 +57,15 @@ export async function deactivateUser(formData: FormData): Promise<{error?: strin
         const originalSF = user.shareFund || 0;
         const originalGF = user.guaranteedFund || 0;
         const originalTF = user.thriftFund || 0;
-        const totalFunds = originalSF + originalGF + originalTF;
+        const originalDF = user.dividendFund || 0;
+        const totalFunds = originalSF + originalGF + originalTF + originalDF;
         const settlementBalance = totalFunds - totalOutstandingLoan;
 
         // Reset funds to 0
         user.shareFund = 0;
         user.guaranteedFund = 0;
         user.thriftFund = 0;
+        user.dividendFund = 0;
         user.status = 'inactive';
 
         await user.save();
@@ -75,6 +77,7 @@ export async function deactivateUser(formData: FormData): Promise<{error?: strin
             shareFund: originalSF,
             guaranteedFund: originalGF,
             thriftFund: originalTF,
+            dividendFund: originalDF,
             totalFunds,
             totalOutstandingLoan,
             settlementBalance,
@@ -155,7 +158,7 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
         
         // 2. Share Fund Dividend
         const sfDividend = calculateDividend(user.shareFund || 0, bankSettings.shareFundDividendRate) * proRataFactor;
-        user.shareFund = (user.shareFund || 0) + sfDividend;
+        user.dividendFund = (user.dividendFund || 0) + sfDividend;
         
         // 3. Thrift Fund Interest
         const monthlyThrift = bankSettings.monthlyThriftContribution;
@@ -173,13 +176,15 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
         const originalSF = user.shareFund || 0;
         const originalGF = user.guaranteedFund || 0;
         const originalTF = user.thriftFund || 0;
-        const totalFunds = originalSF + originalGF + originalTF;
+        const originalDF = user.dividendFund || 0;
+        const totalFunds = originalSF + originalGF + originalTF + originalDF;
         const settlementBalance = totalFunds - totalOutstandingLoan;
 
         // Reset funds to 0
         user.shareFund = 0;
         user.guaranteedFund = 0;
         user.thriftFund = 0;
+        user.dividendFund = 0;
         user.status = 'retired';
 
         await user.save();
@@ -191,6 +196,7 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
             shareFund: originalSF,
             guaranteedFund: originalGF,
             thriftFund: originalTF,
+            dividendFund: originalDF,
             totalFunds,
             totalOutstandingLoan,
             settlementBalance,
@@ -825,6 +831,7 @@ export async function cancelSettlement(settlementId: string): Promise<{ error?: 
         user.shareFund = (user.shareFund || 0) + settlement.shareFund;
         user.guaranteedFund = (user.guaranteedFund || 0) + settlement.guaranteedFund;
         user.thriftFund = (user.thriftFund || 0) + settlement.thriftFund;
+        user.dividendFund = (user.dividendFund || 0) + settlement.dividendFund;
         user.status = 'active'; // Revert back to active member
 
         await user.save();

@@ -26,11 +26,12 @@ function SubmitButton() {
     )
 }
 
-export function CapitalManagement({ userId, shareFund, thriftFund, guaranteedFund }: {
+export function CapitalManagement({ userId, shareFund, thriftFund, guaranteedFund, dividendFund }: {
     userId: string;
     shareFund: number;
     thriftFund: number;
     guaranteedFund: number;
+    dividendFund: number;
 }) {
   const [state, formAction] = useActionState(updateUserCapital, initialState);
   const [open, setOpen] = useState(false);
@@ -120,6 +121,21 @@ export function CapitalManagement({ userId, shareFund, thriftFund, guaranteedFun
                 />
               </div>
 
+              <div className="grid gap-2">
+                <Label htmlFor="dividendFund" className="flex items-center gap-2">
+                  <PiggyBank className="size-4 text-amber-500" /> Dividend Fund (DF)
+                </Label>
+                <Input
+                  id="dividendFund"
+                  name="dividendFund"
+                  type="number"
+                  defaultValue={dividendFund}
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+
               <DialogFooter className="mt-4">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                   Cancel
@@ -131,7 +147,7 @@ export function CapitalManagement({ userId, shareFund, thriftFund, guaranteedFun
         </Dialog>
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="grid grid-cols-4 gap-2 text-center">
           <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 transition-all duration-300 hover:bg-primary/10 flex flex-col justify-between">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Share Fund</p>
             <p className="text-xs font-bold text-primary mt-1">₹{(shareFund ?? 0).toLocaleString()}</p>
@@ -143,6 +159,10 @@ export function CapitalManagement({ userId, shareFund, thriftFund, guaranteedFun
           <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/10 transition-all duration-300 hover:bg-purple-500/10 flex flex-col justify-between">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Guaranteed</p>
             <p className="text-xs font-bold text-purple-500 mt-1">₹{(guaranteedFund ?? 0).toLocaleString()}</p>
+          </div>
+          <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10 transition-all duration-300 hover:bg-amber-500/10 flex flex-col justify-between">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Dividend</p>
+            <p className="text-xs font-bold text-amber-500 mt-1">₹{(dividendFund ?? 0).toLocaleString()}</p>
           </div>
         </div>
       </CardContent>

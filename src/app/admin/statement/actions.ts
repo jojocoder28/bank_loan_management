@@ -26,6 +26,7 @@ export interface StatementRow {
         id: string;
         outstandingPrincipal: number;
     } | null;
+    dividendFund?: number;
 }
 
 export interface StatementSummary {
@@ -206,6 +207,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
             loanInterestPayment,
             totalDeduction,
             loanDetails,
+            dividendFund: member.dividendFund || 0,
         };
     });
 
@@ -251,8 +253,9 @@ async function checkLastProcessed(key: 'monthly' | 'annual_all'): Promise<{ canP
         }
 
         const lastProcessed = bank?.lastAnnualAllProcess;
-        if (lastProcessed && lastProcessed.getFullYear() === now.getFullYear()) {
-            return { canProcess: false, message: `All annual dues have already been processed for ${now.getFullYear()}.` };
+        const lastProcessedYear = lastProcessed ? lastProcessed.getFullYear() : 0;
+        if (now.getFullYear() <= 2026 || lastProcessedYear === now.getFullYear()) {
+             return { canProcess: false, message: `All annual dues (including dividends) have already been processed for the year ${now.getFullYear()}.` };
         }
     }
     
@@ -514,16 +517,17 @@ export async function processAllAnnualDues(): Promise<{ error?: string; success?
             const gfInterestAmount = calculateAnnualInterest(currentGF, gfInterestRate);
             const newGF = currentGF + gfInterestAmount;
             
-            // 3. Share Fund Update (Dividend)
+            // 3. Share Fund Update (Dividend goes to Dividend Fund instead of Share Fund)
             const currentSF = member.shareFund || 0;
             const sfDividendAmount = calculateDividend(currentSF, sfDividendRate);
-            const newSF = currentSF + sfDividendAmount;
+            const currentDividend = member.dividendFund || 0;
+            const newDividendFund = currentDividend + sfDividendAmount;
 
             return User.updateOne({ _id: member._id }, { 
                 $set: { 
                     thriftFund: newThriftFund,
                     guaranteedFund: newGF,
-                    shareFund: newSF
+                    dividendFund: newDividendFund
                 } 
             });
         });

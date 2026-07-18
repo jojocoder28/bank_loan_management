@@ -50,6 +50,7 @@ interface FinancialChartsProps {
     shareFund: number;
     thriftFund: number;
     guaranteedFund: number;
+    dividendFund?: number;
   };
   allLoans: ILoan[];
 }
@@ -125,9 +126,10 @@ export function FinancialCharts({ user, allLoans }: FinancialChartsProps) {
     { name: "Share Fund", value: user.shareFund, color: "#2563eb" },
     { name: "Thrift Fund", value: user.thriftFund, color: "#10b981" },
     { name: "Guaranteed Fund", value: user.guaranteedFund, color: "#f43f5e" },
+    { name: "Dividend Fund", value: user.dividendFund || 0, color: "#eab308" },
   ];
 
-  const COLORS = ["#3b82f6", "#10b981", "#f43f5e"];
+  const COLORS = ["#3b82f6", "#10b981", "#f43f5e", "#eab308"];
 
   // Custom tooltips
   const formatCurrency = (val: any) => `₹${Number(val).toLocaleString()}`;

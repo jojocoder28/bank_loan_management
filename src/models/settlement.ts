@@ -9,6 +9,7 @@ export interface ISettlement extends Document {
     shareFund: number;
     guaranteedFund: number;
     thriftFund: number;
+    dividendFund: number;
     totalFunds: number;
     totalOutstandingLoan: number;
     settlementBalance: number; // totalFunds - totalOutstandingLoan
@@ -25,6 +26,7 @@ const SettlementSchema = new Schema<ISettlement>({
     shareFund: { type: Number, required: true, default: 0 },
     guaranteedFund: { type: Number, required: true, default: 0 },
     thriftFund: { type: Number, required: true, default: 0 },
+    dividendFund: { type: Number, required: true, default: 0 },
     totalFunds: { type: Number, required: true },
     totalOutstandingLoan: { type: Number, required: true },
     settlementBalance: { type: Number, required: true },
