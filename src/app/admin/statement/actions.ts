@@ -128,55 +128,69 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
         status: 'active'
     }).lean();
 
-    const loansByUserId = new Map<string, ILoan>();
+    const loansByUserId = new Map<string, ILoan[]>();
     for (const loan of activeLoans) {
-        loansByUserId.set(loan.user.toString(), loan);
+        const userId = loan.user.toString();
+        if (!loansByUserId.has(userId)) {
+            loansByUserId.set(userId, []);
+        }
+        loansByUserId.get(userId)!.push(loan);
     }
 
     let slNoCounter = 1;
     const statementData: StatementRow[] = members.map(member => {
         const thriftFundContribution = bankSettings.monthlyThriftContribution;
-        const loan = loansByUserId.get(member._id.toString());
+        const userLoans = loansByUserId.get(member._id.toString()) || [];
         
         let loanPrincipalPayment = 0;
         let loanInterestPayment = 0;
-        let loanDetails: StatementRow['loanDetails'] = null;
+        let totalOutstandingPrincipal = 0;
+        let hasActiveLoan = false;
+        let firstLoanId = "";
         
         const shareFundContribution = 0;
 
-        const isLoanStarted = loan && (
-            loan.startYear === undefined || loan.startMonth === undefined ||
-            (loan.startYear * 12 + loan.startMonth <= targetYear * 12 + targetMonth)
-        );
+        for (const loan of userLoans) {
+            const isLoanStarted = loan.startYear === undefined || loan.startMonth === undefined ||
+                (loan.startYear * 12 + loan.startMonth <= targetYear * 12 + targetMonth);
 
-        if (loan && isLoanStarted) {
-            loanPrincipalPayment = loan.monthlyPrincipalPayment;
-            
-            // Check for approved temporary change_payment request that spans this targetMonth & targetYear
-            const tempChangeRequest = loan.modificationRequests?.find(
-                (req: any) => {
-                    if (req.type !== 'change_payment' || req.status !== 'approved' || req.requestType !== 'temporary') {
-                        return false;
-                    }
-                    if (req.effectiveMonth === undefined || req.effectiveYear === undefined) {
-                        return false;
-                    }
-                    const startVal = req.effectiveYear * 12 + req.effectiveMonth;
-                    const targetVal = targetYear * 12 + targetMonth;
-                    const duration = req.durationMonths || 1;
-                    return targetVal >= startVal && targetVal < startVal + duration;
+            if (isLoanStarted) {
+                hasActiveLoan = true;
+                if (!firstLoanId) {
+                    firstLoanId = (loan._id as any).toString();
                 }
-            );
-            if (tempChangeRequest) {
-                loanPrincipalPayment = tempChangeRequest.requestedValue;
-            }
 
-            loanInterestPayment = Math.round(calculateMonthlyInterest(loan.principal, loan.interestRate));
-            loanDetails = {
-                id: loan._id.toString(),
-                outstandingPrincipal: loan.principal
-            };
+                let principalPayment = loan.monthlyPrincipalPayment;
+
+                // Check for approved temporary change_payment request that spans this targetMonth & targetYear
+                const tempChangeRequest = loan.modificationRequests?.find(
+                    (req: any) => {
+                        if (req.type !== 'change_payment' || req.status !== 'approved' || req.requestType !== 'temporary') {
+                            return false;
+                        }
+                        if (req.effectiveMonth === undefined || req.effectiveYear === undefined) {
+                            return false;
+                        }
+                        const startVal = req.effectiveYear * 12 + req.effectiveMonth;
+                        const targetVal = targetYear * 12 + targetMonth;
+                        const duration = req.durationMonths || 1;
+                        return targetVal >= startVal && targetVal < startVal + duration;
+                    }
+                );
+                if (tempChangeRequest) {
+                    principalPayment = tempChangeRequest.requestedValue;
+                }
+
+                loanPrincipalPayment += principalPayment;
+                loanInterestPayment += Math.round(calculateMonthlyInterest(loan.principal, loan.interestRate));
+                totalOutstandingPrincipal += loan.principal;
+            }
         }
+
+        const loanDetails = hasActiveLoan ? {
+            id: firstLoanId,
+            outstandingPrincipal: totalOutstandingPrincipal
+        } : null;
 
         const totalDeduction = thriftFundContribution + loanPrincipalPayment + loanInterestPayment + shareFundContribution;
 
@@ -276,7 +290,7 @@ export async function processMonthlyDeductions(
         // 1. Update Thrift Funds for all members
         const memberUpdatePromises = activeMembers.map(member => {
             const currentThrift = member.thriftFund || 0;
-            const override = overrides[member._id.toString()];
+            const override = overrides[(member._id as any).toString()];
             
             let thriftContribution = monthlyThrift;
             if (override) {
@@ -291,68 +305,154 @@ export async function processMonthlyDeductions(
         });
 
         // 2. Update Loan Principals and push payments
-        const loanUpdatePromises = activeLoans.map(loan => {
-            const override = overrides[loan.user.toString()];
-            
-            const isLoanStarted = loan.startYear === undefined || loan.startMonth === undefined ||
-                (loan.startYear * 12 + loan.startMonth <= targetMonth + targetYear * 12);
-
-            if (!isLoanStarted) {
-                return Promise.resolve();
+        const loansByUserId = new Map<string, ILoan[]>();
+        for (const loan of activeLoans) {
+            const userId = (loan.user as any).toString();
+            if (!loansByUserId.has(userId)) {
+                loansByUserId.set(userId, []);
             }
-            
-            let principalPayment = loan.monthlyPrincipalPayment;
-            let interestPayment = Math.round(calculateMonthlyInterest(loan.principal, loan.interestRate));
+            loansByUserId.get(userId)!.push(loan);
+        }
 
+        const loanUpdatePromises: Promise<any>[] = [];
+
+        for (const [userId, userLoans] of loansByUserId.entries()) {
+            const override = overrides[userId];
+
+            // Filter user loans to started ones
+            const startedLoans = userLoans.filter(loan => {
+                return loan.startYear === undefined || loan.startMonth === undefined ||
+                    (loan.startYear * 12 + loan.startMonth <= targetMonth + targetYear * 12);
+            });
+
+            // Map each started loan to its default principal and interest payment
+            const loanPayments = startedLoans.map(loan => {
+                let defaultPrincipal = loan.monthlyPrincipalPayment;
+                
+                // Check for approved temporary change_payment request that spans this targetMonth & targetYear
+                const tempChangeRequest = loan.modificationRequests?.find(
+                    (req: any) => {
+                        if (req.type !== 'change_payment' || req.status !== 'approved' || req.requestType !== 'temporary') {
+                            return false;
+                        }
+                        if (req.effectiveMonth === undefined || req.effectiveYear === undefined) {
+                            return false;
+                        }
+                        const startVal = req.effectiveYear * 12 + req.effectiveMonth;
+                        const targetVal = targetYear * 12 + targetMonth;
+                        const duration = req.durationMonths || 1;
+                        return targetVal >= startVal && targetVal < startVal + duration;
+                    }
+                );
+                if (tempChangeRequest) {
+                    defaultPrincipal = tempChangeRequest.requestedValue;
+                }
+
+                const defaultInterest = Math.round(calculateMonthlyInterest(loan.principal, loan.interestRate));
+                
+                return {
+                    loan,
+                    principalPayment: defaultPrincipal,
+                    interestPayment: defaultInterest,
+                };
+            });
+
+            // Apply overrides if any
             if (override) {
                 if (override.pauseDeduction) {
-                    principalPayment = 0;
-                    interestPayment = 0;
+                    for (const lp of loanPayments) {
+                        lp.principalPayment = 0;
+                        lp.interestPayment = 0;
+                    }
                 } else if (override.stopPrincipal) {
-                    principalPayment = 0;
+                    for (const lp of loanPayments) {
+                        lp.principalPayment = 0;
+                    }
                     if (override.customInterest !== undefined) {
-                        interestPayment = override.customInterest;
+                        // Distribute customInterest sequentially among the started loans
+                        let interestRem = override.customInterest;
+                        for (const lp of loanPayments) {
+                            const defInt = lp.interestPayment;
+                            lp.interestPayment = Math.min(interestRem, defInt);
+                            interestRem -= lp.interestPayment;
+                        }
+                        // If there is still remaining interest, add to the first loan
+                        if (interestRem > 0 && loanPayments.length > 0) {
+                            loanPayments[0].interestPayment += interestRem;
+                        }
                     }
                 } else {
+                    // Custom override mode
                     if (override.customPrincipal !== undefined) {
-                        principalPayment = override.customPrincipal;
+                        // Distribute customPrincipal sequentially among the started loans
+                        let principalRem = override.customPrincipal;
+                        // First pass: pay up to default monthly principal payment, capped by outstanding principal
+                        for (const lp of loanPayments) {
+                            const limit = Math.min(principalRem, lp.loan.principal, lp.principalPayment);
+                            lp.principalPayment = limit;
+                            principalRem -= limit;
+                        }
+                        // Second pass: distribute remaining principalRem to any loan up to its outstanding principal
+                        if (principalRem > 0) {
+                            for (const lp of loanPayments) {
+                                const extra = Math.min(principalRem, lp.loan.principal - lp.principalPayment);
+                                lp.principalPayment += extra;
+                                principalRem -= extra;
+                            }
+                        }
                     }
                     if (override.customInterest !== undefined) {
-                        interestPayment = override.customInterest;
+                        // Distribute customInterest sequentially among the started loans
+                        let interestRem = override.customInterest;
+                        for (const lp of loanPayments) {
+                            const defInt = lp.interestPayment;
+                            lp.interestPayment = Math.min(interestRem, defInt);
+                            interestRem -= lp.interestPayment;
+                        }
+                        if (interestRem > 0 && loanPayments.length > 0) {
+                            loanPayments[0].interestPayment += interestRem;
+                        }
                     }
                 }
             }
 
-            principalPayment = Math.min(principalPayment, loan.principal);
-            const newPrincipal = Math.max(0, loan.principal - principalPayment);
-            const newStatus = newPrincipal === 0 ? 'paid' : loan.status;
+            // Generate update promises
+            for (const lp of loanPayments) {
+                const loan = lp.loan;
+                let principalPayment = lp.principalPayment;
+                let interestPayment = lp.interestPayment;
 
-            const paymentsToPush = [];
-            if (principalPayment > 0) {
-                paymentsToPush.push({
-                    amount: principalPayment,
-                    date: new Date(),
-                    type: 'principal',
-                    notes: `Monthly principal deduction for ${targetMonthLabel}`
-                });
-            }
-            if (interestPayment > 0) {
-                paymentsToPush.push({
-                    amount: interestPayment,
-                    date: new Date(),
-                    type: 'interest',
-                    notes: `Monthly interest deduction for ${targetMonthLabel}`
-                });
-            }
+                principalPayment = Math.min(principalPayment, loan.principal);
+                const newPrincipal = Math.max(0, loan.principal - principalPayment);
+                const newStatus = newPrincipal === 0 ? 'paid' : loan.status;
 
-            const updateFields: any = { principal: newPrincipal, status: newStatus };
-            const updateQuery: any = { $set: updateFields };
-            if (paymentsToPush.length > 0) {
-                updateQuery.$push = { payments: { $each: paymentsToPush } };
-            }
+                const paymentsToPush = [];
+                if (principalPayment > 0) {
+                    paymentsToPush.push({
+                        amount: principalPayment,
+                        date: new Date(),
+                        type: 'principal',
+                        notes: `Monthly principal deduction for ${targetMonthLabel}`
+                    });
+                }
+                if (interestPayment > 0) {
+                    paymentsToPush.push({
+                        amount: interestPayment,
+                        date: new Date(),
+                        type: 'interest',
+                        notes: `Monthly interest deduction for ${targetMonthLabel}`
+                    });
+                }
 
-            return Loan.updateOne({ _id: loan._id }, updateQuery);
-        });
+                const updateFields: any = { principal: newPrincipal, status: newStatus };
+                const updateQuery: any = { $set: updateFields };
+                if (paymentsToPush.length > 0) {
+                    updateQuery.$push = { payments: { $each: paymentsToPush } };
+                }
+
+                loanUpdatePromises.push(Loan.updateOne({ _id: loan._id }, updateQuery));
+            }
+        }
 
         await Promise.all([...memberUpdatePromises, ...loanUpdatePromises]);
 
@@ -360,8 +460,8 @@ export async function processMonthlyDeductions(
         const processedDate = new Date(targetYear, targetMonth, 15);
         await Bank.updateOne({ singleton: 'bank-settings' }, { $set: { lastMonthlyProcess: processedDate } });
 
-        const session = await getSession();
-        const actor = session?.user?.email || 'Admin';
+        const session = await getSession() as any;
+        const actor = session?.email || 'Admin';
         await logAuditActivity(
             'MONTHLY_DEDUCTION_PROCESSED',
             actor,
@@ -507,7 +607,7 @@ export async function undoLastMonthlyProcess(): Promise<{ error?: string; succes
 
         // 2. Revert Member Thrift fund accumulations
         const memberUpdatePromises = activeMembers.map(async (member) => {
-            const loan = allLoans.find(l => l.user.toString() === member._id.toString());
+            const loan = allLoans.find(l => (l.user as any).toString() === (member._id as any).toString());
             let thriftToSubtract = monthlyThrift;
             
             if (loan) {
@@ -546,8 +646,8 @@ export async function undoLastMonthlyProcess(): Promise<{ error?: string; succes
             );
         }
 
-        const session = await getSession();
-        const actor = session?.user?.email || 'Admin';
+        const session = await getSession() as any;
+        const actor = session?.email || 'Admin';
         await logAuditActivity(
             'MONTHLY_DEDUCTION_UNDONE',
             actor,
