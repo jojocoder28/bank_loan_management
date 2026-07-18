@@ -19,8 +19,8 @@ type LoginResult = {
 }
 
 // Return type updated to send role or error
-export async function login(formData: FormData): Promise<LoginResult> {
-  const values = Object.fromEntries(formData.entries());
+export async function login(data: { identifier: string; password: string }): Promise<LoginResult> {
+  const values = data;
   const validatedFields = loginSchema.safeParse(values);
 
   if (!validatedFields.success) {
