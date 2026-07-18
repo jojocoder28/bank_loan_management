@@ -6,6 +6,9 @@ export type SettlementStatus = 'pending' | 'settled';
 export interface ISettlement extends Document {
     user: any;
     type: 'deactivation' | 'retirement';
+    shareFund: number;
+    guaranteedFund: number;
+    thriftFund: number;
     totalFunds: number;
     totalOutstandingLoan: number;
     settlementBalance: number; // totalFunds - totalOutstandingLoan
@@ -19,6 +22,9 @@ export interface ISettlement extends Document {
 const SettlementSchema = new Schema<ISettlement>({
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     type: { type: String, enum: ['deactivation', 'retirement'], required: true },
+    shareFund: { type: Number, required: true, default: 0 },
+    guaranteedFund: { type: Number, required: true, default: 0 },
+    thriftFund: { type: Number, required: true, default: 0 },
     totalFunds: { type: Number, required: true },
     totalOutstandingLoan: { type: Number, required: true },
     settlementBalance: { type: Number, required: true },

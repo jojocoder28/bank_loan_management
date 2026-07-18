@@ -54,7 +54,10 @@ export async function deactivateUser(formData: FormData): Promise<{error?: strin
 
         const activeLoans = await Loan.find({ user: userId, status: 'active' });
         const totalOutstandingLoan = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
-        const totalFunds = (user.shareFund || 0) + (user.guaranteedFund || 0) + (user.thriftFund || 0);
+        const originalSF = user.shareFund || 0;
+        const originalGF = user.guaranteedFund || 0;
+        const originalTF = user.thriftFund || 0;
+        const totalFunds = originalSF + originalGF + originalTF;
         const settlementBalance = totalFunds - totalOutstandingLoan;
 
         // Reset funds to 0
@@ -69,6 +72,9 @@ export async function deactivateUser(formData: FormData): Promise<{error?: strin
         await Settlement.create({
             user: userId,
             type: 'deactivation',
+            shareFund: originalSF,
+            guaranteedFund: originalGF,
+            thriftFund: originalTF,
             totalFunds,
             totalOutstandingLoan,
             settlementBalance,
@@ -164,7 +170,10 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
         // Calculate settlement details before clearing user's funds
         const activeLoans = await Loan.find({ user: userId, status: 'active' });
         const totalOutstandingLoan = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
-        const totalFunds = (user.shareFund || 0) + (user.guaranteedFund || 0) + (user.thriftFund || 0);
+        const originalSF = user.shareFund || 0;
+        const originalGF = user.guaranteedFund || 0;
+        const originalTF = user.thriftFund || 0;
+        const totalFunds = originalSF + originalGF + originalTF;
         const settlementBalance = totalFunds - totalOutstandingLoan;
 
         // Reset funds to 0
@@ -179,6 +188,9 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
         await Settlement.create({
             user: userId,
             type: 'retirement',
+            shareFund: originalSF,
+            guaranteedFund: originalGF,
+            thriftFund: originalTF,
             totalFunds,
             totalOutstandingLoan,
             settlementBalance,
@@ -791,6 +803,55 @@ export async function updateSettlementAmounts(
         return { success: true };
     } catch (e: any) {
         console.error("Error updating settlement amounts:", e);
+        return { error: e.message || 'An error occurred.' };
+    }
+}
+
+export async function cancelSettlement(settlementId: string): Promise<{ error?: string, success?: boolean }> {
+    try {
+        await dbConnect();
+        const settlement = await Settlement.findById(settlementId);
+        if (!settlement) {
+            return { error: 'Settlement record not found.' };
+        }
+
+        if (settlement.status === 'settled') {
+            return { error: 'Cannot cancel a completed settlement.' };
+        }
+
+        const user = await User.findById(settlement.user) as any;
+        if (!user) {
+            return { error: 'User profile not found.' };
+        }
+
+        // Restore original funds
+        user.shareFund = (user.shareFund || 0) + settlement.shareFund;
+        user.guaranteedFund = (user.guaranteedFund || 0) + settlement.guaranteedFund;
+        user.thriftFund = (user.thriftFund || 0) + settlement.thriftFund;
+        user.status = 'active'; // Revert back to active member
+
+        await user.save();
+
+        // Delete the pending settlement record
+        await Settlement.findByIdAndDelete(settlementId);
+
+        const session = await getSession() as any;
+        const actor = session?.email || 'Admin';
+        await logAuditActivity(
+            'USER_SETTLEMENT_CANCELLED',
+            actor,
+            user._id.toString(),
+            `Cancelled settlement and reactivated user ${user.name}. Restored funds: Share ₹${settlement.shareFund.toLocaleString()}, Guaranteed ₹${settlement.guaranteedFund.toLocaleString()}, Thrift ₹${settlement.thriftFund.toLocaleString()}.`,
+            { userId: user._id, type: settlement.type }
+        );
+
+        revalidatePath("/admin/settlements");
+        revalidatePath("/admin/users");
+        revalidatePath(`/admin/users/${user._id.toString()}`);
+
+        return { success: true };
+    } catch (e: any) {
+        console.error("Error cancelling settlement:", e);
         return { error: e.message || 'An error occurred.' };
     }
 }
