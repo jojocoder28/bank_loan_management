@@ -370,7 +370,7 @@ export function Sidebar({
           href={user.role === "admin" ? "/admin/dashboard" : "/dashboard"}
           className="flex items-center gap-0 min-w-0"
         >
-          <Logo collapsed={isCollapsed} showText={!isCollapsed} size="md" invertText />
+          <Logo collapsed={isCollapsed} showText={!isCollapsed} size="md" />
         </Link>
 
         {!isCollapsed && (
@@ -421,7 +421,7 @@ export function Sidebar({
       )}
 
       {/* ── Bottom gradient fade ── */}
-      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[hsl(222,47%,9%)] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent pointer-events-none" />
     </aside>
   );
 }
