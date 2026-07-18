@@ -186,11 +186,15 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
             const headers = [
                 "Name",
                 "Membership #",
-                "GF Balance",
+                "GF Balance (March)",
                 "GF Interest (Adjusted)",
-                "TF Balance",
-                "TF Interest (Adjusted)",
-                "Total Interest"
+                "TF Balance (March)",
+                "TF Opening Balance (before this year)",
+                "TF This Year Contribution (12×monthly)",
+                "TF Interest on Opening Balance",
+                "TF Interest on New Contributions",
+                "TF Interest Total (Adjusted)",
+                "Grand Total Interest"
             ];
             
             const csvRows = previewRows.map(row => {
@@ -202,6 +206,10 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                     row.gfBalance,
                     gfInt,
                     row.tfBalance,
+                    row.tfOpeningBalance,
+                    row.tfYearlyContribution,
+                    row.tfInterestOnOpening,
+                    row.tfInterestOnNew,
                     tfInt,
                     gfInt + tfInt
                 ].join(',');
@@ -341,10 +349,13 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                                     <TableHead>Member Name</TableHead>
                                     <TableHead>Membership #</TableHead>
                                     <TableHead className="text-right">GF Balance (March ₹)</TableHead>
-                                    <TableHead className="text-right w-[150px]">GF Interest (₹)</TableHead>
-                                    <TableHead className="text-right">TF Balance (March ₹)</TableHead>
-                                    <TableHead className="text-right w-[150px]">TF Interest (₹)</TableHead>
-                                    <TableHead className="text-right">Total Interest (₹)</TableHead>
+                                    <TableHead className="text-right w-[140px]">GF Interest (₹)</TableHead>
+                                    <TableHead className="text-right">TF Opening Balance (₹)</TableHead>
+                                    <TableHead className="text-right">TF This Year (12×mo) (₹)</TableHead>
+                                    <TableHead className="text-right">TF Interest on Opening (₹)</TableHead>
+                                    <TableHead className="text-right">TF Interest on New (₹)</TableHead>
+                                    <TableHead className="text-right w-[140px]">TF Interest Total (₹)</TableHead>
+                                    <TableHead className="text-right">Grand Total (₹)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -373,7 +384,12 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                                                         min="0"
                                                     />
                                                 </TableCell>
-                                                <TableCell className="text-right">₹{row.tfBalance.toLocaleString()}</TableCell>
+                                                {/* TF breakdown (read-only reference columns) */}
+                                                <TableCell className="text-right text-muted-foreground text-xs">₹{row.tfOpeningBalance.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right text-muted-foreground text-xs">₹{row.tfYearlyContribution.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right text-muted-foreground text-xs">₹{row.tfInterestOnOpening.toLocaleString()}</TableCell>
+                                                <TableCell className="text-right text-muted-foreground text-xs">₹{row.tfInterestOnNew.toLocaleString()}</TableCell>
+                                                {/* Editable TF total interest */}
                                                 <TableCell className="text-right">
                                                     <Input
                                                         type="number"
@@ -396,7 +412,7 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                                     <TableCell colSpan={3}>Totals</TableCell>
                                     <TableCell className="text-right">₹{totalGfBalance.toLocaleString()}</TableCell>
                                     <TableCell className="text-right text-green-600">₹{totalGfInterest.toLocaleString()}</TableCell>
-                                    <TableCell className="text-right">₹{totalTfBalance.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right" colSpan={4}></TableCell>
                                     <TableCell className="text-right text-green-600">₹{totalTfInterest.toLocaleString()}</TableCell>
                                     <TableCell className="text-right text-green-600 font-bold text-sm">
                                         ₹{grandTotalInterest.toLocaleString()}
