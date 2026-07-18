@@ -12,6 +12,18 @@ import { revalidatePath } from "next/cache";
 import { logAuditActivity } from "@/lib/audit";
 import { getSession } from "@/lib/session";
 
+export interface LoanInterestBreakdown {
+    loanId: string;
+    loanAmount: number;           // Original sanctioned amount
+    outstandingPrincipal: number; // Current principal balance used for interest calc
+    interestRate: number;         // Annual rate (%)
+    monthlyInterest: number;      // Calculated monthly interest
+    monthlyPrincipal: number;     // Monthly principal installment
+    issueDate: string;            // ISO date
+    tenure: number;               // Months
+    formula: string;              // Human-readable formula string
+}
+
 export interface StatementRow {
     slNo: number;
     userId: string;
@@ -28,6 +40,7 @@ export interface StatementRow {
         outstandingPrincipal: number;
     } | null;
     dividendFund?: number;
+    loanBreakdown: LoanInterestBreakdown[]; // Per-loan interest breakdown for hover tooltip
 }
 
 export interface StatementSummary {
@@ -149,6 +162,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
         let totalOutstandingPrincipal = 0;
         let hasActiveLoan = false;
         let firstLoanId = "";
+        const loanBreakdown: LoanInterestBreakdown[] = [];
         
         const shareFundContribution = 0;
 
@@ -183,9 +197,23 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
                     principalPayment = tempChangeRequest.requestedValue;
                 }
 
+                const monthlyInterest = Math.round(calculateMonthlyInterest(loan.principal, loan.interestRate));
                 loanPrincipalPayment += principalPayment;
-                loanInterestPayment += Math.round(calculateMonthlyInterest(loan.principal, loan.interestRate));
+                loanInterestPayment += monthlyInterest;
                 totalOutstandingPrincipal += loan.principal;
+
+                // Build per-loan breakdown for the interest tooltip
+                loanBreakdown.push({
+                    loanId: (loan._id as any).toString(),
+                    loanAmount: loan.loanAmount,
+                    outstandingPrincipal: loan.principal,
+                    interestRate: loan.interestRate,
+                    monthlyInterest,
+                    monthlyPrincipal: principalPayment,
+                    issueDate: loan.issueDate ? new Date(loan.issueDate).toISOString() : '',
+                    tenure: loan.tenure,
+                    formula: `₹${loan.principal.toLocaleString()} × ${loan.interestRate}% ÷ 12 = ₹${monthlyInterest.toLocaleString()}`,
+                });
             }
         }
 
@@ -209,6 +237,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
             totalDeduction,
             loanDetails,
             dividendFund: member.dividendFund || 0,
+            loanBreakdown,
         };
     });
 

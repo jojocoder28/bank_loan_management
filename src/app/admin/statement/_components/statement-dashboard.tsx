@@ -20,6 +20,7 @@ import * as XLSX from "xlsx";
 import { numberToWords } from "@/lib/number-to-words";
 import { StatementRow, PendingMonth, DeductionOverrideInput, processMonthlyDeductions, processAllAnnualDues, undoLastMonthlyProcess } from "../actions";
 import { StatementPDFGenerator } from "./statement-pdf-generator";
+import { InterestBreakdownPopover } from "./interest-breakdown-popover";
 import { RotateCcw } from "lucide-react";
 
 interface StatementDashboardProps {
@@ -564,7 +565,13 @@ export function StatementDashboard({
                       </TableCell>
                       <TableCell>{row.bankAccountNumber}</TableCell>
                       <TableCell className="text-right">₹{row.loanPrincipalPayment.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">₹{row.loanInterestPayment.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                          <InterestBreakdownPopover
+                              loanBreakdown={row.loanBreakdown}
+                              totalInterest={row.loanInterestPayment}
+                              userId={row.userId}
+                          />
+                      </TableCell>
                       <TableCell className="text-right">₹{row.shareFundContribution.toLocaleString()}</TableCell>
                       <TableCell className="text-right">₹{row.thriftFundContribution.toLocaleString()}</TableCell>
                       <TableCell className="text-right font-bold text-foreground">₹{row.totalDeduction.toLocaleString()}</TableCell>
