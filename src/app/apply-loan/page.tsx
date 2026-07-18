@@ -64,6 +64,7 @@ export default function ApplyLoanPage() {
   
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [allowExceeding, setAllowExceeding] = useState(false);
 
   const { toast } = useToast();
   const [state, formAction] = useActionState(applyForLoan, initialState);
@@ -75,8 +76,10 @@ export default function ApplyLoanPage() {
         const data = await getUserFundsAndSettings();
         setUserData(data);
         const maxLoan = data.bankSettings.maxLoanAmount - data.activeLoanPrincipal;
-        const initialLoanAmount = Math.min(100000, maxLoan > 10000 ? maxLoan : 10000);
-        setLoanAmount(initialLoanAmount)
+        const initialLoanAmount = data.role === 'admin' 
+            ? 100000 
+            : Math.min(100000, maxLoan > 10000 ? maxLoan : 10000);
+        setLoanAmount(initialLoanAmount);
         const newMin = Math.ceil(initialLoanAmount / data.bankSettings.maxLoanTenureMonths);
         setMonthlyPrincipal(newMin);
       } catch (error) {
@@ -142,7 +145,7 @@ export default function ApplyLoanPage() {
       )
   }
 
-  if (userData.role !== 'member' && userData.role !== 'board_member') {
+  if (userData.role !== 'member' && userData.role !== 'board_member' && userData.role !== 'admin') {
     return (
       <div className="flex justify-center items-start pt-8">
         <Card className="w-full max-w-lg text-center">
@@ -178,7 +181,7 @@ export default function ApplyLoanPage() {
   
   const minMonthlyPayment = Math.ceil(loanAmount / userData.bankSettings.maxLoanTenureMonths);
   
-   if (maxLoanForUser < 10000) {
+   if (maxLoanForUser < 10000 && userData.role !== 'admin') {
       return (
          <div className="flex justify-center items-start pt-8">
             <Card className="w-full max-w-lg text-center">
@@ -211,6 +214,7 @@ export default function ApplyLoanPage() {
     <div className="flex justify-center items-start pt-8">
       <Card className="w-full max-w-4xl">
         <form action={formAction}>
+        <input type="hidden" name="allowExceeding" value={allowExceeding ? "true" : "false"} />
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-headline">
             <Handshake className="size-6" />
@@ -354,6 +358,21 @@ export default function ApplyLoanPage() {
                     </AlertDescription>
                 </Alert>
             )}
+
+            {isExceedingLimit && userData.role === 'admin' && (
+                <div className="flex items-center space-x-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <input
+                        type="checkbox"
+                        id="allow-exceeding-limit"
+                        checked={allowExceeding}
+                        onChange={(e) => setAllowExceeding(e.target.checked)}
+                        className="rounded border-input text-primary focus:ring-ring cursor-pointer"
+                    />
+                    <label htmlFor="allow-exceeding-limit" className="text-sm font-medium text-destructive cursor-pointer">
+                        Allow exceeding maximum loan limit (Administrator override)
+                    </label>
+                </div>
+            )}
             
             {!isExceedingLimit && totalShortfall > 0 && (
                  <Alert variant="default" className="bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400">
@@ -378,8 +397,8 @@ export default function ApplyLoanPage() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
-          <Button variant="ghost" type="reset">Cancel</Button>
-          <SubmitButton disabled={isLoading || isExceedingLimit} />
+          <Button variant="ghost" type="reset" onClick={() => setAllowExceeding(false)}>Cancel</Button>
+          <SubmitButton disabled={isLoading || (isExceedingLimit && !(userData.role === 'admin' && allowExceeding))} />
         </CardFooter>
         </form>
       </Card>

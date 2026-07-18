@@ -50,8 +50,8 @@ export async function applyForLoan(prevState: any, formData: FormData) {
       return { error: 'Bank settings are not configured. Please contact an administrator.' };
     }
 
-    if (user.role !== 'member' && user.role !== 'board_member') {
-        return { error: 'You must be a member or a board member to apply for a loan.' };
+    if (user.role !== 'member' && user.role !== 'board_member' && user.role !== 'admin') {
+        return { error: 'You must be a member, board member, or admin to apply for a loan.' };
     }
 
     // Check for existing active loans
@@ -63,11 +63,15 @@ export async function applyForLoan(prevState: any, formData: FormData) {
         return { error: 'You already have a loan application pending approval. Please wait for it to be processed.' };
     }
 
+    const allowExceeding = formData.get('allowExceeding') === 'true';
+
     // Verify that the requested loan amount does not exceed max loan limit
     if ((totalExistingPrincipal + loanAmount) > bankSettings.maxLoanAmount) {
-         return { 
-             error: `The requested amount would result in a total loan balance of ₹${(totalExistingPrincipal + loanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
-         };
+         if (!(user.role === 'admin' && allowExceeding)) {
+             return { 
+                 error: `The requested amount would result in a total loan balance of ₹${(totalExistingPrincipal + loanAmount).toLocaleString()}, which exceeds the maximum allowed loan limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` 
+             };
+         }
     }
     
     if (monthlyPrincipal <= 0) {

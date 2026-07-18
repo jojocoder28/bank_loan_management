@@ -167,9 +167,12 @@ async function updateLoanStatus(formData: FormData, newStatus: 'active' | 'rejec
         const existingActiveLoans = await Loan.find({ user: loan.user, status: 'active', _id: { $ne: loan._id } });
         const totalExistingPrincipal = existingActiveLoans.reduce((sum, activeL) => sum + activeL.principal, 0);
         const bankSettings = await getBankSettings();
+        const allowExceeding = formData.get('allowExceeding') === 'true';
         
         if (bankSettings && (totalExistingPrincipal + finalLoanAmount) > bankSettings.maxLoanAmount) {
-            return { error: `The approved amount of ₹${finalLoanAmount.toLocaleString()} would bring the member's total outstanding principal to ₹${(totalExistingPrincipal + finalLoanAmount).toLocaleString()}, exceeding the maximum limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` };
+            if (!allowExceeding) {
+                return { error: `The approved amount of ₹${finalLoanAmount.toLocaleString()} would bring the member's total outstanding principal to ₹${(totalExistingPrincipal + finalLoanAmount).toLocaleString()}, exceeding the maximum limit of ₹${bankSettings.maxLoanAmount.toLocaleString()}.` };
+            }
         }
 
         loan.status = 'active';
