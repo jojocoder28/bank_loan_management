@@ -502,7 +502,6 @@ export async function processAllAnnualDues(): Promise<{ error?: string; success?
         const monthlyThrift = bankSettings.monthlyThriftContribution;
         const tfInterestRate = bankSettings.thriftFundInterestRate / 100;
         const gfInterestRate = bankSettings.guaranteedFundInterestRate;
-        const sfDividendRate = bankSettings.shareFundDividendRate;
 
         // Formula for TF: 78 * MonthlyContribution * (InterestRate / 12)
         const thriftInterestAmount = 78 * monthlyThrift * (tfInterestRate / 12);
@@ -517,17 +516,10 @@ export async function processAllAnnualDues(): Promise<{ error?: string; success?
             const gfInterestAmount = calculateAnnualInterest(currentGF, gfInterestRate);
             const newGF = currentGF + gfInterestAmount;
             
-            // 3. Share Fund Update (Dividend goes to Dividend Fund instead of Share Fund)
-            const currentSF = member.shareFund || 0;
-            const sfDividendAmount = calculateDividend(currentSF, sfDividendRate);
-            const currentDividend = member.dividendFund || 0;
-            const newDividendFund = currentDividend + sfDividendAmount;
-
             return User.updateOne({ _id: member._id }, { 
                 $set: { 
                     thriftFund: newThriftFund,
-                    guaranteedFund: newGF,
-                    dividendFund: newDividendFund
+                    guaranteedFund: newGF
                 } 
             });
         });
