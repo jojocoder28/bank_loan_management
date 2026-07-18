@@ -40,7 +40,7 @@ export function DeactivateUserButton({ userId, userName, onStatusChange }: { use
       } else {
          toast({
             title: "Success",
-            description: `User ${userName} has been deactivated.`,
+            description: result.message || `User ${userName} has been deactivated.`,
         });
         onStatusChange();
       }

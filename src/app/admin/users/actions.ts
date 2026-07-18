@@ -36,7 +36,7 @@ export async function getUsers(status?: UserStatus): Promise<IUser[]> {
 }
 
 
-export async function deactivateUser(formData: FormData): Promise<{error?: string, success?: boolean}> {
+export async function deactivateUser(formData: FormData): Promise<{error?: string, success?: boolean, message?: string}> {
     const userId = formData.get('userId') as string;
 
     if (!userId) {
@@ -46,25 +46,66 @@ export async function deactivateUser(formData: FormData): Promise<{error?: strin
     try {
         await dbConnect();
 
-        // Check for active loans
-        const activeLoan = await Loan.findOne({ user: userId, status: 'active' });
-        if (activeLoan) {
-            return { error: 'Cannot deactivate a user with an active loan. The loan must be paid or settled first.' };
+        const user = await User.findById(userId);
+        if (!user) {
+            return { error: 'User not found.' };
         }
 
-        await User.findByIdAndUpdate(userId, { status: 'inactive' });
-        
+        const activeLoans = await Loan.find({ user: userId, status: 'active' });
+        const totalOutstandingLoan = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
+        const totalFunds = (user.shareFund || 0) + (user.guaranteedFund || 0) + (user.thriftFund || 0);
+        const settlementBalance = totalFunds - totalOutstandingLoan;
+
+        // Reset funds to 0
+        user.shareFund = 0;
+        user.guaranteedFund = 0;
+        user.thriftFund = 0;
+        user.status = 'inactive';
+
+        await user.save();
+
+        // Settle active loans
+        for (const loan of activeLoans) {
+            loan.payments.push({
+                amount: loan.principal,
+                date: new Date(),
+                type: 'principal',
+                notes: 'Settled upon deactivation'
+            } as any);
+            loan.principal = 0;
+            loan.status = 'paid';
+            await loan.save();
+        }
+
+        const session = await getSession() as any;
+        const actor = session?.email || 'Admin';
+        await logAuditActivity(
+            'USER_DEACTIVATED',
+            actor,
+            userId,
+            `Deactivated user ${user.name}. Total funds ₹${totalFunds.toLocaleString()} offset against loan ₹${totalOutstandingLoan.toLocaleString()}. Settlement balance: ₹${settlementBalance.toLocaleString()}.`,
+            { totalFunds, totalOutstandingLoan, settlementBalance }
+        );
+
         revalidatePath("/admin/users");
         revalidatePath(`/admin/users/${userId}`);
-        return { success: true };
+
+        let message = `User ${user.name} has been deactivated. Total funds: ₹${totalFunds.toLocaleString()}. Outstanding loan: ₹${totalOutstandingLoan.toLocaleString()}. `;
+        if (settlementBalance >= 0) {
+            message += `Admin will give the user ₹${settlementBalance.toLocaleString()}.`;
+        } else {
+            message += `User will give the admin ₹${Math.abs(settlementBalance).toLocaleString()}.`;
+        }
+
+        return { success: true, message };
         
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deactivating user:", error);
-        return { error: 'Failed to deactivate user.' };
+        return { error: `Failed to deactivate user: ${error.message}` };
     }
 }
 
-export async function retireUser(formData: FormData): Promise<{error?: string, success?: boolean}> {
+export async function retireUser(formData: FormData): Promise<{error?: string, success?: boolean, message?: string}> {
     const userId = formData.get('userId') as string;
 
     if (!userId) {
@@ -83,12 +124,6 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
             return { error: 'User not found.' };
         }
         
-        // Check for active loans
-        const activeLoan = await Loan.findOne({ user: userId, status: 'active' });
-        if (activeLoan) {
-            return { error: 'Cannot retire a user with an active loan. The loan must be paid or settled first.' };
-        }
-
         // --- Pro-rata Interest & Dividend Calculation ---
         const now = new Date();
         const currentMonth = now.getMonth(); // 0 = Jan, 3 = April, 2 = March
@@ -127,12 +162,54 @@ export async function retireUser(formData: FormData): Promise<{error?: string, s
         const tfInterest = fullYearTfInterest * proRataFactor;
         user.thriftFund = (user.thriftFund || 0) + tfInterest;
         
+        // Calculate settlement details before clearing user's funds
+        const activeLoans = await Loan.find({ user: userId, status: 'active' });
+        const totalOutstandingLoan = activeLoans.reduce((sum, loan) => sum + loan.principal, 0);
+        const totalFunds = (user.shareFund || 0) + (user.guaranteedFund || 0) + (user.thriftFund || 0);
+        const settlementBalance = totalFunds - totalOutstandingLoan;
+
+        // Reset funds to 0
+        user.shareFund = 0;
+        user.guaranteedFund = 0;
+        user.thriftFund = 0;
         user.status = 'retired';
+
         await user.save();
+
+        // Settle active loans
+        for (const loan of activeLoans) {
+            loan.payments.push({
+                amount: loan.principal,
+                date: new Date(),
+                type: 'principal',
+                notes: 'Settled upon retirement'
+            } as any);
+            loan.principal = 0;
+            loan.status = 'paid';
+            await loan.save();
+        }
+
+        const session = await getSession() as any;
+        const actor = session?.email || 'Admin';
+        await logAuditActivity(
+            'USER_RETIRED',
+            actor,
+            userId,
+            `Retired user ${user.name}. Total funds ₹${totalFunds.toLocaleString()} (including pro-rated interest/dividends) offset against loan ₹${totalOutstandingLoan.toLocaleString()}. Settlement balance: ₹${settlementBalance.toLocaleString()}.`,
+            { totalFunds, totalOutstandingLoan, settlementBalance }
+        );
         
         revalidatePath("/admin/users");
         revalidatePath(`/admin/users/${userId}`);
-        return { success: true };
+
+        let message = `User ${user.name} has been retired. Total funds: ₹${totalFunds.toLocaleString()}. Outstanding loan: ₹${totalOutstandingLoan.toLocaleString()}. `;
+        if (settlementBalance >= 0) {
+            message += `Admin will give the user ₹${settlementBalance.toLocaleString()}.`;
+        } else {
+            message += `User will give the admin ₹${Math.abs(settlementBalance).toLocaleString()}.`;
+        }
+
+        return { success: true, message };
         
     } catch (error: any) {
         console.error("Error retiring user:", error);

@@ -40,7 +40,7 @@ export function RetireUserButton({ userId, userName, onStatusChange }: { userId:
       } else {
          toast({
             title: "Success",
-            description: `User ${userName} has been marked as retired.`,
+            description: result.message || `User ${userName} has been marked as retired.`,
         });
         onStatusChange();
       }
