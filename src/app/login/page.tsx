@@ -221,7 +221,7 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col min-h-screen bg-background">
         {/* Top bar on mobile */}
         <div className="flex items-center justify-between p-4 lg:hidden">
-          <Logo showText size="sm" className="[--sidebar-foreground:hsl(var(--foreground))] [--sidebar-muted-foreground:hsl(var(--muted-foreground))]" />
+          <Logo showText size="sm" />
           <ThemeToggle />
         </div>
         <div className="hidden lg:flex justify-end p-5">

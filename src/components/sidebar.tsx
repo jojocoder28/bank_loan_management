@@ -370,7 +370,7 @@ export function Sidebar({
           href={user.role === "admin" ? "/admin/dashboard" : "/dashboard"}
           className="flex items-center gap-0 min-w-0"
         >
-          <Logo collapsed={isCollapsed} showText={!isCollapsed} size="md" />
+          <Logo collapsed={isCollapsed} showText={!isCollapsed} size="md" invertText />
         </Link>
 
         {!isCollapsed && (

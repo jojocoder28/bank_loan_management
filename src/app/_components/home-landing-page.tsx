@@ -136,7 +136,7 @@ export function HomeLandingPage({
         <div className="container mx-auto px-4 md:px-8 h-[68px] flex items-center justify-between">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-0">
-            <Logo showText size="md" className="[--sidebar-foreground:hsl(var(--foreground))] [--sidebar-muted-foreground:hsl(var(--muted-foreground))]" />
+            <Logo showText size="md" />
           </Link>
 
           {/* Actions */}
@@ -434,7 +434,7 @@ export function HomeLandingPage({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
             {/* Brand column */}
             <div className="space-y-4">
-              <Logo showText size="md" className="[--sidebar-foreground:hsl(var(--foreground))] [--sidebar-muted-foreground:hsl(var(--muted-foreground))]" />
+              <Logo showText size="md" />
               <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
                 Sarisha &amp; Khorda G P Primary School Teachers Co Operative Credit Society LTD.
                 Built on transparency, trust, and shared financial values.
