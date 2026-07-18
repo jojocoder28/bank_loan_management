@@ -1,20 +1,26 @@
 "use client";
 
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "./ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "./ui/sheet";
 import { Button } from "./ui/button";
-import { Menu, Landmark, X, Bell } from "lucide-react";
+import { AlignLeft, Bell, X } from "lucide-react";
 import { SidebarNav } from "./sidebar";
 import { User } from "@/lib/types";
 import Link from "next/link";
 import { UserNav } from "./user-nav";
 import React from "react";
 import { getPendingApprovalCount } from "@/app/admin/approvals/actions";
-import { Badge } from "./ui/badge";
 import { ThemeToggle } from "./theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
-
+import { Logo } from "./logo";
 
 export function Header({ user }: { user: User }) {
   const [approvalCount, setApprovalCount] = React.useState(0);
@@ -22,112 +28,119 @@ export function Header({ user }: { user: User }) {
   const pathname = usePathname();
 
   const fetchApprovalCount = React.useCallback(() => {
-    if (user.role === 'admin') {
-      getPendingApprovalCount().then(count => {
-        setApprovalCount(count);
-      });
+    if (user.role === "admin") {
+      getPendingApprovalCount().then(setApprovalCount);
     }
   }, [user.role]);
 
   React.useEffect(() => {
     fetchApprovalCount();
-    const handleCountChanged = () => fetchApprovalCount();
-    window.addEventListener('approvalCountChanged', handleCountChanged);
-    const intervalId = setInterval(fetchApprovalCount, 30000);
+    const handler = () => fetchApprovalCount();
+    window.addEventListener("approvalCountChanged", handler);
+    const id = setInterval(fetchApprovalCount, 30000);
     return () => {
-      window.removeEventListener('approvalCountChanged', handleCountChanged);
-      clearInterval(intervalId);
-    }
+      window.removeEventListener("approvalCountChanged", handler);
+      clearInterval(id);
+    };
   }, [fetchApprovalCount]);
 
-  // Derive a clean page title from the path
+  /* Derive page title from path */
   const pageTitle = React.useMemo(() => {
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = pathname.split("/").filter(Boolean);
     const last = segments[segments.length - 1];
-    if (!last || last === 'dashboard') return 'Dashboard';
+    if (!last || last === "dashboard") return "Dashboard";
     return last
-      .split('-')
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
   }, [pathname]);
 
   return (
     <>
-      {/* ── Mobile Top Header ─────────────────────────────────── */}
-      <header className={cn(
-        "md:hidden sticky top-0 z-40 w-full",
-        "flex h-16 items-center gap-3 px-4",
-        "bg-background/80 backdrop-blur-xl border-b border-border/50",
-        "supports-[backdrop-filter]:bg-background/60"
-      )}>
-        {/* Hamburger */}
+      {/* ══════════════════════════════════════════
+          MOBILE TOP HEADER — frosted glass bar
+      ══════════════════════════════════════════ */}
+      <header
+        className={cn(
+          "md:hidden sticky top-0 z-40 w-full",
+          "flex h-[58px] items-center justify-between px-4 gap-2",
+          "glass border-b border-white/30 dark:border-white/[0.07]",
+          "shadow-sm shadow-black/5"
+        )}
+      >
+        {/* Left — hamburger */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0 -ml-1 rounded-xl hover:bg-muted/80"
+            <button
+              className={cn(
+                "flex items-center justify-center size-9 rounded-xl transition-all duration-150 active:scale-90",
+                "bg-white/60 dark:bg-white/[0.07] border border-white/60 dark:border-white/10",
+                "text-foreground hover:bg-white/80 dark:hover:bg-white/[0.1] shadow-sm"
+              )}
               id="mobile-menu-trigger"
+              aria-label="Open menu"
             >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
+              <AlignLeft className="size-[18px]" />
+            </button>
           </SheetTrigger>
 
-          {/* ── Drawer ───────────────────────────────────────── */}
+          {/* ── SIDE DRAWER ── */}
           <SheetContent
             side="left"
-            className="p-0 w-[300px] border-r-0 bg-background/95 backdrop-blur-2xl shadow-2xl"
+            className="p-0 w-[300px] border-r-0 bg-background/95 dark:bg-[hsl(225,50%,4%,0.97)] backdrop-blur-2xl shadow-2xl"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
-              <SheetDescription>Main navigation for the application.</SheetDescription>
+              <SheetDescription>Main navigation links.</SheetDescription>
             </SheetHeader>
 
             <div className="flex flex-col h-full">
-              {/* Drawer Header with gradient */}
-              <div className="relative flex items-center justify-between px-5 py-5 overflow-hidden">
-                {/* gradient blob */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent pointer-events-none" />
-                <div className="absolute -top-8 -left-8 size-40 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+              {/* Drawer header — gradient art */}
+              <div className="relative flex items-center justify-between px-5 py-5 overflow-hidden shrink-0">
+                {/* Background blobs */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary)_/_0.18)] via-[hsl(var(--gold)_/_0.08)] to-transparent pointer-events-none" />
+                <div className="absolute -top-10 -left-10 size-48 bg-[hsl(var(--primary)_/_0.15)] rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
+                <div className="absolute -bottom-10 -right-4 size-32 bg-[hsl(var(--gold)_/_0.1)] rounded-full blur-3xl pointer-events-none" />
 
                 <Link
-                  href={user.role === 'admin' ? "/admin/dashboard" : "/dashboard"}
+                  href={user.role === "admin" ? "/admin/dashboard" : "/dashboard"}
                   onClick={() => setOpen(false)}
-                  className="relative flex items-center gap-2.5 z-10"
+                  className="relative z-10"
                 >
-                  <div className="flex items-center justify-center size-9 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
-                    <Landmark className="size-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold leading-tight">S&KGPPS Co-op</p>
-                    <p className="text-[10px] text-muted-foreground leading-tight">Credit Society</p>
-                  </div>
+                  <Logo showText={true} size="md" />
                 </Link>
+
+                <button
+                  onClick={() => setOpen(false)}
+                  className="relative z-10 flex items-center justify-center size-8 rounded-xl bg-muted/60 hover:bg-muted transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="size-4 text-muted-foreground" />
+                </button>
               </div>
 
               {/* User identity strip */}
-              <div className="mx-4 mb-4 flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/40">
-                <Avatar className="size-9 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+              <div className="mx-4 mb-4 flex items-center gap-3 p-3 rounded-2xl bg-muted/40 border border-border/50 backdrop-blur-sm shrink-0">
+                <Avatar className="size-10 ring-2 ring-[hsl(var(--gold)_/_0.4)] ring-offset-2 ring-offset-background shadow-md">
                   <AvatarImage src={user.photoUrl ?? undefined} alt={user.name ?? "User"} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                  <AvatarFallback className="bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--gold))] text-white font-bold text-sm">
                     {user.name?.[0]?.toUpperCase() ?? "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate">{user.name}</p>
+                  <p className="text-sm font-bold tracking-tight truncate" style={{ fontFamily: "Sora, sans-serif" }}>
+                    {user.name}
+                  </p>
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
-                <div className="shrink-0">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 capitalize">
-                    {user.role}
-                  </span>
-                </div>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[hsl(var(--gold)_/_0.15)] text-[hsl(var(--gold))] border border-[hsl(var(--gold)_/_0.3)] capitalize shrink-0">
+                  {user.role === "board_member" ? "Board" : user.role}
+                </span>
               </div>
 
               {/* Nav links */}
-              <div className="flex-1 overflow-y-auto px-3 pb-4">
-                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+              <div className="flex-1 overflow-y-auto pb-4">
+                <p className="px-7 mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
                   Navigation
                 </p>
                 <SidebarNav
@@ -138,46 +151,54 @@ export function Header({ user }: { user: User }) {
                 />
               </div>
 
-              {/* Drawer footer actions */}
-              <div className="border-t border-border/40 px-5 py-4 flex items-center justify-between gap-2">
+              {/* Drawer footer */}
+              <div className="border-t border-border/40 px-4 py-4 flex items-center gap-2 shrink-0">
                 <Link
                   href="/settings"
                   onClick={() => setOpen(false)}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors py-2 px-3 rounded-xl hover:bg-muted/60"
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors py-2.5 px-3 rounded-xl hover:bg-muted/60 border border-border/50"
                 >
                   Settings
                 </Link>
                 <ThemeToggle />
-                <form
-                  action="/logout"
-                  method="POST"
-                  className="flex-1 flex"
-                >
-                  {/* We use the logout action via UserNav instead */}
-                </form>
                 <UserNav user={user} isMobile={true} />
               </div>
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* Centered Page Title */}
+        {/* Center — page title */}
         <div className="flex-1 text-center">
-          <p className="text-sm font-semibold tracking-tight truncate px-2">{pageTitle}</p>
+          <p
+            className="text-[14px] font-bold tracking-tight truncate px-2"
+            style={{ fontFamily: "Sora, sans-serif" }}
+          >
+            {pageTitle}
+          </p>
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-1 shrink-0">
-          {approvalCount > 0 && user.role === 'admin' && (
+        {/* Right — notification + avatar */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {approvalCount > 0 && user.role === "admin" && (
             <Link href="/admin/approvals">
-              <Button variant="ghost" size="icon" className="relative rounded-xl size-9 hover:bg-muted/80">
-                <Bell className="size-4.5" />
-                <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground shadow">
-                  {approvalCount > 9 ? '9+' : approvalCount}
+              <button
+                className={cn(
+                  "relative flex items-center justify-center size-9 rounded-xl transition-all active:scale-90",
+                  "bg-white/60 dark:bg-white/[0.07] border border-white/60 dark:border-white/10 shadow-sm",
+                  "text-foreground hover:bg-white/80 dark:hover:bg-white/[0.1]"
+                )}
+                aria-label="Pending approvals"
+              >
+                <Bell className="size-[17px]" />
+                <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-[hsl(var(--gold))] text-[8px] font-bold text-[hsl(var(--gold-foreground))] shadow">
+                  {approvalCount > 9 ? "9+" : approvalCount}
                 </span>
-              </Button>
+                {/* Pulse ring */}
+                <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-[hsl(var(--gold)_/_0.5)] animate-ping-slow" />
+              </button>
             </Link>
           )}
+
           <UserNav user={user} isMobile={true} />
         </div>
       </header>

@@ -1,228 +1,381 @@
-
 "use client";
+
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, useEffect } from "react";
-import { LogIn, AlertTriangle, Eye, EyeOff, Landmark } from "lucide-react";
+import {
+  LogIn,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Shield,
+  Users,
+  TrendingUp,
+  Sparkles,
+  ChevronRight,
+} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { login } from "./actions";
-import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
-import { Badge } from "@/components/ui/badge";
 import { getBanners } from "@/app/admin/homepage/actions";
+import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
+const FEATURE_PILLS = [
+  { icon: Shield, label: "Secure & Encrypted" },
+  { icon: Users, label: "500+ Members" },
+  { icon: TrendingUp, label: "Trusted Since 2010" },
+];
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Banner State
   const [banners, setBanners] = useState<any[]>([]);
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
+  const [currentBanner, setCurrentBanner] = useState(0);
 
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    async function loadBanners() {
-      try {
-        const activeBanners = await getBanners(true);
-        setBanners(activeBanners);
-      } catch (err) {
-        console.error("Failed to load banners on login page", err);
-      }
-    }
-    loadBanners();
+    getBanners(true).then(setBanners).catch(console.error);
   }, []);
 
   useEffect(() => {
-    if (!api) return;
-    setCurrent(api.selectedScrollSnap());
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap());
-    });
-
-    const interval = setInterval(() => {
-      if (api.canScrollNext()) {
-        api.scrollNext();
-      } else {
-        api.scrollTo(0);
-      }
+    if (banners.length <= 1) return;
+    const id = setInterval(() => {
+      setCurrentBanner((p) => (p + 1) % banners.length);
     }, 5000);
-    return () => clearInterval(interval);
-  }, [api]);
+    return () => clearInterval(id);
+  }, [banners.length]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append('identifier', identifier);
-      formData.append('password', password);
-      
-      const result = await login(formData);
-
-      if (result.error) {
+      const result = await login({ identifier, password });
+      if (result?.error) {
         setError(result.error);
       } else {
-        if (result.requiresPasswordChange) {
-            router.push('/force-password-change');
-        } else if (result.role === 'admin') {
-            router.push('/admin/dashboard');
-        } else {
-            router.push('/dashboard');
-        }
-        // We call router.refresh() to ensure the new session is picked up by the layout
         router.refresh();
       }
     });
-  };
+  }
+
+  const activeBanner = banners[currentBanner];
 
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
-      <div className="flex items-center justify-center py-12">
-        <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold">Login</h1>
-            <p className="text-balance text-muted-foreground">
-              Enter your email or phone to access your account
-            </p>
-          </div>
-           {error && (
-             <Alert variant="destructive" className="mb-4">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Login Failed</AlertTitle>
-                <AlertDescription>
-                    {error}
-                </AlertDescription>
-            </Alert>
-          )}
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="identifier">Email or Phone Number</Label>
-              <Input
-                id="identifier"
-                type="text"
-                placeholder="email@example.com or 9876543210"
-                required
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                disabled={isPending}
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                 {/* <Link
-                  href="/forgot-password"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Forgot your password?
-                </Link> */}
-              </div>
-              <div className="relative">
-                <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isPending}
-                />
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                    onClick={() => setShowPassword(!showPassword)}
-                >
-                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                    <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
-                </Button>
-              </div>
-            </div>
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Logging in..." : "Login"}
-            </Button>
-          </form>
-          {/* <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </div> */}
-        </div>
-      </div>
-      <div className="hidden bg-muted lg:flex items-center justify-center flex-col p-8 overflow-hidden relative">
-        {banners.length > 0 ? (
-          <div className="w-full max-w-lg mx-auto">
-            <Carousel setApi={setApi} className="w-full">
-              <CarouselContent>
-                {banners.map((banner) => (
-                  <CarouselItem key={banner._id.toString()}>
-                    <div className="flex flex-col items-center justify-center text-center p-6 space-y-6">
-                      <div className="bg-primary/10 p-4 rounded-2xl border border-primary/20 text-primary">
-                        <Landmark className="size-12" />
-                      </div>
-                      {banner.subtitle && (
-                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-                          {banner.subtitle}
-                        </Badge>
-                      )}
-                      <h2 className="text-3xl font-bold tracking-tight">
-                        {banner.title}
-                      </h2>
-                      <p className="text-balance text-muted-foreground max-w-md leading-relaxed">
-                        {banner.description}
-                      </p>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
+    <div className="min-h-screen flex" style={{ fontFamily: "Inter, sans-serif" }}>
+      {/* ════════════════════════════════════════
+          LEFT PANEL — Art + Brand (desktop only)
+      ════════════════════════════════════════ */}
+      <div className="hidden lg:flex lg:w-[55%] xl:w-[60%] relative overflow-hidden">
+        {/* Animated gradient mesh background */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(135deg, hsl(220,75%,20%) 0%, hsl(199,80%,30%) 40%, hsl(220,60%,15%) 80%, hsl(35,80%,30%) 100%)",
+          }}
+        />
 
-            {/* Dots */}
-            {banners.length > 1 && (
-              <div className="flex justify-center gap-1.5 mt-4">
-                {banners.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => api?.scrollTo(index)}
-                    className={`size-2 rounded-full transition-all duration-300 ${
-                      index === current
-                        ? "bg-primary w-4"
-                        : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
-                ))}
+        {/* Animated orbs */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute size-[600px] rounded-full animate-pulse-glow"
+            style={{
+              background: "radial-gradient(circle, hsl(199,80%,60%,0.25) 0%, transparent 70%)",
+              top: "-100px",
+              right: "-100px",
+            }}
+          />
+          <div
+            className="absolute size-[400px] rounded-full"
+            style={{
+              background: "radial-gradient(circle, hsl(35,90%,55%,0.2) 0%, transparent 70%)",
+              bottom: "-60px",
+              left: "10%",
+              animation: "pulse-glow 4s ease-in-out infinite",
+              animationDelay: "2s",
+            }}
+          />
+          <div
+            className="absolute size-[300px] rounded-full animate-float"
+            style={{
+              background: "radial-gradient(circle, hsl(220,75%,60%,0.15) 0%, transparent 70%)",
+              top: "40%",
+              left: "30%",
+            }}
+          />
+        </div>
+
+        {/* Grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(hsl(0,0%,100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0,0%,100%) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col w-full p-10 xl:p-14">
+          {/* Logo */}
+          <div className="mb-auto">
+            <Logo showText size="lg" />
+          </div>
+
+          {/* Feature pills */}
+          <div className="flex flex-wrap gap-2.5 mb-8">
+            {FEATURE_PILLS.map(({ icon: Icon, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-white/90 text-xs font-semibold"
+              >
+                <Icon className="size-3.5" />
+                {label}
               </div>
+            ))}
+          </div>
+
+          {/* Dynamic banner content */}
+          <div className="space-y-4 mb-12">
+            {activeBanner ? (
+              <>
+                <div className="flex items-center gap-2 text-[hsl(35,90%,70%)] text-xs font-semibold uppercase tracking-widest">
+                  <Sparkles className="size-3.5" />
+                  {activeBanner.subtitle || "Featured"}
+                </div>
+                <h2
+                  className="text-3xl xl:text-4xl font-extrabold text-white leading-tight"
+                  style={{ fontFamily: "Sora, sans-serif" }}
+                >
+                  {activeBanner.title}
+                </h2>
+                <p className="text-white/65 text-sm leading-relaxed max-w-md">
+                  {activeBanner.description}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-[hsl(35,90%,70%)] text-xs font-semibold uppercase tracking-widest">
+                  <Sparkles className="size-3.5" />
+                  Welcome Back
+                </div>
+                <h2
+                  className="text-3xl xl:text-4xl font-extrabold text-white leading-tight"
+                  style={{ fontFamily: "Sora, sans-serif" }}
+                >
+                  Your Financial Partner for Teachers
+                </h2>
+                <p className="text-white/65 text-sm leading-relaxed max-w-md">
+                  Access your cooperative account, track loans, and manage your savings — all in one secure place.
+                </p>
+              </>
             )}
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center max-w-md">
-            <Landmark className="size-16 text-primary mb-4" />
-            <h2 className="text-3xl font-bold">
-                Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD
-            </h2>
-             <p className="text-balance text-muted-foreground mt-4">
-                Your trusted financial partner, dedicated to serving the teacher community with integrity and excellence.
-            </p>
+
+          {/* Floating glass stats card */}
+          <div className="rounded-2xl bg-white/[0.08] backdrop-blur-md border border-white/15 p-5 flex items-center gap-5">
+            <div className="flex flex-col gap-1">
+              <p className="text-[hsl(35,90%,70%)] text-xs font-semibold uppercase tracking-wider">Quick Stats</p>
+              <div className="flex gap-6 mt-1">
+                {[
+                  { v: "500+", l: "Members" },
+                  { v: "₹2Cr+", l: "Disbursed" },
+                  { v: "15 Yrs", l: "Experience" },
+                ].map(({ v, l }) => (
+                  <div key={l}>
+                    <p className="text-white font-bold text-lg leading-none" style={{ fontFamily: "Sora, sans-serif" }}>{v}</p>
+                    <p className="text-white/50 text-[11px] mt-0.5">{l}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Banner dots */}
+          {banners.length > 1 && (
+            <div className="flex gap-1.5 mt-5">
+              {banners.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentBanner(i)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === currentBanner ? "w-5 bg-[hsl(35,90%,60%)]" : "w-1.5 bg-white/30"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ════════════════════════════════════════
+          RIGHT PANEL — Login Form
+      ════════════════════════════════════════ */}
+      <div className="flex-1 flex flex-col min-h-screen bg-background">
+        {/* Top bar on mobile */}
+        <div className="flex items-center justify-between p-4 lg:hidden">
+          <Logo showText size="sm" className="[--sidebar-foreground:hsl(var(--foreground))] [--sidebar-muted-foreground:hsl(var(--muted-foreground))]" />
+          <ThemeToggle />
+        </div>
+        <div className="hidden lg:flex justify-end p-5">
+          <ThemeToggle />
+        </div>
+
+        {/* Centered form */}
+        <div className="flex-1 flex items-center justify-center px-5 py-8">
+          <div className="w-full max-w-[420px] space-y-8 animate-slide-up">
+            {/* Header */}
+            <div className="space-y-2">
+              <h1
+                className="text-2xl sm:text-3xl font-extrabold tracking-tight"
+                style={{ fontFamily: "Sora, sans-serif" }}
+              >
+                Welcome back
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Sign in to access your cooperative account
+              </p>
+            </div>
+
+            {/* Error */}
+            {error && (
+              <Alert variant="destructive" className="rounded-xl">
+                <AlertTriangle className="size-4" />
+                <AlertTitle>Sign In Failed</AlertTitle>
+                <AlertDescription className="text-xs">{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email / Phone */}
+              <div className="space-y-1.5">
+                <Label htmlFor="identifier" className="text-sm font-semibold">
+                  Email or Phone
+                </Label>
+                <Input
+                  id="identifier"
+                  type="text"
+                  placeholder="you@example.com or 9XXXXXXXXX"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  required
+                  autoComplete="username"
+                  className="h-12 rounded-xl border-border/60 bg-muted/30 focus:bg-background transition-colors text-sm"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-semibold">
+                    Password
+                  </Label>
+                  <Link
+                    href="/login"
+                    className="text-xs text-[hsl(var(--primary))] hover:underline font-medium"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    className="h-12 rounded-xl border-border/60 bg-muted/30 focus:bg-background transition-colors pr-12 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="w-full h-12 rounded-xl font-bold text-sm shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all"
+                style={{
+                  background: isPending
+                    ? undefined
+                    : "linear-gradient(135deg, hsl(var(--primary)), hsl(220,75%,40%), hsl(var(--gold)))",
+                  color: "white",
+                }}
+              >
+                {isPending ? (
+                  <span className="flex items-center gap-2">
+                    <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Signing in…
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <LogIn className="size-4.5" />
+                    Sign In
+                    <ChevronRight className="size-4 ml-auto" />
+                  </span>
+                )}
+              </Button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/40" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-background px-3 text-xs text-muted-foreground">
+                  New to the society?
+                </span>
+              </div>
+            </div>
+
+            {/* Signup CTA */}
+            <Button
+              asChild
+              variant="outline"
+              className="w-full h-12 rounded-xl font-semibold border-border/60 hover:border-[hsl(var(--primary)_/_0.4)] transition-all text-sm"
+            >
+              <Link href="/signup">Create an Account</Link>
+            </Button>
+
+            {/* Trust badges */}
+            <div className="flex items-center justify-center gap-4 pt-2">
+              {[
+                { icon: Shield, label: "SSL Secured" },
+                { icon: Users, label: "Verified Coop" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <Icon className="size-3 text-[hsl(var(--primary))]" />
+                  {label}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer note */}
+        <div className="p-5 text-center">
+          <p className="text-[11px] text-muted-foreground">
+            &copy; {new Date().getFullYear()} SKGPPST Co-op Credit Society Ltd.
+          </p>
+        </div>
       </div>
     </div>
   );
