@@ -567,7 +567,8 @@ export async function getAnnualDuesPreviewData(
         const yearlyContribution = 12 * monthlyThrift;
         const tfOpeningBalance = Math.max(0, tfBalance - yearlyContribution);
         const tfInterestOnOpening = Math.round(tfOpeningBalance * tfRateDecimal);
-        const tfInterestOnNew = Math.round(yearlyContribution * tfRateDecimal);
+        // 78 = 1+2+...+12: prorated sum-of-digits formula for monthly deposits through the year
+        const tfInterestOnNew = Math.round(78 * monthlyThrift * (tfRateDecimal / 12));
         const tfInterest = tfInterestOnOpening + tfInterestOnNew;
 
         return {
