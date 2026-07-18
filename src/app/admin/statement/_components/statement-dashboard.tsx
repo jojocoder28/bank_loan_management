@@ -461,28 +461,12 @@ export function StatementDashboard({
             </AlertDialogContent>
           </AlertDialog>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline">
-                {isAnnualPending ? <Loader2 className="mr-2 animate-spin" /> : <Gift className="mr-2" />}
-                Annual Dues
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Process Annual Dues</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will calculate and credit annual interest for Thrift and Guaranteed Funds, and dividends for Share Funds. This action is only permitted once per year (usually March).
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleProcessAnnual} disabled={isAnnualPending}>
-                  Yes, Process Annual Dues
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button variant="outline" asChild>
+            <Link href="/admin/statement/annual-dues">
+              <Gift className="mr-2 size-4" />
+              Annual Dues
+            </Link>
+          </Button>
 
           {canUndo && (
             <AlertDialog>
