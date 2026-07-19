@@ -14,6 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Download, Loader2, Play, AlertTriangle, Search, Check, RefreshCw, X } from "lucide-react";
 import { DividendReportRow, getDividendReportData, applyAnnualDividends } from "../actions";
+import { uploadProcessedReport } from "../../statement/actions";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import { useState, useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,6 +147,107 @@ export function DividendReport({ defaultRate, defaultYear, lastDividendProcess }
                         title: "Yearly Dividends Applied!",
                         description: `Successfully credited annual dividends to the dividend funds of ${finalizedList.length} members.`
                     });
+
+                    // Auto-upload PDF & CSV to Cloudinary
+                    try {
+                        const doc = new jsPDF();
+                        
+                        doc.setFontSize(14);
+                        doc.setFont("helvetica", "bold");
+                        doc.text(`SARISHA & KHORDA G P PRIMARY SCHOOL TEACHERS CO OPERATIVE CREDIT SOCIETY LTD`, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+                        
+                        doc.setFontSize(11);
+                        doc.setFont("helvetica", "normal");
+                        doc.text(`Yearly Share Fund Dividend Report - Year ${year}`, doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
+                        doc.text(`Dividend Rate: ${rate}%`, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+
+                        const tableHeaders = [
+                            "Sl. No", "Name", "Membership #", "Share Fund Balance (March)", "Calculated Dividend", "Final Adjusted Dividend"
+                        ];
+
+                        let sumShareFund = 0;
+                        let sumCalculatedDividend = 0;
+                        let sumAdjustedDividend = 0;
+
+                        const body = previewRows.map((row, index) => {
+                            const adjAmount = editedAmounts[row.memberId] ?? 0;
+                            sumShareFund += row.shareFund;
+                            sumCalculatedDividend += row.dividendAmount;
+                            sumAdjustedDividend += adjAmount;
+
+                            return [
+                                index + 1,
+                                row.name,
+                                row.membershipNumber,
+                                row.shareFund.toLocaleString(),
+                                row.dividendAmount.toLocaleString(),
+                                adjAmount.toLocaleString()
+                            ];
+                        });
+
+                        const footer = [
+                            ['', 'Total', '', sumShareFund.toLocaleString(), sumCalculatedDividend.toLocaleString(), sumAdjustedDividend.toLocaleString()]
+                        ];
+
+                        doc.autoTable({
+                            startY: 35,
+                            head: [tableHeaders],
+                            body: body,
+                            foot: footer,
+                            theme: 'grid',
+                            headStyles: { fillColor: [100, 110, 120], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
+                            footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
+                            styles: { fontSize: 8, lineColor: [200, 200, 200], lineWidth: 0.1 },
+                            margin: { horizontal: 15 }
+                        });
+
+                        const pdfBase64 = doc.output('datauristring').split(',')[1];
+
+                        const csvHeaders = [
+                            "Name",
+                            "Membership #",
+                            "Share Fund Balance (March)",
+                            "Dividend Rate (%)",
+                            "Dividend Amount (Calculated)",
+                            "Dividend Amount (Final Adjusted)"
+                        ];
+                        
+                        const csvRows = previewRows.map(row => {
+                            const adjAmount = editedAmounts[row.memberId] ?? 0;
+                            return [
+                                `"${row.name.replace(/"/g, '""')}"`,
+                                row.membershipNumber,
+                                row.shareFund,
+                                row.dividendRate,
+                                row.dividendAmount,
+                                adjAmount
+                            ].join(',');
+                        });
+
+                        const totalsRow = [
+                            `"Total"`,
+                            `""`,
+                            sumShareFund,
+                            `""`,
+                            sumCalculatedDividend,
+                            sumAdjustedDividend
+                        ].join(',');
+                        
+                        const csvContent = [csvHeaders.join(','), ...csvRows, totalsRow].join('\n');
+                        const title = `Yearly Dividend - ${year}`;
+                        
+                        await uploadProcessedReport(
+                            title,
+                            'dividend',
+                            Number(year),
+                            undefined,
+                            pdfBase64,
+                            csvContent
+                        );
+                    } catch (uploadError) {
+                        console.error("Failed to auto-upload dividend reports:", uploadError);
+                    }
+
                     setPreviewRows(null);
                     setEditedAmounts({});
                     setSearchQuery("");

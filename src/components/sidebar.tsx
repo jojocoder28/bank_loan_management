@@ -26,6 +26,7 @@ import {
     Cog,
     DatabaseZap,
     Handshake,
+    Archive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/types";
@@ -73,6 +74,7 @@ const adminNavGroups = [
     icon: DatabaseZap,
     items: [
       { href: "/admin/data-export", label: "Data Export", icon: Download },
+      { href: "/admin/reports", label: "Reports Archive", icon: Archive },
       { href: "/admin/audit", label: "AI Auditor", icon: ShieldCheck },
       { href: "/admin/bulk-import", label: "Bulk Import", icon: UploadCloud },
     ],

@@ -21,172 +21,176 @@ const subHeader = `Regd No 11/1994/South 24 Parganas, Date 30/09/1994 Mob No. 92
 const tableHeaders = [`Sl. No`, `Name`, `S.B. A/C No`, `Bank Loan Prin`, `Bank Loan Int.`, `OWN LOAN Prin.`, `OWN LOAN Int.`, `S F`, `T.F`, `Total`];
 
 
+export function buildStatementPdf(data: StatementRow[], summary: StatementSummary, month: string, year: number): jsPDF {
+    const doc = new jsPDF();
+    const totalInWords = numberToWords(summary.grandTotal);
+    const depositText = `Please deposit the amount Rs. ${summary.grandTotal.toLocaleString()} (Rupees ${totalInWords} only) to the SBCS Number 129342134828 of the society and oblige.`;
+
+    // --- 1. Summary Sheet ---
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(subHeader, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Summary for the month of ${month}, ${year}`, doc.internal.pageSize.getWidth() / 2, 40, { align: "center" });
+
+    doc.autoTable({
+        startY: 50,
+        head: [['Category', 'Amount (Rs.)']],
+        body: [
+            ["Thrift Fund(TF)", summary.totalThrift.toLocaleString()],
+            ["Share Fund(SF)", summary.totalShare.toLocaleString()],
+            ["Own Loan Principal", summary.totalLoanPrincipal.toLocaleString()],
+            ["Own Loan Interest", summary.totalLoanInterest.toLocaleString()],
+        ],
+        foot: [['Total Deduction', summary.grandTotal.toLocaleString()]],
+        theme: 'grid',
+        headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
+        footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
+        bodyStyles: { fontStyle: 'bold', textColor: [0, 0, 0], fillColor: [255, 255, 255] },
+        margin: { horizontal: 'auto' },
+    });
+    
+    const summaryFinalY = (doc as any).lastAutoTable.finalY;
+    doc.setFontSize(10);
+    doc.text(depositText, 14, summaryFinalY + 10, { maxWidth: 180 });
+    
+    // --- 2. Deduction List Sheets ---
+    const recordsPerPage = 42;
+    const numPages = Math.ceil(data.length / recordsPerPage);
+
+    for (let i = 0; i < numPages; i++) {
+        const start = i * recordsPerPage;
+        const end = start + recordsPerPage;
+        const pageData = data.slice(start, end);
+
+        doc.addPage();
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(subHeader, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Deduction List for the month of ${month}, ${year} (Page ${i + 1})`, doc.internal.pageSize.getWidth() / 2, 40, { align: "center" });
+
+        const body = pageData.map(row => [
+            row.slNo,
+            row.name,
+            row.bankAccountNumber,
+            '', // Bank Loan Prin
+            '', // Bank Loan Int
+            row.loanPrincipalPayment,
+            row.loanInterestPayment,
+            row.shareFundContribution,
+            row.thriftFundContribution,
+            row.totalDeduction,
+        ]);
+        
+        const pageTotal = body.reduce((acc: number[], row) => {
+            acc[5] += Number(row[5]) || 0;
+            acc[6] += Number(row[6]) || 0;
+            acc[7] += Number(row[7]) || 0;
+            acc[8] += Number(row[8]) || 0;
+            acc[9] += Number(row[9]) || 0;
+            return acc;
+        }, [0,0,0,0,0,0,0,0,0,0]);
+        
+        const footer = [['', 'Page Total', '', '', '', pageTotal[5], pageTotal[6], pageTotal[7], pageTotal[8], pageTotal[9]]];
+
+        doc.autoTable({
+            startY: 50,
+            head: [tableHeaders],
+            body: body,
+            foot: footer,
+            theme: 'grid',
+            headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8 },
+            footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
+            styles: { fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], fillColor: [255, 255, 255] },
+            margin: { horizontal: 'auto' },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 10 },
+                1: { cellWidth: 35 },
+                2: { halign: 'center', cellWidth: 25 },
+                3: { halign: 'right', cellWidth: 15 },
+                4: { halign: 'right', cellWidth: 15 },
+                5: { halign: 'right', cellWidth: 15 },
+                6: { halign: 'right', cellWidth: 15 },
+                7: { halign: 'right', cellWidth: 10 },
+                8: { halign: 'right', cellWidth: 10 },
+                9: { halign: 'right', fontStyle: 'bold', cellWidth: 20 },
+            }
+        });
+    }
+
+    // --- 3. Separate Dividend Fund List ---
+    const divRecordsPerPage = 42;
+    const divNumPages = Math.ceil(data.length / divRecordsPerPage);
+
+    for (let i = 0; i < divNumPages; i++) {
+        const start = i * divRecordsPerPage;
+        const end = start + divRecordsPerPage;
+        const pageData = data.slice(start, end);
+
+        doc.addPage();
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(subHeader, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Dividend Fund Report for ${month}, ${year} (Page ${i + 1})`, doc.internal.pageSize.getWidth() / 2, 40, { align: "center" });
+
+        const body = pageData.map(row => [
+            row.slNo,
+            row.name,
+            row.bankAccountNumber,
+            row.membershipNumber,
+            (row.dividendFund || 0).toLocaleString(),
+        ]);
+
+        const pageTotal = pageData.reduce((acc, row) => acc + (row.dividendFund || 0), 0);
+        const footer = [['', 'Page Total', '', '', pageTotal.toLocaleString()]];
+
+        doc.autoTable({
+            startY: 50,
+            head: [['Sl. No', 'Name', 'S.B. A/C No', 'Membership No', 'Dividend Fund Balance']],
+            body: body,
+            foot: footer,
+            theme: 'grid',
+            headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8 },
+            footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
+            styles: { fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], fillColor: [255, 255, 255] },
+            margin: { horizontal: 'auto' },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 15 },
+                1: { cellWidth: 50 },
+                2: { halign: 'center', cellWidth: 35 },
+                3: { halign: 'center', cellWidth: 35 },
+                4: { halign: 'right', fontStyle: 'bold', cellWidth: 45 },
+            }
+        });
+    }
+
+    return doc;
+}
+
 export function StatementPDFGenerator({ data, summary, month, year }: { data: StatementRow[], summary: StatementSummary, month: string, year: number }) {
     const [isDownloading, setIsDownloading] = useState(false);
 
     const generatePdf = () => {
         setIsDownloading(true);
         try {
-            const doc = new jsPDF();
-            const totalInWords = numberToWords(summary.grandTotal);
-            const depositText = `Please deposit the amount Rs. ${summary.grandTotal.toLocaleString()} (Rupees ${totalInWords} only) to the SBCS Number 129342134828 of the society and oblige.`;
-
-            // --- 1. Summary Sheet ---
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
-            doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
-
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.text(subHeader, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
-
-            doc.setFontSize(12);
-            doc.setFont("helvetica", "bold");
-            doc.text(`Summary for the month of ${month}, ${year}`, doc.internal.pageSize.getWidth() / 2, 40, { align: "center" });
-
-            doc.autoTable({
-                startY: 50,
-                head: [['Category', 'Amount (Rs.)']],
-                body: [
-                    ["Thrift Fund(TF)", summary.totalThrift.toLocaleString()],
-                    ["Share Fund(SF)", summary.totalShare.toLocaleString()],
-                    ["Own Loan Principal", summary.totalLoanPrincipal.toLocaleString()],
-                    ["Own Loan Interest", summary.totalLoanInterest.toLocaleString()],
-                ],
-                foot: [['Total Deduction', summary.grandTotal.toLocaleString()]],
-                theme: 'grid',
-                headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
-                footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
-                bodyStyles: { fontStyle: 'bold', textColor: [0, 0, 0], fillColor: [255, 255, 255] },
-                margin: { horizontal: 'auto' },
-            });
-            
-            const summaryFinalY = (doc as any).lastAutoTable.finalY;
-            doc.setFontSize(10);
-            doc.text(depositText, 14, summaryFinalY + 10, { maxWidth: 180 });
-            
-            // --- 2. Deduction List Sheets ---
-            const recordsPerPage = 42;
-            const numPages = Math.ceil(data.length / recordsPerPage);
-
-            for (let i = 0; i < numPages; i++) {
-                const start = i * recordsPerPage;
-                const end = start + recordsPerPage;
-                const pageData = data.slice(start, end);
-
-                doc.addPage();
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "bold");
-                doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                doc.text(subHeader, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.text(`Deduction List for the month of ${month}, ${year} (Page ${i + 1})`, doc.internal.pageSize.getWidth() / 2, 40, { align: "center" });
-
-                const body = pageData.map(row => [
-                    row.slNo,
-                    row.name,
-                    row.bankAccountNumber,
-                    '', // Bank Loan Prin
-                    '', // Bank Loan Int
-                    row.loanPrincipalPayment,
-                    row.loanInterestPayment,
-                    row.shareFundContribution,
-                    row.thriftFundContribution,
-                    row.totalDeduction,
-                ]);
-                
-                const pageTotal = body.reduce((acc: number[], row) => {
-                    acc[5] += Number(row[5]) || 0;
-                    acc[6] += Number(row[6]) || 0;
-                    acc[7] += Number(row[7]) || 0;
-                    acc[8] += Number(row[8]) || 0;
-                    acc[9] += Number(row[9]) || 0;
-                    return acc;
-                }, [0,0,0,0,0,0,0,0,0,0]);
-                
-                const footer = [['', 'Page Total', '', '', '', pageTotal[5], pageTotal[6], pageTotal[7], pageTotal[8], pageTotal[9]]];
-
-                doc.autoTable({
-                    startY: 50,
-                    head: [tableHeaders],
-                    body: body,
-                    foot: footer,
-                    theme: 'grid',
-                    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8 },
-                    footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
-                    styles: { fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], fillColor: [255, 255, 255] },
-                    margin: { horizontal: 'auto' },
-                    columnStyles: {
-                        0: { halign: 'center', cellWidth: 10 },
-                        1: { cellWidth: 35 },
-                        2: { halign: 'center', cellWidth: 25 },
-                        3: { halign: 'right', cellWidth: 15 },
-                        4: { halign: 'right', cellWidth: 15 },
-                        5: { halign: 'right', cellWidth: 15 },
-                        6: { halign: 'right', cellWidth: 15 },
-                        7: { halign: 'right', cellWidth: 10 },
-                        8: { halign: 'right', cellWidth: 10 },
-                        9: { halign: 'right', fontStyle: 'bold', cellWidth: 20 },
-                    }
-                });
-            }
-
-            // --- 3. Separate Dividend Fund List ---
-            const divRecordsPerPage = 42;
-            const divNumPages = Math.ceil(data.length / divRecordsPerPage);
-
-            for (let i = 0; i < divNumPages; i++) {
-                const start = i * divRecordsPerPage;
-                const end = start + divRecordsPerPage;
-                const pageData = data.slice(start, end);
-
-                doc.addPage();
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "bold");
-                doc.text(mainHeader, doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                doc.text(subHeader, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.text(`Dividend Fund Report for ${month}, ${year} (Page ${i + 1})`, doc.internal.pageSize.getWidth() / 2, 40, { align: "center" });
-
-                const body = pageData.map(row => [
-                    row.slNo,
-                    row.name,
-                    row.bankAccountNumber,
-                    row.membershipNumber,
-                    (row.dividendFund || 0).toLocaleString(),
-                ]);
-
-                const pageTotal = pageData.reduce((acc, row) => acc + (row.dividendFund || 0), 0);
-                const footer = [['', 'Page Total', '', '', pageTotal.toLocaleString()]];
-
-                doc.autoTable({
-                    startY: 50,
-                    head: [['Sl. No', 'Name', 'S.B. A/C No', 'Membership No', 'Dividend Fund Balance']],
-                    body: body,
-                    foot: footer,
-                    theme: 'grid',
-                    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8 },
-                    footStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8 },
-                    styles: { fontStyle: 'bold', fontSize: 8, lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0], fillColor: [255, 255, 255] },
-                    margin: { horizontal: 'auto' },
-                    columnStyles: {
-                        0: { halign: 'center', cellWidth: 15 },
-                        1: { cellWidth: 50 },
-                        2: { halign: 'center', cellWidth: 35 },
-                        3: { halign: 'center', cellWidth: 35 },
-                        4: { halign: 'right', fontStyle: 'bold', cellWidth: 45 },
-                    }
-                });
-            }
-
+            const doc = buildStatementPdf(data, summary, month, year);
             doc.save(`monthly_statement_${month}_${year}.pdf`);
-
         } finally {
             setIsDownloading(false);
         }
