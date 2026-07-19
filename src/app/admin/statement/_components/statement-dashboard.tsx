@@ -136,10 +136,30 @@ export function StatementDashboard({
     router.push(`/admin/statement?month=${m}&year=${y}`);
   };
 
-  // Reset overrides when month/data changes
+  // Load overrides from localStorage when month/year changes
   useEffect(() => {
-    setOverrides({});
-  }, [initialData, selectedMonth, selectedYear]);
+    const key = `coop-deduction-overrides-${selectedMonth}-${selectedYear}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        setOverrides(JSON.parse(saved));
+      } catch (e) {
+        setOverrides({});
+      }
+    } else {
+      setOverrides({});
+    }
+  }, [selectedMonth, selectedYear]);
+
+  // Persist overrides to localStorage whenever they change
+  useEffect(() => {
+    const key = `coop-deduction-overrides-${selectedMonth}-${selectedYear}`;
+    if (Object.keys(overrides).length > 0) {
+      localStorage.setItem(key, JSON.stringify(overrides));
+    } else {
+      localStorage.removeItem(key);
+    }
+  }, [overrides, selectedMonth, selectedYear]);
 
   // Compute final table data based on overrides
   const tableData = initialData.map((row) => {
@@ -293,7 +313,6 @@ export function StatementDashboard({
         toast({ variant: "destructive", title: "Processing Failed", description: result.error });
       } else {
         toast({ title: "Success", description: result.success });
-        
         // Auto-upload PDF & CSV to Cloudinary
         try {
           const doc = buildStatementPdf(tableData, summary, monthName, selectedYear);
@@ -341,6 +360,9 @@ export function StatementDashboard({
           console.error("Failed to auto-upload statement reports:", uploadError);
         }
 
+        // Clear overrides from localStorage and state
+        localStorage.removeItem(`coop-deduction-overrides-${selectedMonth}-${selectedYear}`);
+        setOverrides({});
         router.refresh();
       }
     });

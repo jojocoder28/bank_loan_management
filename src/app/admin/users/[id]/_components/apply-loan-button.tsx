@@ -25,6 +25,7 @@ export function ApplyLoanButton({ userId }: ApplyLoanButtonProps) {
   const [monthlyPrincipal, setMonthlyPrincipal] = useState("");
   const [startMonth, setStartMonth] = useState(now.getMonth().toString());
   const [startYear, setStartYear] = useState(now.getFullYear().toString());
+  const [allowExceeding, setAllowExceeding] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +52,7 @@ export function ApplyLoanButton({ userId }: ApplyLoanButtonProps) {
 
     startTransition(async () => {
       try {
-        const result = await applyLoanOnBehalf(userId, amount, principal, Number(startMonth), Number(startYear));
+        const result = await applyLoanOnBehalf(userId, amount, principal, Number(startMonth), Number(startYear), allowExceeding);
         if (result.error) {
           toast({
             variant: "destructive",
@@ -66,6 +67,7 @@ export function ApplyLoanButton({ userId }: ApplyLoanButtonProps) {
           setOpen(false);
           setLoanAmount("");
           setMonthlyPrincipal("");
+          setAllowExceeding(false);
           router.refresh();
         }
       } catch (err: any) {
@@ -152,6 +154,19 @@ export function ApplyLoanButton({ userId }: ApplyLoanButtonProps) {
                   })}
                 </select>
               </div>
+            </div>
+            <div className="flex items-center space-x-2 pt-2">
+              <input
+                type="checkbox"
+                id="allow-exceeding-limit-behalf"
+                checked={allowExceeding}
+                onChange={(e) => setAllowExceeding(e.target.checked)}
+                className="rounded border-input text-primary focus:ring-ring cursor-pointer"
+                disabled={isPending}
+              />
+              <Label htmlFor="allow-exceeding-limit-behalf" className="text-sm font-medium cursor-pointer">
+                Allow exceeding maximum loan limit
+              </Label>
             </div>
           </div>
           <DialogFooter>
