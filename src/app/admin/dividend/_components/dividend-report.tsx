@@ -184,18 +184,37 @@ export function DividendReport({ defaultRate, defaultYear, lastDividendProcess }
                 "Dividend Amount (Final Adjusted)"
             ];
             
-            const csvRows = previewRows.map(row => 
-                [
+            let sumShareFund = 0;
+            let sumCalculatedDividend = 0;
+            let sumAdjustedDividend = 0;
+
+            const csvRows = previewRows.map(row => {
+                const adjAmount = editedAmounts[row.memberId] ?? 0;
+                sumShareFund += row.shareFund;
+                sumCalculatedDividend += row.dividendAmount;
+                sumAdjustedDividend += adjAmount;
+
+                return [
                     `"${row.name.replace(/"/g, '""')}"`,
                     row.membershipNumber,
                     row.shareFund,
                     row.dividendRate,
                     row.dividendAmount,
-                    editedAmounts[row.memberId] ?? 0
-                ].join(',')
-            );
+                    adjAmount
+                ].join(',');
+            });
+
+            // Column-wise totals row
+            const totalsRow = [
+                `"Total"`,
+                `""`,
+                sumShareFund,
+                `""`,
+                sumCalculatedDividend,
+                sumAdjustedDividend
+            ].join(',');
             
-            const csvContent = [headers.join(','), ...csvRows].join('\n');
+            const csvContent = [headers.join(','), ...csvRows, totalsRow].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             

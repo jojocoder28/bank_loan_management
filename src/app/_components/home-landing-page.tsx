@@ -57,9 +57,9 @@ interface IBenefit {
 }
 
 const STATS = [
-  { value: "500+", label: "Active Members", icon: Users },
-  { value: "₹2Cr+", label: "Loans Disbursed", icon: CircleDollarSign },
-  { value: "15+", label: "Years of Trust", icon: ShieldCheck },
+  { value: "Since 1994", label: "Years of Trust", icon: ShieldCheck },
+  { value: "100+", label: "Active Members", icon: Users },
+  { value: "₹1Cr+", label: "Reserve Capital", icon: CircleDollarSign },
   { value: "99%", label: "Satisfaction Rate", icon: Star },
 ];
 

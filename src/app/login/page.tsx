@@ -25,8 +25,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 const FEATURE_PILLS = [
   { icon: Shield, label: "Secure & Encrypted" },
-  { icon: Users, label: "500+ Members" },
-  { icon: TrendingUp, label: "Trusted Since 2010" },
+  { icon: Users, label: "100+ Members" },
+  { icon: TrendingUp, label: "Trusted Since 1994" },
 ];
 
 export default function LoginPage() {
@@ -185,9 +185,9 @@ export default function LoginPage() {
               <p className="text-[hsl(35,90%,70%)] text-xs font-semibold uppercase tracking-wider">Quick Stats</p>
               <div className="flex gap-6 mt-1">
                 {[
-                  { v: "500+", l: "Members" },
-                  { v: "₹2Cr+", l: "Disbursed" },
-                  { v: "15 Yrs", l: "Experience" },
+                  { v: "100+", l: "Members" },
+                  { v: "₹1Cr+", l: "Capital" },
+                  { v: "Since 1994", l: "Trust" },
                 ].map(({ v, l }) => (
                   <div key={l}>
                     <p className="text-white font-bold text-lg leading-none" style={{ fontFamily: "Sora, sans-serif" }}>{v}</p>
