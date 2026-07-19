@@ -40,9 +40,6 @@ export async function getLedgerData(): Promise<LedgerData> {
     // Calculate total capital
     const capitalAggregation = await User.aggregate([
         {
-            $match: { role: 'member' } // We only count capital from active members
-        },
-        {
             $group: {
                 _id: null,
                 totalShareFund: { $sum: '$shareFund' },

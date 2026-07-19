@@ -48,7 +48,7 @@ export async function getProfitLossData(rangeKey: string): Promise<ProfitLossDat
     const [bankSettings, activeLoans, members] = await Promise.all([
         getBankSettings(),
         Loan.find({ status: 'active', issueDate: { $lt: range.to } }).lean(),
-        User.find({ role: 'member' }).select('thriftFund').lean(),
+        User.find({}).select('thriftFund').lean(),
     ]);
 
     // 1. Calculate Income (Accrued Loan Interest)
