@@ -91,12 +91,16 @@ export async function getAdminStats(): Promise<AdminStats> {
     sixMonthsAgo.setHours(0, 0, 0, 0);
 
     const trendAgg = await Loan.aggregate([
-        { $match: { createdAt: { $gte: sixMonthsAgo } } },
+        { 
+            $match: { 
+                issueDate: { $exists: true, $ne: null, $gte: sixMonthsAgo } 
+            } 
+        },
         {
             $group: {
                 _id: {
-                    year: { $year: "$createdAt" },
-                    month: { $month: "$createdAt" }
+                    year: { $year: "$issueDate" },
+                    month: { $month: "$issueDate" }
                 },
                 count: { $sum: 1 }
             }
