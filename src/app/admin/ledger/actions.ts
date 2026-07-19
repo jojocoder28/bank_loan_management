@@ -17,7 +17,6 @@ interface TotalCapital {
     shareFund: number;
     guaranteedFund: number;
     thriftFund: number;
-    previousClosingBankBalance?: number;
     yearlyBankInterest?: number;
     total: number;
 }
@@ -56,13 +55,10 @@ export async function getLedgerData(): Promise<LedgerData> {
     
     const capital = capitalAggregation[0] || { totalShareFund: 0, totalGuaranteedFund: 0, totalThriftFund: 0 };
     const bankInterest = bank?.yearlyBankInterest || 0;
-    const prevClosingBalance = bank?.previousClosingBankBalance || 0;
-    
     const totalCapital: TotalCapital = {
         shareFund: capital.totalShareFund,
         guaranteedFund: capital.totalGuaranteedFund,
         thriftFund: capital.totalThriftFund,
-        previousClosingBankBalance: prevClosingBalance,
         yearlyBankInterest: bankInterest,
         total: capital.totalShareFund + capital.totalGuaranteedFund + capital.totalThriftFund + bankInterest
     };

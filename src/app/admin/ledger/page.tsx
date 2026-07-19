@@ -87,11 +87,6 @@ export default async function LedgerPage() {
             value={`₹${(totalCapital?.yearlyBankInterest ?? 0).toLocaleString()}`}
             icon={<TrendingUp className="size-4 text-muted-foreground" />}
            />
-           <StatCard 
-            title="Bank Balance (Prev Closing Date)" 
-            value={`₹${(totalCapital?.previousClosingBankBalance ?? 0).toLocaleString()}`}
-            icon={<TrendingUp className="size-4 text-muted-foreground" />}
-           />
       </div>
 
       <Card>
