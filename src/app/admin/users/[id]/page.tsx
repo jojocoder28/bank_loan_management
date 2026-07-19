@@ -282,6 +282,8 @@ const LoanTable = ({ loans, statusVariant, showActions = false }: { loans: ILoan
                                 loanAmount={loan.loanAmount}
                                 principal={loan.principal}
                                 monthlyPrincipalPayment={loan.monthlyPrincipalPayment ?? 0} 
+                                startMonth={loan.startMonth}
+                                startYear={loan.startYear}
                             />
                         </TableCell>
                     )}

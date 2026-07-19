@@ -165,6 +165,12 @@ export async function updateLoanDetails(prevState: any, formData: FormData): Pro
     const loanAmount = Number(formData.get('loanAmount'));
     const principal = Number(formData.get('principal'));
     const monthlyPrincipalPayment = Number(formData.get('monthlyPrincipalPayment'));
+    
+    // Parse starting month/year if provided
+    const startMonthStr = formData.get('startMonth');
+    const startYearStr = formData.get('startYear');
+    const startMonth = startMonthStr !== null ? Number(startMonthStr) : undefined;
+    const startYear = startYearStr !== null ? Number(startYearStr) : undefined;
 
     const session = await getSession();
 
@@ -197,24 +203,40 @@ export async function updateLoanDetails(prevState: any, formData: FormData): Pro
 
         const tenureMonths = monthlyPrincipalPayment > 0 ? Math.ceil(principal / monthlyPrincipalPayment) : loan.loanTenureMonths;
 
+        const updateFields: any = {
+            loanAmount,
+            principal,
+            monthlyPrincipalPayment,
+            loanTenureMonths: tenureMonths
+        };
+
+        if (startMonth !== undefined && !isNaN(startMonth) && startYear !== undefined && !isNaN(startYear)) {
+            updateFields.startMonth = startMonth;
+            updateFields.startYear = startYear;
+            // Set issueDate to 1st of that month
+            updateFields.issueDate = new Date(startYear, startMonth, 1);
+        }
+
         await Loan.findByIdAndUpdate(loanId, {
-            $set: {
-                loanAmount,
-                principal,
-                monthlyPrincipalPayment,
-                loanTenureMonths: tenureMonths
-            }
+            $set: updateFields
         });
 
         // Record activity to the database audit trail
         const userToUpdate = await User.findById(loan.user as any);
         const actor = session?.email || 'Admin';
+        
+        let auditMsg = `Admin modified loan details for ${userToUpdate?.name || 'N/A'}. New Amount: ₹${loanAmount.toLocaleString()}, New Principal: ₹${principal.toLocaleString()}, New Monthly Payment: ₹${monthlyPrincipalPayment.toLocaleString()}.`;
+        if (startMonth !== undefined && startYear !== undefined) {
+            const startMonthName = new Date(2000, startMonth, 1).toLocaleString('default', { month: 'long' });
+            auditMsg += ` Start date adjusted to: ${startMonthName} ${startYear} (1st of month).`;
+        }
+
         await logAuditActivity(
             'LOAN_MODIFIED_BY_ADMIN',
             actor,
             loan.user as any,
-            `Admin modified loan details for ${userToUpdate?.name || 'N/A'}. New Amount: ₹${loanAmount.toLocaleString()}, New Principal: ₹${principal.toLocaleString()}, New Monthly Payment: ₹${monthlyPrincipalPayment.toLocaleString()}.`,
-            { loanId, loanAmount, principal, monthlyPrincipalPayment }
+            auditMsg,
+            { loanId, loanAmount, principal, monthlyPrincipalPayment, startMonth, startYear }
         );
 
         revalidatePath(`/admin/users/${(loan.user as any).toString()}`);
