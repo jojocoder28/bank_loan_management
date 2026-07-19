@@ -85,7 +85,7 @@ export default async function ReportsPage() {
                             <CardContent className="p-5 flex flex-col gap-3">
                                 {report.pdfUrl ? (
                                     <Button asChild variant="outline" className="w-full justify-between h-10 border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5 text-blue-700 dark:text-blue-400 text-xs font-semibold rounded-xl transition-all">
-                                        <a href={report.pdfUrl} target="_blank" rel="noopener noreferrer">
+                                        <a href={report.pdfUrl} download target="_blank" rel="noopener noreferrer">
                                             <span className="flex items-center gap-2">
                                                 <FileText className="size-4 shrink-0" />
                                                 Download Statement PDF
@@ -101,7 +101,7 @@ export default async function ReportsPage() {
 
                                 {report.csvUrl ? (
                                     <Button asChild variant="outline" className="w-full justify-between h-10 border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 text-xs font-semibold rounded-xl transition-all">
-                                        <a href={report.csvUrl} target="_blank" rel="noopener noreferrer">
+                                        <a href={report.csvUrl} download target="_blank" rel="noopener noreferrer">
                                             <span className="flex items-center gap-2">
                                                 <FileSpreadsheet className="size-4 shrink-0" />
                                                 Download Excel/CSV

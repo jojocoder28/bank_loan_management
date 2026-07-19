@@ -908,7 +908,7 @@ export async function uploadProcessedReport(
                     {
                         folder: "coop_statements/pdf",
                         resource_type: "raw",
-                        public_id: `${type}_${year}_${month !== undefined ? month : ''}_pdf`,
+                        public_id: `${type}_${year}_${month !== undefined ? month : ''}_pdf.pdf`,
                         overwrite: true
                     },
                     (err, result) => err ? reject(err) : resolve(result)
@@ -926,7 +926,7 @@ export async function uploadProcessedReport(
                     {
                         folder: "coop_statements/csv",
                         resource_type: "raw",
-                        public_id: `${type}_${year}_${month !== undefined ? month : ''}_csv`,
+                        public_id: `${type}_${year}_${month !== undefined ? month : ''}_csv.csv`,
                         overwrite: true
                     },
                     (err, result) => err ? reject(err) : resolve(result)
