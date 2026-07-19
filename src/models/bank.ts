@@ -16,6 +16,8 @@ export interface IBank extends Document {
   lastGuaranteedFundProcess?: Date;
   lastAnnualAllProcess?: Date; // New field for master annual process
   lastDividendProcess?: Date;  // Track when dividends were processed
+  previousClosingBankBalance?: number;
+  yearlyBankInterest?: number;
   // This is a unique key to ensure we only have one document
   singleton: string; 
 }
@@ -35,6 +37,8 @@ const BankSchema = new Schema<IBank>({
   lastGuaranteedFundProcess: { type: Date },
   lastAnnualAllProcess: { type: Date }, // New field
   lastDividendProcess: { type: Date },  // Track when dividends were processed
+  previousClosingBankBalance: { type: Number, default: 0 },
+  yearlyBankInterest: { type: Number, default: 0 },
   singleton: { type: String, default: 'bank-settings', unique: true }
 });
 

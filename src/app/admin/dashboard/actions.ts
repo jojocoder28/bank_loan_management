@@ -3,6 +3,7 @@
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/user";
 import Loan from "@/models/loan";
+import Bank from "@/models/bank";
 
 export interface AdminStats {
     totalUsers: number;
@@ -38,6 +39,10 @@ export async function getAdminStats(): Promise<AdminStats> {
         Loan.countDocuments({})
     ]);
 
+    // Fetch bank settings
+    const bank = await Bank.findOne({ singleton: 'bank-settings' });
+    const bankInterest = bank?.yearlyBankInterest || 0;
+
     // Financial Aggregations
     // 1. Total System Funds
     const userFundsAgg = await User.aggregate([
@@ -51,7 +56,7 @@ export async function getAdminStats(): Promise<AdminStats> {
         }
     ]);
     const funds = userFundsAgg[0] || { totalShare: 0, totalGuaranteed: 0, totalThrift: 0 };
-    const totalSystemFunds = funds.totalShare + funds.totalGuaranteed + funds.totalThrift;
+    const totalSystemFunds = funds.totalShare + funds.totalGuaranteed + funds.totalThrift + bankInterest;
 
     // 2. Total Borrowed Capital & Interest
     const loanAgg = await Loan.aggregate([

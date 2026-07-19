@@ -1,9 +1,9 @@
-
 "use server";
 
 import dbConnect from "@/lib/mongodb";
 import Loan, { ILoan } from "@/models/loan";
 import User, { IUser } from "@/models/user";
+import Bank from "@/models/bank";
 
 interface PopulatedLoan extends ILoan {
     user: {
@@ -17,6 +17,8 @@ interface TotalCapital {
     shareFund: number;
     guaranteedFund: number;
     thriftFund: number;
+    previousClosingBankBalance?: number;
+    yearlyBankInterest?: number;
     total: number;
 }
 
@@ -37,6 +39,9 @@ export async function getLedgerData(): Promise<LedgerData> {
         .sort({ createdAt: 'desc' })
         .lean();
 
+    // Fetch bank settings
+    const bank = await Bank.findOne({ singleton: 'bank-settings' });
+
     // Calculate total capital
     const capitalAggregation = await User.aggregate([
         {
@@ -50,12 +55,16 @@ export async function getLedgerData(): Promise<LedgerData> {
     ]);
     
     const capital = capitalAggregation[0] || { totalShareFund: 0, totalGuaranteedFund: 0, totalThriftFund: 0 };
+    const bankInterest = bank?.yearlyBankInterest || 0;
+    const prevClosingBalance = bank?.previousClosingBankBalance || 0;
     
     const totalCapital: TotalCapital = {
         shareFund: capital.totalShareFund,
         guaranteedFund: capital.totalGuaranteedFund,
         thriftFund: capital.totalThriftFund,
-        total: capital.totalShareFund + capital.totalGuaranteedFund + capital.totalThriftFund
+        previousClosingBankBalance: prevClosingBalance,
+        yearlyBankInterest: bankInterest,
+        total: capital.totalShareFund + capital.totalGuaranteedFund + capital.totalThriftFund + bankInterest
     };
 
     return {
