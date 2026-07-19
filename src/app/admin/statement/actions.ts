@@ -211,7 +211,7 @@ export async function getMonthlyStatementData(month?: number, year?: number): Pr
                     monthlyInterest,
                     monthlyPrincipal: principalPayment,
                     issueDate: loan.issueDate ? new Date(loan.issueDate).toISOString() : '',
-                    tenure: loan.tenure,
+                    tenure: loan.loanTenureMonths || 0,
                     formula: `₹${loan.principal.toLocaleString()} × ${loan.interestRate}% ÷ 12 = ₹${monthlyInterest.toLocaleString()}`,
                 });
             }

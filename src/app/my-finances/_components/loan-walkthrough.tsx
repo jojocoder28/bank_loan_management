@@ -132,20 +132,43 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
                 "Notes"
             ];
             
-            const csvRows = dataToDownload.map(row => 
-                [
+            let sumPrincipal = 0;
+            let sumInterest = 0;
+            let sumTotalPayment = 0;
+
+            const csvRows = dataToDownload.map(row => {
+                const p = Math.round(row.principalPayment);
+                const i = Math.round(row.interestPayment);
+                const t = Math.round(row.totalPayment);
+                sumPrincipal += p;
+                sumInterest += i;
+                sumTotalPayment += t;
+
+                return [
                     row.month,
                     row.year,
                     Math.round(row.openingBalance),
-                    Math.round(row.principalPayment),
-                    Math.round(row.interestPayment),
-                    Math.round(row.totalPayment),
+                    p,
+                    i,
+                    t,
                     Math.round(row.closingBalance),
                     `"${row.notes.replace(/"/g, '""')}"`
-                ].join(',')
-            );
+                ].join(',');
+            });
+
+            // Column-wise totals row
+            const totalsRow = [
+                `"Total"`,
+                `""`,
+                `""`,
+                sumPrincipal,
+                sumInterest,
+                sumTotalPayment,
+                `""`,
+                `""`
+            ].join(',');
             
-            const csvContent = [headers.join(','), ...csvRows].join('\n');
+            const csvContent = [headers.join(','), ...csvRows, totalsRow].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             
@@ -159,7 +182,7 @@ export function LoanWalkthrough({ loan }: { loan: ILoan }) {
         } finally {
             setIsGenerating(false);
         }
-    }
+    };
 
     return (
         <Dialog onOpenChange={(isOpen) => { if (isOpen) handleOpen(); }}>

@@ -29,16 +29,36 @@ export function LoanDetailsModifier({
     loanId, 
     loanAmount,
     principal,
-    monthlyPrincipalPayment 
+    monthlyPrincipalPayment,
+    startMonth,
+    startYear
 }: {
     loanId: string;
     loanAmount: number;
     principal: number;
     monthlyPrincipalPayment: number;
+    startMonth?: number;
+    startYear?: number;
 }) {
   const [state, formAction] = useActionState(updateLoanDetails, initialState);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(
+    startMonth !== undefined ? startMonth.toString() : now.getMonth().toString()
+  );
+  const [selectedYear, setSelectedYear] = useState(
+    startYear !== undefined ? startYear.toString() : now.getFullYear().toString()
+  );
+
+  // Sync state when props change or dialog opens
+  useEffect(() => {
+    if (open) {
+      setSelectedMonth(startMonth !== undefined ? startMonth.toString() : now.getMonth().toString());
+      setSelectedYear(startYear !== undefined ? startYear.toString() : now.getFullYear().toString());
+    }
+  }, [open, startMonth, startYear]);
 
   useEffect(() => {
     if (state?.error) {
@@ -68,7 +88,7 @@ export function LoanDetailsModifier({
         <DialogHeader>
           <DialogTitle>Modify Loan Details</DialogTitle>
           <DialogDescription>
-            Change the loan amount, outstanding principal, or monthly deduction payment directly. Use this to fix errors or adjustments.
+            Change the loan amount, outstanding principal, monthly payment, or starting time directly.
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="grid gap-4 py-4">
@@ -108,6 +128,42 @@ export function LoanDetailsModifier({
               min="0"
               required
             />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="startMonth">Starting Deduction Time</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <select
+                id="startMonth"
+                name="startMonth"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer text-foreground"
+              >
+                {Array.from({ length: 12 }).map((_, idx) => (
+                  <option key={idx} value={idx}>
+                    {new Date(2000, idx, 1).toLocaleString('default', { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                id="startYear"
+                name="startYear"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer text-foreground"
+              >
+                {Array.from({ length: 11 }).map((_, idx) => {
+                  const yr = now.getFullYear() - 5 + idx;
+                  return (
+                    <option key={yr} value={yr}>
+                      {yr}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
           </div>
 
           <DialogFooter className="mt-4">
