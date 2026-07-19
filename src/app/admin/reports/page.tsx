@@ -1,9 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { getReportsArchive } from "../statement/actions";
-import { FileText, FileSpreadsheet, Calendar, Archive, Download } from "lucide-react";
-import Link from "next/link";
+import { FileText, FileSpreadsheet, Calendar, Archive } from "lucide-react";
+import { DownloadReportButton } from "./_components/download-report-button";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -64,59 +63,80 @@ export default async function ReportsPage() {
                 </Card>
             ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {reports.map((report) => (
-                        <Card key={report._id} className="overflow-hidden border border-border/60 hover:border-primary/30 hover:shadow-lg transition-all duration-300 bg-card/60 backdrop-blur-sm">
-                            <CardHeader className="pb-3 bg-muted/20 border-b border-border/40">
-                                <div className="flex items-center justify-between gap-2 mb-2">
-                                    {getReportBadge(report.type)}
-                                    <div className="flex items-center gap-1 text-xs text-muted-foreground font-semibold">
-                                        <Calendar className="size-3.5" />
-                                        <span>{report.year}</span>
-                                        {report.month !== undefined && <span> - {getMonthName(report.month)}</span>}
-                                    </div>
-                                </div>
-                                <CardTitle className="text-base font-bold line-clamp-1 text-foreground" style={{ fontFamily: "Sora, sans-serif" }}>
-                                    {report.title}
-                                </CardTitle>
-                                <CardDescription className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-1">
-                                    Uploaded on {new Date(report.createdAt).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-5 flex flex-col gap-3">
-                                {report.pdfUrl ? (
-                                    <Button asChild variant="outline" className="w-full justify-between h-10 border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5 text-blue-700 dark:text-blue-400 text-xs font-semibold rounded-xl transition-all">
-                                        <a href={report.pdfUrl} download target="_blank" rel="noopener noreferrer">
-                                            <span className="flex items-center gap-2">
-                                                <FileText className="size-4 shrink-0" />
-                                                Download Statement PDF
-                                            </span>
-                                            <Download className="size-3.5" />
-                                        </a>
-                                    </Button>
-                                ) : (
-                                    <div className="text-xs text-muted-foreground py-2 text-center border border-dashed rounded-xl">
-                                        PDF statement file unavailable
-                                    </div>
-                                )}
+                    {reports.map((report) => {
+                        const isMonthly = report.type === 'monthly_statement';
+                        const isYearly = report.type === 'yearly_dues';
+                        const isDividend = report.type === 'dividend';
 
-                                {report.csvUrl ? (
-                                    <Button asChild variant="outline" className="w-full justify-between h-10 border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 text-xs font-semibold rounded-xl transition-all">
-                                        <a href={report.csvUrl} download target="_blank" rel="noopener noreferrer">
-                                            <span className="flex items-center gap-2">
-                                                <FileSpreadsheet className="size-4 shrink-0" />
-                                                Download Excel/CSV
-                                            </span>
-                                            <Download className="size-3.5" />
-                                        </a>
-                                    </Button>
-                                ) : (
-                                    <div className="text-xs text-muted-foreground py-2 text-center border border-dashed rounded-xl">
-                                        CSV database file unavailable
+                        const mName = report.month !== undefined ? getMonthName(report.month).toLowerCase() : "";
+                        
+                        let pdfFilename = "";
+                        let csvFilename = "";
+                        
+                        if (isMonthly) {
+                            pdfFilename = `monthly statement of ${mName} ${report.year}.pdf`;
+                            csvFilename = `monthly statement of ${mName} ${report.year}.csv`;
+                        } else if (isYearly) {
+                            pdfFilename = `yearly dues - ${report.year}.pdf`;
+                            csvFilename = `yearly dues - ${report.year}.csv`;
+                        } else if (isDividend) {
+                            pdfFilename = `yearly dividend - ${report.year}.pdf`;
+                            csvFilename = `yearly dividend - ${report.year}.csv`;
+                        } else {
+                            pdfFilename = `${report.title.toLowerCase().replace(/[\s\-_]+/g, '_')}.pdf`;
+                            csvFilename = `${report.title.toLowerCase().replace(/[\s\-_]+/g, '_')}.csv`;
+                        }
+
+                        return (
+                            <Card key={report._id} className="overflow-hidden border border-border/60 hover:border-primary/30 hover:shadow-lg transition-all duration-300 bg-card/60 backdrop-blur-sm">
+                                <CardHeader className="pb-3 bg-muted/20 border-b border-border/40">
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                        {getReportBadge(report.type)}
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground font-semibold">
+                                            <Calendar className="size-3.5" />
+                                            <span>{report.year}</span>
+                                            {report.month !== undefined && <span> - {getMonthName(report.month)}</span>}
+                                        </div>
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    ))}
+                                    <CardTitle className="text-base font-bold line-clamp-1 text-foreground" style={{ fontFamily: "Sora, sans-serif" }}>
+                                        {report.title}
+                                    </CardTitle>
+                                    <CardDescription className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-1">
+                                        Uploaded on {new Date(report.createdAt).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-5 flex flex-col gap-3">
+                                    {report.pdfUrl ? (
+                                        <DownloadReportButton
+                                            url={report.pdfUrl}
+                                            filename={pdfFilename}
+                                            label="Download Statement PDF"
+                                            icon={<FileText className="size-4 shrink-0" />}
+                                            className="w-full justify-between h-10 border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5 text-blue-700 dark:text-blue-400 text-xs font-semibold rounded-xl transition-all"
+                                        />
+                                    ) : (
+                                        <div className="text-xs text-muted-foreground py-2 text-center border border-dashed rounded-xl">
+                                            PDF statement file unavailable
+                                        </div>
+                                    )}
+
+                                    {report.csvUrl ? (
+                                        <DownloadReportButton
+                                            url={report.csvUrl}
+                                            filename={csvFilename}
+                                            label="Download Excel/CSV"
+                                            icon={<FileSpreadsheet className="size-4 shrink-0" />}
+                                            className="w-full justify-between h-10 border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 text-xs font-semibold rounded-xl transition-all"
+                                        />
+                                    ) : (
+                                        <div className="text-xs text-muted-foreground py-2 text-center border border-dashed rounded-xl">
+                                            CSV database file unavailable
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
                 </div>
             )}
         </div>
