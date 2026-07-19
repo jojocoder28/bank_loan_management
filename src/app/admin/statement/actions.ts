@@ -6,6 +6,8 @@ import User, { IUser } from "@/models/user";
 import Loan, { ILoan } from "@/models/loan";
 import Bank from "@/models/bank";
 import FundTopUp from "@/models/fundTopUp";
+import Report from "@/models/report";
+import { v2 as cloudinary } from "cloudinary";
 import { getBankSettings } from "../settings/actions";
 import { calculateAnnualInterest, calculateDividend, calculateMonthlyInterest } from "@/lib/coop-calculations";
 import { revalidatePath } from "next/cache";
@@ -870,4 +872,103 @@ export async function getLastProcessedMonthInfo(): Promise<{ canUndo: boolean; l
     const canUndo = lastDate.getTime() > baseTime;
 
     return { canUndo, lastProcessedLabel };
+}
+
+export async function uploadProcessedReport(
+    title: string,
+    type: 'monthly_statement' | 'yearly_dues' | 'dividend',
+    year: number,
+    month: number | undefined,
+    pdfBase64?: string,
+    csvString?: string
+): Promise<{ error?: string; success?: boolean; pdfUrl?: string; csvUrl?: string }> {
+    try {
+        await dbConnect();
+        
+        const session = await getSession() as any;
+        if (!session || session.role !== 'admin') {
+            return { error: "Unauthorized. Admin role required." };
+        }
+
+        // Configure Cloudinary
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+
+        let pdfUrl: string | undefined = undefined;
+        let csvUrl: string | undefined = undefined;
+
+        // Upload PDF if provided
+        if (pdfBase64) {
+            const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+            const pdfUpload = await new Promise<any>((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: "coop_statements/pdf",
+                        resource_type: "raw",
+                        public_id: `${type}_${year}_${month !== undefined ? month : ''}_pdf`,
+                        overwrite: true
+                    },
+                    (err, result) => err ? reject(err) : resolve(result)
+                );
+                uploadStream.end(pdfBuffer);
+            });
+            pdfUrl = pdfUpload.secure_url;
+        }
+
+        // Upload CSV if provided
+        if (csvString) {
+            const csvBuffer = Buffer.from(csvString, 'utf-8');
+            const csvUpload = await new Promise<any>((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: "coop_statements/csv",
+                        resource_type: "raw",
+                        public_id: `${type}_${year}_${month !== undefined ? month : ''}_csv`,
+                        overwrite: true
+                    },
+                    (err, result) => err ? reject(err) : resolve(result)
+                );
+                uploadStream.end(csvBuffer);
+            });
+            csvUrl = csvUpload.secure_url;
+        }
+
+        // Save report entry in MongoDB (create or update)
+        const query: any = { type, year };
+        if (month !== undefined) {
+            query.month = month;
+        }
+        
+        await Report.findOneAndUpdate(
+            query,
+            {
+                $set: {
+                    title,
+                    pdfUrl,
+                    csvUrl,
+                }
+            },
+            { upsert: true, new: true }
+        );
+
+        revalidatePath('/admin/reports');
+        return { success: true, pdfUrl, csvUrl };
+    } catch (e: any) {
+        console.error("Failed to upload report to Cloudinary:", e);
+        return { error: e.message || "Failed to upload files to Cloudinary." };
+    }
+}
+
+export async function getReportsArchive(): Promise<any[]> {
+    try {
+        await dbConnect();
+        const reports = await Report.find({}).sort({ createdAt: -1 }).lean();
+        return JSON.parse(JSON.stringify(reports));
+    } catch (e: any) {
+        console.error("Failed to fetch reports archive:", e);
+        return [];
+    }
 }

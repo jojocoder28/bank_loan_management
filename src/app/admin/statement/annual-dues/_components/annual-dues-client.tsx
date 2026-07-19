@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Download, Loader2, Play, AlertTriangle, Search, Check, X } from "lucide-react";
-import { AnnualDuesPreviewRow, getAnnualDuesPreviewData, applyAnnualDues } from "../../actions";
+import { AnnualDuesPreviewRow, getAnnualDuesPreviewData, applyAnnualDues, uploadProcessedReport } from "../../actions";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import { useState, useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -157,6 +159,164 @@ export function AnnualDuesClient({ defaultGfRate, defaultTfRate, defaultYear }: 
                         title: "Annual Dues Finalized!",
                         description: `Successfully credited TF & GF interest to ${finalizedList.length} members for ${year}.`
                     });
+
+                    // Auto-upload PDF & CSV to Cloudinary
+                    try {
+                        const doc = new jsPDF('l', 'mm', 'a4'); // landscape
+                        
+                        doc.setFontSize(14);
+                        doc.setFont("helvetica", "bold");
+                        doc.text(`SARISHA & KHORDA G P PRIMARY SCHOOL TEACHERS CO OPERATIVE CREDIT SOCIETY LTD`, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+                        
+                        doc.setFontSize(11);
+                        doc.setFont("helvetica", "normal");
+                        doc.text(`Yearly Dues Interest Calculation Preview Report - Year ${year}`, doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
+                        doc.text(`Rates applied: Guaranteed Fund (GF) = ${gfRate}%, Thrift Fund (TF) = ${tfRate}%`, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+
+                        const tableHeaders = [
+                            "Sl", "Name", "Membership #", 
+                            "GF Bal (March)", "GF Int (₹)", 
+                            "TF Bal (March)", "TF Opening (₹)", "TF This Yr (₹)", 
+                            "TF Int Opening (₹)", "TF Int New (₹)", "TF Int Total (₹)", 
+                            "Total Fund Bal (₹)", "Grand Total Int (₹)"
+                        ];
+
+                        let sumGfBal = 0;
+                        let sumGfInt = 0;
+                        let sumTfBal = 0;
+                        let sumTfOpening = 0;
+                        let sumTfYearly = 0;
+                        let sumTfIntOpening = 0;
+                        let sumTfIntNew = 0;
+                        let sumTfIntTotal = 0;
+                        let sumTotalFunds = 0;
+                        let sumGrandTotalInt = 0;
+
+                        const body = previewRows.map((row, index) => {
+                            const gfInt = editedGfAmounts[row.memberId] ?? 0;
+                            const tfInt = editedTfAmounts[row.memberId] ?? 0;
+                            const totalFunds = row.gfBalance + row.tfBalance;
+                            const grandTotalInt = gfInt + tfInt;
+
+                            sumGfBal += row.gfBalance;
+                            sumGfInt += gfInt;
+                            sumTfBal += row.tfBalance;
+                            sumTfOpening += row.tfOpeningBalance;
+                            sumTfYearly += row.tfYearlyContribution;
+                            sumTfIntOpening += row.tfInterestOnOpening;
+                            sumTfIntNew += row.tfInterestOnNew;
+                            sumTfIntTotal += tfInt;
+                            sumTotalFunds += totalFunds;
+                            sumGrandTotalInt += grandTotalInt;
+
+                            return [
+                                index + 1,
+                                row.name,
+                                row.membershipNumber,
+                                row.gfBalance.toLocaleString(),
+                                gfInt.toLocaleString(),
+                                row.tfBalance.toLocaleString(),
+                                row.tfOpeningBalance.toLocaleString(),
+                                row.tfYearlyContribution.toLocaleString(),
+                                row.tfInterestOnOpening.toLocaleString(),
+                                row.tfInterestOnNew.toLocaleString(),
+                                tfInt.toLocaleString(),
+                                totalFunds.toLocaleString(),
+                                grandTotalInt.toLocaleString()
+                            ];
+                        });
+
+                        const footer = [
+                            [
+                                '', 'Total', '',
+                                sumGfBal.toLocaleString(), sumGfInt.toLocaleString(),
+                                sumTfBal.toLocaleString(), sumTfOpening.toLocaleString(), sumTfYearly.toLocaleString(),
+                                sumTfIntOpening.toLocaleString(), sumTfIntNew.toLocaleString(), sumTfIntTotal.toLocaleString(),
+                                sumTotalFunds.toLocaleString(), sumGrandTotalInt.toLocaleString()
+                            ]
+                        ];
+
+                        doc.autoTable({
+                            startY: 35,
+                            head: [tableHeaders],
+                            body: body,
+                            foot: footer,
+                            theme: 'grid',
+                            headStyles: { fillColor: [100, 110, 120], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7, halign: 'center' },
+                            footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
+                            styles: { fontSize: 7, lineColor: [200, 200, 200], lineWidth: 0.1 },
+                            margin: { horizontal: 10 }
+                        });
+
+                        const pdfBase64 = doc.output('datauristring').split(',')[1];
+
+                        const csvHeaders = [
+                            "Name",
+                            "Membership #",
+                            "GF Balance (March)",
+                            "GF Interest (Adjusted)",
+                            "TF Balance (March)",
+                            "TF Opening Balance (before this year)",
+                            "TF This Year Contribution (12×monthly)",
+                            "TF Interest on Opening Balance",
+                            "TF Interest on New Contributions",
+                            "TF Interest Total (Adjusted)",
+                            "Total Funds Balance (GF+TF)",
+                            "Grand Total Interest"
+                        ];
+                        
+                        const csvRows = previewRows.map(row => {
+                            const gfInt = editedGfAmounts[row.memberId] ?? 0;
+                            const tfInt = editedTfAmounts[row.memberId] ?? 0;
+                            const totalFunds = row.gfBalance + row.tfBalance;
+                            const grandTotalInt = gfInt + tfInt;
+
+                            return [
+                                `"${row.name.replace(/"/g, '""')}"`,
+                                row.membershipNumber,
+                                row.gfBalance,
+                                gfInt,
+                                row.tfBalance,
+                                row.tfOpeningBalance,
+                                row.tfYearlyContribution,
+                                row.tfInterestOnOpening,
+                                row.tfInterestOnNew,
+                                tfInt,
+                                totalFunds,
+                                grandTotalInt
+                            ].join(',');
+                        });
+
+                        const totalsRow = [
+                            `"Total"`,
+                            `""`,
+                            sumGfBal,
+                            sumGfInt,
+                            sumTfBal,
+                            sumTfOpening,
+                            sumTfYearly,
+                            sumTfIntOpening,
+                            sumTfIntNew,
+                            sumTfIntTotal,
+                            sumTotalFunds,
+                            sumGrandTotalInt
+                        ].join(',');
+                        
+                        const csvContent = [csvHeaders.join(','), ...csvRows, totalsRow].join('\n');
+                        const title = `Yearly Dues - ${year}`;
+                        
+                        await uploadProcessedReport(
+                            title,
+                            'yearly_dues',
+                            Number(year),
+                            undefined,
+                            pdfBase64,
+                            csvContent
+                        );
+                    } catch (uploadError) {
+                        console.error("Failed to auto-upload yearly dues reports:", uploadError);
+                    }
+
                     setPreviewRows(null);
                     setEditedGfAmounts({});
                     setEditedTfAmounts({});

@@ -18,8 +18,8 @@ import { Loader2, Cog, Calendar, Gift, Download, Edit2, AlertTriangle, ArrowRigh
 import Link from "next/link";
 import * as XLSX from "xlsx";
 import { numberToWords } from "@/lib/number-to-words";
-import { StatementRow, PendingMonth, DeductionOverrideInput, processMonthlyDeductions, processAllAnnualDues, undoLastMonthlyProcess } from "../actions";
-import { StatementPDFGenerator } from "./statement-pdf-generator";
+import { StatementRow, PendingMonth, DeductionOverrideInput, processMonthlyDeductions, processAllAnnualDues, undoLastMonthlyProcess, uploadProcessedReport } from "../actions";
+import { StatementPDFGenerator, buildStatementPdf } from "./statement-pdf-generator";
 import { InterestBreakdownPopover } from "./interest-breakdown-popover";
 import { RotateCcw } from "lucide-react";
 
@@ -313,6 +313,54 @@ export function StatementDashboard({
         toast({ variant: "destructive", title: "Processing Failed", description: result.error });
       } else {
         toast({ title: "Success", description: result.success });
+        // Auto-upload PDF & CSV to Cloudinary
+        try {
+          const doc = buildStatementPdf(tableData, summary, monthName, selectedYear);
+          const pdfBase64 = doc.output('datauristring').split(',')[1];
+          
+          const headers = ["Sl. No", "Name", "Bank Acc No", "Bank Loan Prin", "Bank Loan Int", "Own Loan Prin", "Own Loan Int", "SF", "TF", "Total"];
+          const csvRows = tableData.map(row => [
+            row.slNo,
+            `"${row.name.replace(/"/g, '""')}"`,
+            row.bankAccountNumber,
+            "",
+            "",
+            row.loanPrincipalPayment,
+            row.loanInterestPayment,
+            row.shareFundContribution,
+            row.thriftFundContribution,
+            row.totalDeduction
+          ].join(','));
+          
+          const totalsRow = [
+            "Total",
+            "",
+            "",
+            "",
+            "",
+            summary.totalLoanPrincipal,
+            summary.totalLoanInterest,
+            summary.totalShare,
+            summary.totalThrift,
+            summary.grandTotal
+          ].join(',');
+          
+          const csvContent = [headers.join(','), ...csvRows, totalsRow].join('\n');
+          const title = `Monthly Statement - ${monthName} ${selectedYear}`;
+          
+          await uploadProcessedReport(
+            title,
+            'monthly_statement',
+            selectedYear,
+            selectedMonth,
+            pdfBase64,
+            csvContent
+          );
+        } catch (uploadError) {
+          console.error("Failed to auto-upload statement reports:", uploadError);
+        }
+
+        // Clear overrides from localStorage and state
         localStorage.removeItem(`coop-deduction-overrides-${selectedMonth}-${selectedYear}`);
         setOverrides({});
         router.refresh();
