@@ -47,8 +47,9 @@ export async function getPendingLoans(): Promise<PopulatedLoan[]> {
         .sort({ createdAt: 'asc' })
         .lean();
 
-    const populatedLoans = await Promise.all(loans.map(async (loan) => {
-        if (!loan.user) return loan;
+    const validLoans = loans.filter((loan) => loan.user);
+
+    const populatedLoans = await Promise.all(validLoans.map(async (loan) => {
         // Find existing active loans for the user
         const existingActiveLoans = await Loan.find({ user: loan.user._id, status: 'active' });
         const totalExistingPrincipal = existingActiveLoans.reduce((sum, activeL) => sum + activeL.principal, 0);
@@ -97,7 +98,7 @@ export async function getPendingModifications(): Promise<PopulatedModificationLo
     const loansWithPending = loans.map(loan => {
         const pendingRequests = loan.modificationRequests.filter(req => req.status === 'pending');
         return { ...loan, modificationRequests: pendingRequests };
-    }).filter(loan => loan.modificationRequests.length > 0);
+    }).filter(loan => loan.modificationRequests.length > 0 && loan.user);
 
 
     return JSON.parse(JSON.stringify(loansWithPending));
@@ -415,7 +416,8 @@ export async function getPendingProfileModifications(): Promise<PopulatedProfile
         .populate('user', 'name email membershipNumber phone')
         .sort({ requestDate: 'asc' })
         .lean();
-    return JSON.parse(JSON.stringify(requests));
+    const validRequests = requests.filter(req => req.user);
+    return JSON.parse(JSON.stringify(validRequests));
 }
 
 export async function approveProfileModification(formData: FormData) {

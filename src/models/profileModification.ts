@@ -11,6 +11,7 @@ export interface IProfileModificationRequest extends Document {
         nomineeName?: string;
         nomineeRelation?: string;
         nomineeAge?: number;
+        nomineeDob?: Date | null;
     };
     status: ProfileModificationStatus;
     requestDate: Date;
@@ -26,6 +27,7 @@ const ProfileModificationSchema = new Schema<IProfileModificationRequest>({
         nomineeName: { type: String },
         nomineeRelation: { type: String },
         nomineeAge: { type: Number },
+        nomineeDob: { type: Date, default: null },
     },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending', index: true },
     requestDate: { type: Date, default: Date.now },

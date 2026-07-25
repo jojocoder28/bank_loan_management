@@ -70,7 +70,8 @@ export function ProfileApprovals({ pendingRequests: initialRequests }: { pending
 
     const formatValue = (key: string, value: any) => {
         if (key === 'nomineeDob' && value) {
-            return new Date(value).toLocaleDateString();
+            const date = new Date(value);
+            return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
         }
         return String(value);
     }
@@ -87,24 +88,30 @@ export function ProfileApprovals({ pendingRequests: initialRequests }: { pending
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {pendingRequests.map((request) => (
-                        <TableRow key={request._id.toString()}>
-                            <TableCell className="font-medium align-top">
-                                <Link href={`/admin/users/${request.user._id.toString()}`} className="text-primary hover:underline block">
-                                    {request.user.name}
-                                </Link>
-                                <span className="text-xs text-muted-foreground">#{request.user.membershipNumber || 'N/A'}</span>
-                            </TableCell>
-                            <TableCell>
-                                <ul className="list-disc pl-4 text-sm space-y-1">
-                                    {Object.entries(request.requestedChanges).map(([key, value]) => (
-                                        <li key={key}>
-                                            <span className="font-semibold">{formatKey(key)}:</span> {formatValue(key, value)}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </TableCell>
-                            <TableCell suppressHydrationWarning className="align-top whitespace-nowrap">{new Date(request.requestDate).toLocaleDateString()}</TableCell>
+                    {pendingRequests.map((request) => {
+                        if (!request.user) return null;
+                        return (
+                            <TableRow key={request._id.toString()}>
+                                <TableCell className="font-medium align-top">
+                                    <Link href={`/admin/users/${request.user._id.toString()}`} className="text-primary hover:underline block">
+                                        {request.user.name}
+                                    </Link>
+                                    <span className="text-xs text-muted-foreground">#{request.user.membershipNumber || 'N/A'}</span>
+                                </TableCell>
+                                <TableCell>
+                                    <ul className="list-disc pl-4 text-sm space-y-1">
+                                        {Object.entries(request.requestedChanges || {})
+                                            .filter(([key, value]) => [
+                                                'personalAddress', 'workplaceAddress', 'nomineeName', 'nomineeRelation', 'nomineeAge', 'nomineeDob'
+                                            ].includes(key) && value !== undefined && value !== null && value !== '')
+                                            .map(([key, value]) => (
+                                                <li key={key}>
+                                                    <span className="font-semibold">{formatKey(key)}:</span> {formatValue(key, value)}
+                                                </li>
+                                            ))}
+                                    </ul>
+                                </TableCell>
+                                <TableCell suppressHydrationWarning className="align-top whitespace-nowrap">{new Date(request.requestDate).toLocaleDateString()}</TableCell>
                             
                             <TableCell className="text-right align-top">
                                 <div className="flex justify-end gap-2">
@@ -117,7 +124,8 @@ export function ProfileApprovals({ pendingRequests: initialRequests }: { pending
                                 </div>
                             </TableCell>
                         </TableRow>
-                    ))}
+                        );
+                    })}
                 </TableBody>
             </Table>
         </div>
