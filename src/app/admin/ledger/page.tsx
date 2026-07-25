@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getLedgerData } from "./actions";
-import { BookCopy, DollarSign, PiggyBank, ShieldCheck, Wallet } from "lucide-react";
+import { BookCopy, DollarSign, PiggyBank, ShieldCheck, Wallet, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { ILoan } from "@/models/loan";
 
@@ -61,7 +61,7 @@ export default async function LedgerPage() {
         </CardHeader>
       </Card>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <StatCard 
             title="Total Capital" 
             value={`₹${(totalCapital?.total ?? 0).toLocaleString()}`} 
@@ -81,6 +81,11 @@ export default async function LedgerPage() {
             title="Total Thrift Fund" 
             value={`₹${(totalCapital?.thriftFund ?? 0).toLocaleString()}`}
             icon={<Wallet className="size-4 text-muted-foreground" />}
+           />
+           <StatCard 
+            title="Bank Interest - Yearly (Added)" 
+            value={`₹${(totalCapital?.yearlyBankInterest ?? 0).toLocaleString()}`}
+            icon={<TrendingUp className="size-4 text-muted-foreground" />}
            />
       </div>
 

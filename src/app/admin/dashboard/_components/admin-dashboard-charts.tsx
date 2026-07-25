@@ -34,9 +34,9 @@ export function AdminDashboardCharts({ loansByStatus, recentLoansTrend }: AdminC
       <Card className="lg:col-span-2 glass-card border-none">
         <CardHeader>
           <CardTitle className="text-lg font-bold" style={{ fontFamily: "Sora, sans-serif" }}>
-            Loan Application Trend
+            Loan Disbursal Trend
           </CardTitle>
-          <CardDescription>Volume of applications over the last 6 months</CardDescription>
+          <CardDescription>Volume of active loans started over the last 6 months</CardDescription>
         </CardHeader>
         <CardContent className="h-80">
           <ResponsiveContainer width="100%" height="100%">
@@ -64,7 +64,7 @@ export function AdminDashboardCharts({ loansByStatus, recentLoansTrend }: AdminC
               />
               <Bar 
                 dataKey="applications" 
-                name="Applications" 
+                name="Started Loans" 
                 fill="url(#barColor)" 
                 radius={[4, 4, 0, 0]} 
                 barSize={40}

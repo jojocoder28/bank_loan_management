@@ -54,13 +54,13 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
   return res;
 }
 
-const publicRoutes = ['/login', '/signup', '/public/data-entry', '/force-password-change', '/'];
+const publicRoutes = ['/login', '/signup', '/public/data-entry', '/force-password-change', '/reset-password', '/'];
 const adminRoutes = ['/admin/dashboard', '/admin/approvals', '/admin/users', '/admin/audit', '/admin/ledger', '/admin/settings', '/admin/profit-loss', '/admin/bulk-import', '/admin/data-export', '/admin/statement'];
 const userRoutes = ['/dashboard', '/apply-loan', '/my-finances', '/become-member'];
 
 export default async function middleware(req: NextRequest) {
   const userAgent = req.headers.get('user-agent');
-  const ip = req.headers.get('x-forwarded-for') || req.ip || '127.0.0.1';
+  const ip = req.headers.get('x-forwarded-for') || (req as any).ip || '127.0.0.1';
 
   // 1. Web scraper mitigation
   if (isScraperBot(userAgent)) {
@@ -105,7 +105,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   // Redirect logged-in users from public routes
-  if (isPublicRoute && user && path !== '/force-password-change') {
+  if (isPublicRoute && user && path !== '/force-password-change' && !path.startsWith('/reset-password')) {
     const dashboardPath = user.role === 'admin' ? '/admin/dashboard' : '/dashboard';
     return applySecurityHeaders(NextResponse.redirect(new URL(dashboardPath, req.nextUrl)));
   }

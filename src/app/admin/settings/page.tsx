@@ -230,6 +230,21 @@ export default function AdminSettingsPage() {
                <p className="text-xs text-muted-foreground">The recurring monthly contribution required from all active members.</p>
               {formState.error?.monthlyThriftContribution && <p className="text-sm text-destructive">{formState.error.monthlyThriftContribution[0]}</p>}
           </div>
+          <Separator />
+
+          <div className="grid gap-2">
+              <Label htmlFor="yearlyBankInterest">Bank Interest - Yearly (₹)</Label>
+              <Input 
+                id="yearlyBankInterest" 
+                name="yearlyBankInterest" 
+                type="number" 
+                defaultValue={settings?.yearlyBankInterest ?? 0}
+                step="1"
+                required 
+              />
+               <p className="text-xs text-muted-foreground">The manually written annual bank interest amount. This value is added directly to the total capital.</p>
+              {formState.error?.yearlyBankInterest && <p className="text-sm text-destructive">{formState.error.yearlyBankInterest[0]}</p>}
+          </div>
         </CardContent>
         <CardFooter className="flex justify-end">
             <SubmitButton />

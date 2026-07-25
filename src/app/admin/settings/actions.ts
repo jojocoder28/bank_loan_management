@@ -27,6 +27,7 @@ export async function getBankSettings(): Promise<IBank> {
             monthlyThriftContribution: 1000,
             maxLoanTenureMonths: 60,
             maxLoanAmount: 600000,
+            yearlyBankInterest: 0,
         });
     }
     return JSON.parse(JSON.stringify(settings));
@@ -41,6 +42,7 @@ const settingsSchema = z.object({
   monthlyThriftContribution: z.coerce.number().min(0, "Monthly contribution must be non-negative."),
   maxLoanTenureMonths: z.coerce.number().int().min(1, "Max tenure must be at least 1 month."),
   maxLoanAmount: z.coerce.number().min(10000, "Max loan amount must be at least 10,000."),
+  yearlyBankInterest: z.coerce.number().min(0, "Yearly bank interest must be non-negative."),
 });
 
 
