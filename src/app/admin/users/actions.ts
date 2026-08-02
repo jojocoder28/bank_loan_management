@@ -15,6 +15,8 @@ import { logAuditActivity } from "@/lib/audit";
 import { getSession } from "@/lib/session";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import EmailJob from "@/models/emailJob";
+import { executeBulkOnboardingEmailJob, sendGoogleEmail as sendGoogleEmailWorker } from "@/lib/email-worker";
 
 
 export async function getUsers(status?: UserStatus): Promise<IUser[]> {
@@ -390,28 +392,9 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:9002');
 
 async function sendGoogleEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  const smtpEmail = process.env.SMTP_EMAIL;
-  const smtpPassword = process.env.SMTP_PASSWORD;
-  
-  if (!smtpEmail || !smtpPassword) {
-    throw new Error("Google SMTP credentials (SMTP_EMAIL or SMTP_PASSWORD) are not configured in environment variables.");
-  }
-  
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: smtpEmail,
-      pass: smtpPassword,
-    },
-  });
-  
-  await transporter.sendMail({
-    from: `"S&KGPPS Co-op" <${smtpEmail}>`,
-    to,
-    subject,
-    html,
-  });
+  await sendGoogleEmailWorker({ to, subject, html });
 }
+
 
 export async function sendOnboardingEmail(userId: string): Promise<{ error?: string; success?: boolean }> {
     const smtpEmail = process.env.SMTP_EMAIL;
@@ -536,7 +519,7 @@ export async function resetUserPasswordAndEmail(userId: string): Promise<{ error
     }
 }
 
-export async function sendBulkOnboardingEmails(): Promise<{ error?: string; success?: string }> {
+export async function sendBulkOnboardingEmails(): Promise<{ error?: string; success?: string; jobId?: string; totalCount?: number }> {
     const smtpEmail = process.env.SMTP_EMAIL;
     const smtpPassword = process.env.SMTP_PASSWORD;
     if (!smtpEmail || !smtpPassword) {
@@ -557,59 +540,72 @@ export async function sendBulkOnboardingEmails(): Promise<{ error?: string; succ
             return { success: "No pending member accounts found that require password onboarding emails." };
         }
 
-        let sentCount = 0;
-        let failedCount = 0;
-
-        for (const user of users) {
-            try {
-                const defaultPassword = `password${user.membershipNumber}`;
-                await sendGoogleEmail({
-                    to: user.email!,
-                    subject: 'Welcome to S&KGPPS Co-op: Your Account Credentials',
-                    html: `
-                        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                            <h2 style="color: #007bff; text-align: center;">Welcome to S&KGPPS Co-op</h2>
-                            <p>Dear <strong>${user.name}</strong>,</p>
-                            <p>An administrator has set up your member account for the Sarisha & Khorda G P Primary School Teachers Co Operative Credit Society LTD.</p>
-                            <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; border-radius: 4px; margin: 20px 0;">
-                                <p style="margin: 5px 0;"><strong>Membership #:</strong> ${user.membershipNumber || 'N/A'}</p>
-                                <p style="margin: 5px 0;"><strong>Username (Email):</strong> ${user.email}</p>
-                                <p style="margin: 5px 0;"><strong>Temporary Password:</strong> <code style="background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 1.1em;">${defaultPassword}</code></p>
-                            </div>
-                            <p>Please click the button below to log in. You will be prompted to change this temporary password upon your first login:</p>
-                            <div style="text-align: center; margin: 30px 0;">
-                                <a href="${baseUrl}/login" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Log In to Account</a>
-                            </div>
-                            <p style="font-size: 0.9em; color: #666;">If you have any questions, please contact an administrator.</p>
-                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                            <p style="font-size: 0.8em; color: #999; text-align: center;">This is an automated system email. Please do not reply directly to this message.</p>
-                        </div>
-                    `
-                });
-                sentCount++;
-            } catch (err) {
-                console.error(`Failed to send bulk onboarding email to ${user.email}:`, err);
-                failedCount++;
-            }
-        }
-
         const session = await getSession();
         const actor = session?.user?.email || 'Admin';
-        await logAuditActivity(
-            'ONBOARDING_BULK_EMAILS_SENT',
-            actor,
-            undefined,
-            `Sent bulk welcome onboarding credentials to ${sentCount} members (Failed: ${failedCount}).`,
-            { sentCount, failedCount }
-        );
 
-        return { success: `Successfully sent onboarding credentials to ${sentCount} members.${failedCount > 0 ? ` Failed to send to ${failedCount} members.` : ''}` };
+        // Create an EmailJob document
+        const job = await EmailJob.create({
+            jobType: 'onboarding_bulk',
+            status: 'pending',
+            totalCount: users.length,
+            sentCount: 0,
+            failedCount: 0,
+            logs: [`Job initiated for ${users.length} members by ${actor}.`]
+        });
+
+        const jobId = (job as any)._id.toString();
+
+        // Trigger background job execution asynchronously (non-blocking)
+        executeBulkOnboardingEmailJob(jobId, actor).catch((err) => {
+            console.error(`[actions.ts] Background job ${jobId} failed to trigger:`, err);
+        });
+
+        return { 
+            success: `Background email job initiated for ${users.length} members. Reusing single SMTP connection with 4s delay between sends.`,
+            jobId,
+            totalCount: users.length
+        };
 
     } catch (e: any) {
-        console.error("Error in bulk onboarding emails:", e);
-        return { error: e.message || "Failed to process bulk onboarding emails." };
+        console.error("Error initiating bulk onboarding email job:", e);
+        return { error: e.message || "Failed to initiate bulk email job." };
     }
 }
+
+export async function getBulkEmailJobStatus(jobId: string): Promise<{ 
+    error?: string; 
+    jobId?: string; 
+    status?: string; 
+    totalCount?: number; 
+    sentCount?: number; 
+    failedCount?: number; 
+    currentRecipient?: string; 
+    logs?: string[];
+    completedAt?: string;
+}> {
+    try {
+        await dbConnect();
+        const job = await EmailJob.findById(jobId).lean();
+        if (!job) {
+            return { error: "Background email job record not found." };
+        }
+
+        return {
+            jobId: (job as any)._id.toString(),
+            status: job.status,
+            totalCount: job.totalCount,
+            sentCount: job.sentCount,
+            failedCount: job.failedCount,
+            currentRecipient: job.currentRecipient,
+            logs: job.logs || [],
+            error: job.error,
+            completedAt: job.completedAt ? new Date(job.completedAt).toLocaleTimeString() : undefined
+        };
+    } catch (e: any) {
+        return { error: e.message || "Failed to fetch job status." };
+    }
+}
+
 
 export async function sendPasswordResetEmail(userId: string): Promise<{ error?: string; success?: boolean }> {
     const session = await getSession();
